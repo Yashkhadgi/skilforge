@@ -1,43 +1,47 @@
-<!-- templates/register.html -->
-
 {% extends 'base.html' %}
-
 {% block content %}
 
-<div class="auth-card">
+<div class="auth-wrapper">
+    <div class="auth-card">
 
-    <h2>Create Account</h2>
-    <p class="subtitle">Start your learning journey on SkillForge</p>
-
-    <form method="POST">
-
-        <div class="mb-3">
-            <label class="form-label">Username</label>
-            <input type="text" name="username" class="form-control" 
-                   placeholder="e.g. john_dev" required>
+        <div class="auth-logo">
+            <i class="bi bi-lightning-charge-fill"></i> SkillForge
         </div>
 
-        <div class="mb-3">
-            <label class="form-label">Email</label>
-            <input type="email" name="email" class="form-control" 
-                   placeholder="you@example.com" required>
-        </div>
+        <h2>Create Account</h2>
+        <p class="subtitle">Start your learning journey today</p>
 
-        <div class="mb-4">
-            <label class="form-label">Password</label>
-            <input type="password" name="password" class="form-control" 
-                   placeholder="Min. 6 characters" required>
-        </div>
+        <form method="POST">
 
-        <button type="submit" class="btn-accent">Create Account</button>
+            <div class="mb-3">
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-control"
+                       placeholder="e.g. john_dev" required>
+            </div>
 
-    </form>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control"
+                       placeholder="you@example.com" required>
+            </div>
 
-    <p class="text-center mt-4" style="color: var(--text-muted); font-size: 0.9rem;">
-        Already have an account? 
-        <a href="/login" style="color: var(--accent);">Login</a>
-    </p>
+            <div class="mb-4">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control"
+                       placeholder="Min. 6 characters" required>
+            </div>
 
+            <button type="submit" class="btn-accent">
+                Create Account
+            </button>
+
+        </form>
+
+        <p class="auth-footer">
+            Already have an account? <a href="/login">Login</a>
+        </p>
+
+    </div>
 </div>
 
 {% endblock %}
