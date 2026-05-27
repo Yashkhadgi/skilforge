@@ -1,0 +1,37 @@
+<!-- templates/login.html -->
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="auth-card">
+
+    <h2>Welcome Back</h2>
+    <p class="subtitle">Login to continue your learning</p>
+
+    <form method="POST">
+
+        <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-control" 
+                   placeholder="Your username" required>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" 
+                   placeholder="Your password" required>
+        </div>
+
+        <button type="submit" class="btn-accent">Login</button>
+
+    </form>
+
+    <p class="text-center mt-4" style="color: var(--text-muted); font-size: 0.9rem;">
+        Don't have an account? 
+        <a href="/register" style="color: var(--accent);">Register</a>
+    </p>
+
+</div>
+
+{% endblock %}

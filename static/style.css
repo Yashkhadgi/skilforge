@@ -1,0 +1,161 @@
+/* ── Base ── */
+:root {
+    --bg-primary:   #121212;
+    --bg-card:      #1e1e1e;
+    --bg-input:     #2a2a2a;
+    --accent:       #4f8ef7;
+    --accent-hover: #3a7ae0;
+    --text-primary: #f0f0f0;
+    --text-muted:   #888;
+    --border:       #2e2e2e;
+    --success:      #28a745;
+    --danger:       #dc3545;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+}
+
+/* ── Navbar ── */
+.navbar {
+    background-color: #0a0a0a;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 0;
+}
+
+.navbar-brand {
+    font-size: 1.3rem;
+    color: var(--text-primary) !important;
+    letter-spacing: 1px;
+}
+
+.text-accent { color: var(--accent); }
+
+/* ── Auth Cards (Login & Register) ── */
+.auth-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px;
+    width: 100%;
+    max-width: 420px;
+    margin: 80px auto;
+}
+
+.auth-card h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.auth-card p.subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 28px;
+}
+
+/* ── Form Elements ── */
+.form-control {
+    background-color: var(--bg-input) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+
+.form-control:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.15) !important;
+}
+
+.form-control::placeholder { color: var(--text-muted) !important; }
+
+.form-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+}
+
+/* ── Buttons ── */
+.btn-accent {
+    background-color: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 11px;
+    font-weight: 600;
+    width: 100%;
+    transition: background 0.2s;
+}
+
+.btn-accent:hover { background-color: var(--accent-hover); color: #fff; }
+
+/* ── Dashboard ── */
+.dashboard-header {
+    padding: 28px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+}
+
+.dashboard-header h4 {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.dashboard-header p { color: var(--text-muted); }
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+}
+
+/* ── Course Cards ── */
+.course-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.course-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.course-card.enrolled {
+    border-color: var(--success);
+    opacity: 0.75;
+}
+
+.course-card h6 { font-weight: 600; margin-bottom: 12px; }
+
+.badge-enrolled {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: var(--success);
+    border: 1px solid var(--success);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.78rem;
+}
+
+/* ── Alert overrides ── */
+.alert {
+    background-color: var(--bg-card);
+    border-color: var(--border);
+    color: var(--text-primary);
+    border-radius: 8px;
+}
