@@ -10,41 +10,50 @@
 </head>
 <body>
 
-    <!-- NAVBAR -->
-    <nav class="navbar navbar-expand-lg">
-        <div class="container">
-            <a class="navbar-brand" href="/dashboard">
-                <i class="bi bi-lightning-charge-fill" style="color: var(--accent);"></i>
-                SkillForge
-            </a>
+{% if session['username'] %}
+<nav class="sf-nav">
+    <div class="sf-nav-inner">
 
-            {% if session['username'] %}
-            <div class="d-flex align-items-center gap-3">
-                <span class="nav-username">
-                    <i class="bi bi-person-circle"></i>
-                    {{ session['username'] }}
-                </span>
-                <a href="/logout" class="btn-logout">Logout</a>
-            </div>
-            {% endif %}
-        </div>
-    </nav>
+        <a href="/dashboard" class="sf-logo">
+            <!-- SVG bolt — drawn via CSS animation -->
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path class="logo-bolt"
+                    d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
+                    stroke="#4f8ef7" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    fill="none"/>
+            </svg>
+            SkillForge
+        </a>
 
-    <!-- FLASH MESSAGES -->
-    <div class="container mt-3">
-        {% for category, message in get_flashed_messages(with_categories=true) %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+        <div class="sf-nav-links">
+            <a href="/dashboard"  class="sf-nav-link {% if request.path == '/dashboard' %}active{% endif %}">Dashboard</a>
+            <a href="/courses"    class="sf-nav-link {% if request.path == '/courses' %}active{% endif %}">Courses</a>
+            <a href="/my-learning" class="sf-nav-link {% if request.path == '/my-learning' %}active{% endif %}">My Learning</a>
         </div>
-        {% endfor %}
+
+        <div class="sf-nav-right">
+            <!-- Avatar shows first letter of username -->
+            <div class="sf-avatar">{{ session['username'][0]|upper }}</div>
+            <a href="/logout" class="sf-btn-ghost">Logout</a>
+        </div>
+
     </div>
+</nav>
+{% endif %}
 
-    <!-- PAGE CONTENT -->
-    <main class="container">
-        {% block content %}{% endblock %}
-    </main>
+<div class="container mt-3">
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block content %}{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>
 </html>

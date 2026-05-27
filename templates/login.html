@@ -1,41 +1,80 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<div class="auth-wrapper">
-    <div class="auth-card">
+<div class="auth-page">
 
-        <div class="auth-logo">
-            <i class="bi bi-lightning-charge-fill"></i> SkillForge
+    <div class="auth-left">
+        <div class="auth-orb"></div>
+        <div class="auth-left-content">
+
+            <div class="sf-logo mb-4" style="font-size:1.2rem;">
+                <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
+                    <path class="logo-bolt" d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
+                        stroke="#4f8ef7" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                </svg>
+                SkillForge
+            </div>
+
+            <h1>Welcome<br>back to<br><span>SkillForge.</span></h1>
+            <p style="margin-top:16px;">Your learning journey continues. Pick up right where you left off.</p>
+
+            <div class="auth-diagram">
+                <svg width="300" height="120" viewBox="0 0 300 120">
+                    <circle cx="40"  cy="60" r="18" fill="rgba(79,142,247,0.15)" stroke="rgba(79,142,247,0.4)" stroke-width="1"/>
+                    <circle cx="150" cy="30" r="18" fill="rgba(124,58,237,0.15)" stroke="rgba(124,58,237,0.4)" stroke-width="1"/>
+                    <circle cx="150" cy="90" r="18" fill="rgba(5,150,105,0.15)"  stroke="rgba(5,150,105,0.4)"  stroke-width="1"/>
+                    <circle cx="260" cy="60" r="18" fill="rgba(79,142,247,0.15)" stroke="rgba(79,142,247,0.4)" stroke-width="1"/>
+                    <line class="diagram-line" x1="58"  y1="60" x2="132" y2="35" stroke="rgba(79,142,247,0.3)"  stroke-width="1" stroke-dasharray="80" stroke-dashoffset="80"/>
+                    <line class="diagram-line" x1="58"  y1="60" x2="132" y2="85" stroke="rgba(79,142,247,0.3)"  stroke-width="1" stroke-dasharray="80" stroke-dashoffset="80"/>
+                    <line class="diagram-line" x1="168" y1="35" x2="242" y2="58" stroke="rgba(124,58,237,0.3)" stroke-width="1" stroke-dasharray="80" stroke-dashoffset="80"/>
+                    <line class="diagram-line" x1="168" y1="85" x2="242" y2="62" stroke="rgba(5,150,105,0.3)"  stroke-width="1" stroke-dasharray="80" stroke-dashoffset="80"/>
+                    <text x="28"  y="64" fill="#4f8ef7" font-size="9" font-family="Inter">You</text>
+                    <text x="136" y="34" fill="#7c3aed" font-size="8" font-family="Inter">Skills</text>
+                    <text x="134" y="94" fill="#059669" font-size="8" font-family="Inter">Projects</text>
+                    <text x="244" y="64" fill="#4f8ef7" font-size="8" font-family="Inter">Career</text>
+                </svg>
+            </div>
+
+            <div class="auth-stats">
+                <div class="auth-stat-item">
+                    <div class="auth-stat-num" data-count="8">0</div>
+                    <div class="auth-stat-label">Courses</div>
+                </div>
+                <div class="auth-stat-item">
+                    <div class="auth-stat-num" data-count="12400">0</div>
+                    <div class="auth-stat-label">Students</div>
+                </div>
+            </div>
+
         </div>
-
-        <h2>Welcome Back</h2>
-        <p class="subtitle">Login to continue your learning</p>
-
-        <form method="POST">
-
-            <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" name="username" class="form-control"
-                       placeholder="Your username" required>
-            </div>
-
-            <div class="mb-4">
-                <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-control"
-                       placeholder="Your password" required>
-            </div>
-
-            <button type="submit" class="btn-accent">
-                Login
-            </button>
-
-        </form>
-
-        <p class="auth-footer">
-            Don't have an account? <a href="/register">Register</a>
-        </p>
-
     </div>
+
+    <div class="auth-right">
+        <div class="auth-form-box">
+            <h2>Sign in</h2>
+            <p class="sub">Good to have you back</p>
+
+            <form method="POST">
+
+                <div class="input-group-sf">
+                    <input type="text" name="username" id="username" placeholder=" " required>
+                    <label for="username">Username</label>
+                </div>
+
+                <div class="input-group-sf">
+                    <input type="password" name="password" id="password" placeholder=" " required>
+                    <label for="password">Password</label>
+                </div>
+
+                <button type="submit" class="btn-primary-sf">Sign In</button>
+
+            </form>
+
+            <p class="auth-switch">Don't have an account? <a href="/register">Create one</a></p>
+        </div>
+    </div>
+
 </div>
 
 {% endblock %}

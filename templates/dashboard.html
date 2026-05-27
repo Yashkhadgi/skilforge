@@ -1,74 +1,111 @@
 {% extends 'base.html' %}
 {% block content %}
 
-<!-- HEADER -->
-<div class="dashboard-header">
-    <p class="greeting">Good to see you, {{ username }} 👋</p>
-    <p>Continue your learning journey. Enroll in courses below.</p>
-</div>
+<div class="sf-page">
 
-<!-- STATS -->
-<div class="row g-3 mb-5">
-    <div class="col-md-4">
-        <div class="stat-card">
-            <p class="stat-label">Total Courses</p>
-            <p class="stat-number" style="color: var(--accent);">{{ courses|length }}</p>
-        </div>
+    <!-- HEADER -->
+    <div class="page-header">
+        <h1 id="greeting">Hello, {{ session['username'] }} 👋</h1>
+        <p>Here's what's happening with your learning today.</p>
     </div>
-    <div class="col-md-4">
-        <div class="stat-card">
-            <p class="stat-label">Enrolled</p>
-            <p class="stat-number" style="color: var(--success);">{{ enrolled|length }}</p>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="stat-card">
-            <p class="stat-label">Remaining</p>
-            <p class="stat-number" style="color: var(--warning);">{{ courses|length - enrolled|length }}</p>
-        </div>
-    </div>
-</div>
 
-<!-- ALL COURSES -->
-<p class="section-title">Available Courses</p>
-<div class="row g-3 mb-5">
-    {% for course in courses %}
-    <div class="col-md-4">
-        <div class="course-card {% if course in enrolled %}enrolled{% endif %}">
-            <div class="course-name">
-                <i class="bi bi-book course-icon"></i>
-                {{ course }}
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--accent);"
+                 data-count="{{ total_enrolled }}">0</div>
+            <div class="stat-label">Enrolled Courses</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--success);"
+                 data-count="{{ avg_progress }}">0</div>
+            <div class="stat-label">Avg Progress %</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--warning);"
+                 data-count="8">0</div>
+            <div class="stat-label">Total Courses</div>
+        </div>
+    </div>
+
+    <!-- CONTINUE LEARNING -->
+    {% if enrolled %}
+    <div class="section-head">
+        <p class="section-title">Continue Learning</p>
+        <a href="/my-learning" class="section-link">View all →</a>
+    </div>
+    <div class="courses-grid">
+        {% for course in enrolled[:3] %}
+        <a href="/course/{{ course['id'] }}" class="course-card">
+            <div class="course-thumb" style="background: linear-gradient(135deg, {{ course['color'] }}22, {{ course['color'] }}44);">
+                <span>📚</span>
             </div>
-            {% if course in enrolled %}
-                <span class="badge-enrolled">
-                    <i class="bi bi-check-circle-fill"></i> Enrolled
-                </span>
-            {% else %}
-                <a href="/enroll/{{ course }}" class="btn-enroll">
-                    <i class="bi bi-plus-circle"></i> Enroll
-                </a>
-            {% endif %}
-        </div>
-    </div>
-    {% endfor %}
-</div>
-
-<!-- MY LEARNING PATH -->
-{% if enrolled %}
-<p class="section-title">My Learning Path</p>
-<div class="row g-3 mb-5">
-    {% for course in enrolled %}
-    <div class="col-md-4">
-        <div class="course-card enrolled">
-            <div class="course-name">
-                <i class="bi bi-check2-circle course-icon" style="color: var(--success);"></i>
-                {{ course }}
+            <div class="course-body">
+                <div>
+                    <div class="course-meta">
+                        <span class="badge badge-level">{{ course['level'] }}</span>
+                    </div>
+                    <div class="course-title mt-2">{{ course['title'] }}</div>
+                    <div class="course-instructor mt-1">{{ course['instructor'] }}</div>
+                </div>
+                <div class="progress-wrap">
+                    <div class="progress-label">
+                        <span>Progress</span>
+                        <span>{{ course['progress'] }}%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill"
+                             style="background: {{ course['color'] }};"
+                             data-width="{{ course['progress'] }}">
+                        </div>
+                    </div>
+                </div>
             </div>
-            <small style="color: var(--text-muted);">In progress</small>
-        </div>
+        </a>
+        {% endfor %}
     </div>
-    {% endfor %}
+    {% endif %}
+
+    <!-- RECOMMENDED -->
+    {% if recommended %}
+    <div class="section-head">
+        <p class="section-title">Recommended For You</p>
+        <a href="/courses" class="section-link">Browse all →</a>
+    </div>
+    <div class="courses-grid">
+        {% for course in recommended %}
+        <a href="/course/{{ course['id'] }}" class="course-card">
+            <div class="course-thumb" style="background: linear-gradient(135deg, {{ course['color'] }}22, {{ course['color'] }}44);">
+                <span>🎯</span>
+            </div>
+            <div class="course-body">
+                <div>
+                    <div class="course-meta">
+                        <span class="badge badge-level">{{ course['level'] }}</span>
+                        <span class="badge" style="background:{{ course['color'] }}22; color:{{ course['color'] }}; border:1px solid {{ course['color'] }}44;">{{ course['category'] }}</span>
+                    </div>
+                    <div class="course-title mt-2">{{ course['title'] }}</div>
+                    <div class="course-instructor mt-1">{{ course['instructor'] }}</div>
+                </div>
+                <div class="course-stats">
+                    <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ course['rating'] }}</span>
+                    <span><i class="bi bi-people"></i> {{ "{:,}".format(course['students']) }}</span>
+                    <span><i class="bi bi-clock"></i> {{ course['duration'] }}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not enrolled and not recommended %}
+    <div style="text-align:center; padding: 80px 0; color: var(--text-2);">
+        <div style="font-size:3rem; margin-bottom:16px;">🚀</div>
+        <p style="font-size:1rem; margin-bottom:20px;">No courses yet. Start your journey!</p>
+        <a href="/courses" class="btn-primary-sf" style="width:auto; display:inline-block; padding: 12px 28px;">Browse Courses</a>
+    </div>
+    {% endif %}
+
 </div>
-{% endif %}
 
 {% endblock %}

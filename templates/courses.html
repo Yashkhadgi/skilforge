@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="sf-page">
+
+    <div class="page-header">
+        <h1>All Courses</h1>
+        <p>Explore our library of expert-led courses.</p>
+    </div>
+
+    <!-- CATEGORY TABS -->
+    <div class="cat-tabs">
+        {% for cat in categories %}
+        <a href="/courses?category={{ cat }}"
+           class="cat-tab {% if cat == active_category %}active{% endif %}">
+            {{ cat }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- COURSES GRID -->
+    <div class="courses-grid">
+        {% for course in courses %}
+        <a href="/course/{{ course['id'] }}" class="course-card">
+
+            <div class="course-thumb" style="background: linear-gradient(135deg, {{ course['color'] }}22, {{ course['color'] }}55);">
+                <span>
+                    {% if course['category'] == 'Python' %}🐍
+                    {% elif course['category'] == 'Web' %}🌐
+                    {% elif course['category'] == 'AI' %}🤖
+                    {% else %}📚{% endif %}
+                </span>
+            </div>
+
+            <div class="course-body">
+                <div>
+                    <div class="course-meta">
+                        <span class="badge badge-level">{{ course['level'] }}</span>
+                        <span class="badge" style="background:{{ course['color'] }}22; color:{{ course['color'] }}; border:1px solid {{ course['color'] }}33;">
+                            {{ course['category'] }}
+                        </span>
+                        {% if course['id'] in enrolled_ids %}
+                        <span class="badge badge-enrolled-pill">✓ Enrolled</span>
+                        {% endif %}
+                    </div>
+                    <div class="course-title mt-2">{{ course['title'] }}</div>
+                    <div class="course-instructor mt-1">{{ course['instructor'] }}</div>
+                </div>
+                <div class="course-stats">
+                    <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ course['rating'] }}</span>
+                    <span><i class="bi bi-people"></i> {{ "{:,}".format(course['students']) }}</span>
+                    <span><i class="bi bi-clock"></i> {{ course['duration'] }}</span>
+                </div>
+            </div>
+
+        </a>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

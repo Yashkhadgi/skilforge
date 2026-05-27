@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="sf-page">
+
+    <!-- HERO -->
+    <div class="detail-hero">
+        <div>
+            <div class="course-meta mb-3">
+                <span class="badge badge-level">{{ course['level'] }}</span>
+                <span class="badge" style="background:{{ course['color'] }}22; color:{{ course['color'] }}; border:1px solid {{ course['color'] }}33;">
+                    {{ course['category'] }}
+                </span>
+            </div>
+
+            <h1>{{ course['title'] }}</h1>
+            <p>{{ course['description'] }}</p>
+
+            <div class="detail-meta">
+                <span><i class="bi bi-person-circle"></i> {{ course['instructor'] }}</span>
+                <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ course['rating'] }} rating</span>
+                <span><i class="bi bi-people"></i> {{ "{:,}".format(course['students']) }} students</span>
+                <span><i class="bi bi-clock"></i> {{ course['duration'] }}</span>
+            </div>
+        </div>
+
+        <!-- ENROLL BOX -->
+        <div class="enroll-box">
+            <div class="price">Free</div>
+            <div class="free-tag">Full access included</div>
+
+            {% if enrollment %}
+                <a href="/my-learning" class="btn-enrolled-big">
+                    <i class="bi bi-check-circle-fill me-1"></i> Enrolled
+                </a>
+                <div class="progress-wrap mt-3">
+                    <div class="progress-label">
+                        <span>Progress</span>
+                        <span>{{ enrollment['progress'] }}%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill"
+                             style="background: {{ course['color'] }};"
+                             data-width="{{ enrollment['progress'] }}">
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <a href="/enroll/{{ course['id'] }}" class="btn-enroll-big">
+                    Enroll Now — Free
+                </a>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- WHAT YOU LEARN -->
+    <div class="curriculum-section">
+        <h3><i class="bi bi-lightbulb me-2" style="color:var(--accent);"></i>What You'll Learn</h3>
+        <div style="padding: 20px 24px; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div style="font-size:0.86rem; color:var(--text-2); display:flex; gap:8px;">
+                <i class="bi bi-check2" style="color:var(--success); flex-shrink:0; margin-top:2px;"></i>
+                Core concepts and real-world applications
+            </div>
+            <div style="font-size:0.86rem; color:var(--text-2); display:flex; gap:8px;">
+                <i class="bi bi-check2" style="color:var(--success); flex-shrink:0; margin-top:2px;"></i>
+                Hands-on projects and exercises
+            </div>
+            <div style="font-size:0.86rem; color:var(--text-2); display:flex; gap:8px;">
+                <i class="bi bi-check2" style="color:var(--success); flex-shrink:0; margin-top:2px;"></i>
+                Industry best practices
+            </div>
+            <div style="font-size:0.86rem; color:var(--text-2); display:flex; gap:8px;">
+                <i class="bi bi-check2" style="color:var(--success); flex-shrink:0; margin-top:2px;"></i>
+                Portfolio-ready final project
+            </div>
+        </div>
+    </div>
+
+    <!-- CURRICULUM -->
+    <div class="curriculum-section">
+        <h3><i class="bi bi-journal-text me-2" style="color:var(--accent);"></i>Course Curriculum</h3>
+        {% for item in curriculum %}
+        <div class="curriculum-item">
+            <div class="mod-name">
+                <i class="bi bi-play-circle" style="color:var(--text-2);"></i>
+                {{ item['module'] }}
+            </div>
+            <div class="mod-count">{{ item['lessons'] }} lessons</div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+{% endblock %}

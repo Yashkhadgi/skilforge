@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="sf-page">
+
+    <div class="page-header">
+        <h1>My Learning</h1>
+        <p>Track your progress across all enrolled courses.</p>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--accent);" data-count="{{ total }}">0</div>
+            <div class="stat-label">Enrolled</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--success);" data-count="{{ completed }}">0</div>
+            <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--warning);" data-count="{{ avg_progress }}">0</div>
+            <div class="stat-label">Avg Progress %</div>
+        </div>
+    </div>
+
+    {% if my_courses %}
+    <div class="section-head">
+        <p class="section-title">Your Courses</p>
+    </div>
+    <div class="courses-grid">
+        {% for course in my_courses %}
+        <a href="/course/{{ course['id'] }}" class="course-card">
+
+            <div class="course-thumb" style="background: linear-gradient(135deg, {{ course['color'] }}22, {{ course['color'] }}44);">
+                <span>
+                    {% if course['category'] == 'Python' %}🐍
+                    {% elif course['category'] == 'Web' %}🌐
+                    {% elif course['category'] == 'AI' %}🤖
+                    {% else %}📚{% endif %}
+                </span>
+            </div>
+
+            <div class="course-body">
+                <div>
+                    <div class="course-meta">
+                        <span class="badge badge-level">{{ course['level'] }}</span>
+                        <span class="badge badge-enrolled-pill">✓ Enrolled</span>
+                    </div>
+                    <div class="course-title mt-2">{{ course['title'] }}</div>
+                    <div class="course-instructor mt-1">{{ course['instructor'] }}</div>
+                </div>
+                <div class="progress-wrap">
+                    <div class="progress-label">
+                        <span>Progress</span>
+                        <span>{{ course['progress'] }}%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill"
+                             style="background: {{ course['color'] }};"
+                             data-width="{{ course['progress'] }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </a>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div style="text-align:center; padding:80px 0; color:var(--text-2);">
+        <div style="font-size:3rem; margin-bottom:16px;">📭</div>
+        <p style="margin-bottom:20px;">You haven't enrolled in any courses yet.</p>
+        <a href="/courses" class="btn-primary-sf" style="width:auto; display:inline-block; padding:12px 28px;">
+            Browse Courses
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}
