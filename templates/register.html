@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="auth-page">
+
+    <div class="auth-left">
+        <div class="auth-orb"></div>
+        <div class="auth-left-content">
+
+            <div class="sf-logo mb-4" style="font-size:1.2rem;">
+                <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
+                    <path class="logo-bolt" d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
+                        stroke="#4f8ef7" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                </svg>
+                SkillForge
+            </div>
+
+            <h1>Learn.<br><span>Build.</span><br>Grow.</h1>
+            <p style="margin-top:16px;">Join thousands of learners mastering in-demand skills with structured, project-based courses.</p>
+
+            <div class="auth-diagram">
+                <svg width="300" height="120" viewBox="0 0 300 120">
+                    <circle cx="40"  cy="60" r="18" fill="rgba(79,142,247,0.15)" stroke="rgba(79,142,247,0.4)" stroke-width="1"/>
+                    <circle cx="150" cy="30" r="18" fill="rgba(124,58,237,0.15)" stroke="rgba(124,58,237,0.4)" stroke-width="1"/>
+                    <circle cx="150" cy="90" r="18" fill="rgba(5,150,105,0.15)"  stroke="rgba(5,150,105,0.4)"  stroke-width="1"/>
+                    <circle cx="260" cy="60" r="18" fill="rgba(79,142,247,0.15)" stroke="rgba(79,142,247,0.4)" stroke-width="1"/>
+                    <line class="diagram-line" x1="58"  y1="60" x2="132" y2="35" stroke="rgba(79,142,247,0.3)"  stroke-width="1" stroke-dasharray="80" stroke-dashoffset="80"/>
+                    <line class="diagram-line" x1="58"  y1="60" x2="132" y2="85" stroke="rgba(79,142,247,0.3)"  stroke-width="1" stroke-dasharray="80" stroke-dashoffset="80"/>
+                    <line class="diagram-line" x1="168" y1="35" x2="242" y2="58" stroke="rgba(124,58,237,0.3)" stroke-width="1" stroke-dasharray="80" stroke-dashoffset="80"/>
+                    <line class="diagram-line" x1="168" y1="85" x2="242" y2="62" stroke="rgba(5,150,105,0.3)"  stroke-width="1" stroke-dasharray="80" stroke-dashoffset="80"/>
+                    <text x="28"  y="64" fill="#4f8ef7" font-size="9" font-family="Inter">You</text>
+                    <text x="136" y="34" fill="#7c3aed" font-size="8" font-family="Inter">Skills</text>
+                    <text x="134" y="94" fill="#059669" font-size="8" font-family="Inter">Projects</text>
+                    <text x="244" y="64" fill="#4f8ef7" font-size="8" font-family="Inter">Career</text>
+                </svg>
+            </div>
+
+            <div class="auth-stats">
+                <div class="auth-stat-item">
+                    <div class="auth-stat-num" data-count="8">0</div>
+                    <div class="auth-stat-label">Courses</div>
+                </div>
+                <div class="auth-stat-item">
+                    <div class="auth-stat-num" data-count="12400">0</div>
+                    <div class="auth-stat-label">Students</div>
+                </div>
+                <div class="auth-stat-item">
+                    <div class="auth-stat-num" data-count="98">0</div>
+                    <div class="auth-stat-label">% Satisfaction</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="auth-right">
+        <div class="auth-form-box">
+            <h2>Create account</h2>
+            <p class="sub">Start your learning journey today</p>
+
+            <form method="POST">
+
+                <div class="input-group-sf">
+                    <input type="text" name="username" id="username" placeholder=" " required>
+                    <label for="username">Username</label>
+                </div>
+
+                <div class="input-group-sf">
+                    <input type="email" name="email" id="email" placeholder=" " required>
+                    <label for="email">Email address</label>
+                </div>
+
+                <div class="input-group-sf">
+                    <input type="password" name="password" id="password" placeholder=" " required>
+                    <label for="password">Password</label>
+                </div>
+
+                <button type="submit" class="btn-primary-sf">Create Account</button>
+
+            </form>
+
+            <p class="auth-switch">Already have an account? <a href="/login">Sign in</a></p>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
