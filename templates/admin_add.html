@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="sf-page">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+            <a href="/admin/courses" style="color:var(--text-2); text-decoration:none; font-size:0.85rem;">
+                <i class="bi bi-arrow-left"></i> Back to Courses
+            </a>
+        </div>
+        <h1><i class="bi bi-plus-circle-fill" style="color:var(--accent);"></i> Add New Course</h1>
+        <p>Fill in the details to add a new course to SkillForge.</p>
+    </div>
+
+    <!-- FORM CARD -->
+    <div class="sf-card" style="max-width: 720px;">
+        <div class="sf-table-header">
+            <span>Course Details</span>
+        </div>
+
+        <div style="padding: 32px;">
+            <form method="POST" action="/admin/courses/add">
+            <!--
+            [EXPLANATION] method="POST" → form submit hone pe POST request jaayegi
+            action="/admin/courses/add" → kahan jaayegi woh request
+            app.py mein is route pe POST handle hota hai
+            -->
+
+                <!-- Row 1: Title + Instructor -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                    <div class="admin-field">
+                        <label>Course Title</label>
+                        <input type="text" name="title" placeholder="e.g. Python Fundamentals" required>
+                        <!-- [EXPLANATION] name="title" → app.py mein request.form['title'] se yahi value milegi -->
+                    </div>
+                    <div class="admin-field">
+                        <label>Instructor Name</label>
+                        <input type="text" name="instructor" placeholder="e.g. Arjun Mehta" required>
+                    </div>
+                </div>
+
+                <!-- Row 2: Category + Level -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                    <div class="admin-field">
+                        <label>Category</label>
+                        <select name="category">
+                            <option value="Python">Python</option>
+                            <option value="Web">Web</option>
+                            <option value="AI">AI</option>
+                        </select>
+                        <!-- [EXPLANATION] select → dropdown menu
+                        name="category" → app.py mein request.form['category'] se milega
+                        value jo select kiya woh jaayega -->
+                    </div>
+                    <div class="admin-field">
+                        <label>Level</label>
+                        <select name="level">
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Row 3: Duration + Rating + Students -->
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+                    <div class="admin-field">
+                        <label>Duration</label>
+                        <input type="text" name="duration" placeholder="e.g. 14 hrs" required>
+                    </div>
+                    <div class="admin-field">
+                        <label>Rating (1.0 - 5.0)</label>
+                        <input type="number" name="rating" placeholder="e.g. 4.8"
+                               min="1" max="5" step="0.1" required>
+                    </div>
+                    <div class="admin-field">
+                        <label>Students Enrolled</label>
+                        <input type="number" name="students" placeholder="e.g. 1200"
+                               min="0" required>
+                    </div>
+                </div>
+
+                <!-- Row 4: Description -->
+                <div class="admin-field" style="margin-bottom:16px;">
+                    <label>Description</label>
+                    <textarea name="description" rows="3"
+                              placeholder="Short course description..."></textarea>
+                </div>
+
+                <!-- Row 5: Color picker -->
+                <div class="admin-field" style="margin-bottom:28px;">
+                    <label>Card Accent Color</label>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <input type="color" name="color" value="#4f8ef7"
+                               style="width:48px; height:40px; border-radius:8px; cursor:pointer; background:transparent; border:1px solid var(--border); padding:2px;">
+                        <span style="color:var(--text-2); font-size:0.82rem;">
+                            Yeh color course card ke background mein use hoga
+                        </span>
+                    </div>
+                    <!-- [EXPLANATION] type="color" → browser ka built-in color picker
+                    value="#4f8ef7" → default color jo pehle se selected rahega -->
+                </div>
+
+                <!-- Buttons -->
+                <div style="display:flex; gap:12px;">
+                    <button type="submit" class="btn-primary-sf" style="width:auto; padding:11px 28px;">
+                        <i class="bi bi-check-lg"></i> Save Course
+                    </button>
+                    <a href="/admin/courses" class="sf-btn-ghost" style="padding:11px 20px;">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

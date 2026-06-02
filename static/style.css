@@ -868,3 +868,92 @@ body::before {
     background: var(--accent-dim) !important;
     border-color: rgba(79,142,247,0.4) !important;
 }
+
+
+
+
+/* ── Admin Action Buttons ── */
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all 0.2s;
+    letter-spacing: 0.2px;
+}
+
+.action-edit {
+    background: rgba(79,142,247,0.1);
+    color: var(--accent);
+    border: 1px solid rgba(79,142,247,0.2);
+}
+
+.action-edit:hover {
+    background: rgba(79,142,247,0.2);
+    color: var(--accent);
+    border-color: rgba(79,142,247,0.4);
+}
+
+.action-delete {
+    background: rgba(239,68,68,0.1);
+    color: var(--danger);
+    border: 1px solid rgba(239,68,68,0.2);
+}
+
+.action-delete:hover {
+    background: rgba(239,68,68,0.2);
+    color: var(--danger);
+    border-color: rgba(239,68,68,0.4);
+}
+
+
+/* ── Admin Form Fields ── */
+.admin-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.admin-field label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.admin-field input,
+.admin-field select,
+.admin-field textarea {
+    background: var(--bg-3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+}
+
+.admin-field input:focus,
+.admin-field select:focus,
+.admin-field textarea:focus {
+    border-color: rgba(79,142,247,0.5);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.admin-field select option {
+    background: var(--bg-3);
+    color: var(--text);
+}
+
+.admin-field textarea {
+    resize: vertical;
+    min-height: 90px;
+}

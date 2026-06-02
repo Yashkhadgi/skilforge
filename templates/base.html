@@ -15,64 +15,6 @@
     <div class="sf-nav-inner">
 
         <a href="/dashboard" class="sf-logo">
-            <!-- SVG bolt — drawn via CSS animation -->
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path class="logo-bolt"
-                    d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
-                    stroke="#4f8ef7" stroke-width="1.5"
-                    stroke-linecap="round" stroke-linejoin="round"
-                    fill="none"/>
-            </svg>
-            SkillForge
-        </a>
-
-        <div class="sf-nav-links">
-            <a href="/dashboard"  class="sf-nav-link {% if request.path == '/dashboard' %}active{% endif %}">Dashboard</a>
-            <a href="/courses"    class="sf-nav-link {% if request.path == '/courses' %}active{% endif %}">Courses</a>
-            <a href="/my-learning" class="sf-nav-link {% if request.path == '/my-learning' %}active{% endif %}">My Learning</a>
-        </div>
-
-        <div class="sf-nav-right">
-            <!-- Avatar shows first letter of username -->
-            <div class="sf-avatar">{{ session['username'][0]|upper }}</div>
-            <a href="/logout" class="sf-btn-ghost">Logout</a>
-        </div>
-
-    </div>
-</nav>
-{% endif %}
-
-<div class="container mt-3">
-    {% for category, message in get_flashed_messages(with_categories=true) %}
-    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
-    </div>
-    {% endfor %}
-</div>
-
-{% block content %}{% endblock %}
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{{ url_for('static', filename='main.js') }}"></script>
-</body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkillForge</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-
-{% if session['username'] %}
-<nav class="sf-nav">
-    <div class="sf-nav-inner">
-
-        <a href="/dashboard" class="sf-logo">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <path class="logo-bolt"
                     d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
@@ -94,12 +36,6 @@
                 <i class="bi bi-shield-fill"></i> Admin
             </a>
             {% endif %}
-            <!--
-            [EXPLANATION] Admin link sirf tab dikhega jab session mein is_admin = 1 ho
-            Normal students ko yeh link nazar hi nahi aayega
-            Lekin yeh sirf UI hiding hai — route pe bhi admin_required() check hai
-            Dono zaroori hain — sirf UI hide karna enough nahi hota
-            -->
         </div>
 
         <div class="sf-nav-right">

@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="sf-page">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div style="margin-bottom:6px;">
+            <a href="/admin/courses" style="color:var(--text-2); text-decoration:none; font-size:0.85rem;">
+                <i class="bi bi-arrow-left"></i> Back to Courses
+            </a>
+        </div>
+        <h1><i class="bi bi-pencil-fill" style="color:var(--accent);"></i> Edit Course</h1>
+        <p>Editing: <strong style="color:var(--text);">{{ course['title'] }}</strong></p>
+    </div>
+
+    <!-- FORM CARD -->
+    <div class="sf-card" style="max-width:720px;">
+        <div class="sf-table-header">
+            <span>Course Details</span>
+            <span style="color:var(--text-2); font-size:0.82rem;">ID #{{ course['id'] }}</span>
+        </div>
+
+        <div style="padding:32px;">
+            <form method="POST" action="/admin/courses/edit/{{ course['id'] }}">
+            <!--
+            [EXPLANATION] action mein course['id'] dynamic hai
+            Jis course ko edit kar rahe hain uska id URL mein jaayega
+            app.py ka admin_edit_course(course_id) route yahi id receive karta hai
+            -->
+
+                <!-- Row 1: Title + Instructor -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                    <div class="admin-field">
+                        <label>Course Title</label>
+                        <input type="text" name="title"
+                               value="{{ course['title'] }}" required>
+                        <!--
+                        [EXPLANATION] value="{{ course['title'] }}" → yahi magic hai
+                        Add form mein value blank tha
+                        Edit form mein DB se aaya data pehle se fill ho jaata hai
+                        User sirf change kare jo change karna ho
+                        -->
+                    </div>
+                    <div class="admin-field">
+                        <label>Instructor Name</label>
+                        <input type="text" name="instructor"
+                               value="{{ course['instructor'] }}" required>
+                    </div>
+                </div>
+
+                <!-- Row 2: Category + Level -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                    <div class="admin-field">
+                        <label>Category</label>
+                        <select name="category">
+                            <option value="Python" {% if course['category'] == 'Python' %}selected{% endif %}>Python</option>
+                            <option value="Web"    {% if course['category'] == 'Web'    %}selected{% endif %}>Web</option>
+                            <option value="AI"     {% if course['category'] == 'AI'     %}selected{% endif %}>AI</option>
+                        </select>
+                        <!--
+                        [EXPLANATION] Dropdown mein "selected" attribute woh option ko
+                        default selected dikhata hai
+                        {% if course['category'] == 'Python' %}selected{% endif %}
+                        Matlab agar DB mein Python tha toh Python wala option selected dikhega
+                        -->
+                    </div>
+                    <div class="admin-field">
+                        <label>Level</label>
+                        <select name="level">
+                            <option value="Beginner"     {% if course['level'] == 'Beginner'     %}selected{% endif %}>Beginner</option>
+                            <option value="Intermediate" {% if course['level'] == 'Intermediate' %}selected{% endif %}>Intermediate</option>
+                            <option value="Advanced"     {% if course['level'] == 'Advanced'     %}selected{% endif %}>Advanced</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Row 3: Duration + Rating + Students -->
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+                    <div class="admin-field">
+                        <label>Duration</label>
+                        <input type="text" name="duration"
+                               value="{{ course['duration'] }}" required>
+                    </div>
+                    <div class="admin-field">
+                        <label>Rating (1.0 - 5.0)</label>
+                        <input type="number" name="rating"
+                               value="{{ course['rating'] }}"
+                               min="1" max="5" step="0.1" required>
+                    </div>
+                    <div class="admin-field">
+                        <label>Students Enrolled</label>
+                        <input type="number" name="students"
+                               value="{{ course['students'] }}"
+                               min="0" required>
+                    </div>
+                </div>
+
+                <!-- Row 4: Description -->
+                <div class="admin-field" style="margin-bottom:16px;">
+                    <label>Description</label>
+                    <textarea name="description" rows="3">{{ course['description'] }}</textarea>
+                    <!--
+                    [EXPLANATION] Textarea mein value attribute nahi hota
+                    Instead opening aur closing tag ke beech mein content likhte hain
+                    {{ course['description'] }} → existing description pre-fill ho jaayega
+                    -->
+                </div>
+
+                <!-- Row 5: Color picker -->
+                <div class="admin-field" style="margin-bottom:28px;">
+                    <label>Card Accent Color</label>
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <input type="color" name="color"
+                               value="{{ course['color'] }}"
+                               style="width:48px; height:40px; border-radius:8px; cursor:pointer; background:transparent; border:1px solid var(--border); padding:2px;">
+                        <span style="color:var(--text-2); font-size:0.82rem;">
+                            Current color: <code style="color:var(--accent);">{{ course['color'] }}</code>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div style="display:flex; gap:12px;">
+                    <button type="submit" class="btn-primary-sf" style="width:auto; padding:11px 28px;">
+                        <i class="bi bi-check-lg"></i> Update Course
+                    </button>
+                    <a href="/admin/courses" class="sf-btn-ghost" style="padding:11px 20px;">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
