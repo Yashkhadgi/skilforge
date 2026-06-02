@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillForge — Learn Skills That Matter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- ─── NAVBAR ─── -->
+<nav class="sf-nav">
+    <div class="sf-nav-inner">
+        <a href="/" class="sf-logo">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path class="logo-bolt"
+                    d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
+                    stroke="#4f8ef7" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    fill="none"/>
+            </svg>
+            SkillForge
+        </a>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <a href="/login"    class="sf-btn-ghost">Login</a>
+            <a href="/register" class="btn-primary-sf"
+               style="width:auto; padding:8px 20px; text-decoration:none; display:inline-block;">
+               Get Started
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section class="landing-hero">
+
+    <!-- Animated glow orb behind text -->
+    <div class="hero-orb"></div>
+
+    <div class="hero-content">
+
+        <!-- Badge -->
+        <div class="hero-badge">
+            <i class="bi bi-stars"></i>
+            Free Learning Platform
+        </div>
+
+        <!-- Headline -->
+        <h1 class="hero-title">
+            Learn Skills That<br>
+            <span class="hero-accent">Actually Matter</span>
+        </h1>
+
+        <p class="hero-sub">
+            Master Python, Web Development, AI and more —
+            with structured courses, real projects, and zero cost.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="hero-btns">
+            <a href="/register" class="btn-primary-sf"
+               style="width:auto; padding:13px 32px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-size:0.95rem;">
+                <i class="bi bi-rocket-takeoff-fill"></i> Start Learning Free
+            </a>
+            <a href="/login" class="sf-btn-ghost"
+               style="padding:13px 24px; font-size:0.95rem;">
+                Login
+            </a>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- ─── STATS BAR ─── -->
+<section class="landing-stats">
+    <div class="stats-inner">
+        <div class="landing-stat">
+            <span class="landing-stat-num" data-count="8">0</span>
+            <span class="landing-stat-label">Courses</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="landing-stat">
+            <span class="landing-stat-num" data-count="50">0</span>
+            <span class="landing-stat-label">K+ Students</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="landing-stat">
+            <span class="landing-stat-num" data-count="3">0</span>
+            <span class="landing-stat-label">Categories</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="landing-stat">
+            <span class="landing-stat-num" data-count="100">0</span>
+            <span class="landing-stat-label">% Free</span>
+        </div>
+    </div>
+</section>
+
+<!-- ─── COURSES PREVIEW ─── -->
+<section class="landing-section">
+    <div class="landing-inner">
+
+        <div class="section-label">Featured Courses</div>
+        <h2 class="landing-heading">Start With The Best</h2>
+        <p class="landing-subheading">
+            Handpicked courses to get you from zero to job-ready.
+        </p>
+
+        <div class="landing-cards-grid">
+
+            <div class="landing-course-card" style="--card-color: #4f8ef7;">
+                <div class="lc-icon" style="background: rgba(79,142,247,0.12);">
+                    <i class="bi bi-code-slash" style="color:#4f8ef7;"></i>
+                </div>
+                <h3>Python Fundamentals</h3>
+                <p>Variables, loops, functions, OOP — master Python from scratch.</p>
+                <div class="lc-meta">
+                    <span><i class="bi bi-clock"></i> 14 hrs</span>
+                    <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> 4.8</span>
+                    <span><i class="bi bi-people-fill"></i> 12.4K</span>
+                </div>
+            </div>
+
+            <div class="landing-course-card" style="--card-color: #7c3aed;">
+                <div class="lc-icon" style="background: rgba(124,58,237,0.12);">
+                    <i class="bi bi-globe" style="color:#7c3aed;"></i>
+                </div>
+                <h3>Flask Web Development</h3>
+                <p>Build real web apps with Flask — routing, templates, databases.</p>
+                <div class="lc-meta">
+                    <span><i class="bi bi-clock"></i> 18 hrs</span>
+                    <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> 4.7</span>
+                    <span><i class="bi bi-people-fill"></i> 8.9K</span>
+                </div>
+            </div>
+
+            <div class="landing-course-card" style="--card-color: #059669;">
+                <div class="lc-icon" style="background: rgba(5,150,105,0.12);">
+                    <i class="bi bi-cpu-fill" style="color:#059669;"></i>
+                </div>
+                <h3>Machine Learning Basics</h3>
+                <p>ML algorithms, data preprocessing, model training with scikit-learn.</p>
+                <div class="lc-meta">
+                    <span><i class="bi bi-clock"></i> 22 hrs</span>
+                    <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> 4.9</span>
+                    <span><i class="bi bi-people-fill"></i> 6.7K</span>
+                </div>
+            </div>
+
+        </div>
+
+        <div style="text-align:center; margin-top:32px;">
+            <a href="/register" class="sf-btn-ghost" style="padding:11px 28px;">
+                View All Courses <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+    </div>
+</section>
+
+<!-- ─── FEATURES ─── -->
+<section class="landing-section" style="background: var(--bg-2);">
+    <div class="landing-inner">
+
+        <div class="section-label">Why SkillForge</div>
+        <h2 class="landing-heading">Everything You Need</h2>
+
+        <div class="features-grid">
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                </div>
+                <h3>Structured Learning</h3>
+                <p>Courses broken into modules — learn at your own pace, track your progress.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(5,150,105,0.12); color:#059669;">
+                    <i class="bi bi-patch-check-fill"></i>
+                </div>
+                <h3>100% Free</h3>
+                <p>No hidden fees, no subscriptions. Every course is completely free forever.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(124,58,237,0.12); color:#7c3aed;">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <h3>Growing Community</h3>
+                <p>Join thousands of learners building real skills for real careers.</p>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- ─── CTA ─── -->
+<section class="landing-cta">
+    <div class="cta-orb"></div>
+    <div class="landing-inner" style="position:relative; z-index:1; text-align:center;">
+        <h2 class="landing-heading">Ready to Start Learning?</h2>
+        <p class="landing-subheading">
+            Join SkillForge today — it's free, forever.
+        </p>
+        <a href="/register" class="btn-primary-sf"
+           style="width:auto; padding:14px 40px; text-decoration:none;
+                  display:inline-flex; align-items:center; gap:8px;
+                  font-size:1rem; margin-top:8px;">
+            <i class="bi bi-rocket-takeoff-fill"></i> Get Started Free
+        </a>
+    </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer class="landing-footer">
+    <div class="sf-logo" style="justify-content:center; margin-bottom:8px;">
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+            <path d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
+                stroke="#4f8ef7" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        SkillForge
+    </div>
+    <p style="color:var(--text-2); font-size:0.8rem;">
+        © 2025 SkillForge. Built with Flask.
+    </p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+
+</body>
+</html>

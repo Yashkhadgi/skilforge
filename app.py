@@ -27,9 +27,6 @@ def init_db():
             password TEXT NOT NULL,
             is_admin INTEGER DEFAULT 0
         );
-        -- [EXPLANATION] is_admin column naya hai
-        -- 0 = normal student, 1 = admin
-        -- DEFAULT 0 matlab jab bhi naya user register kare, woh automatically student hoga
 
         CREATE TABLE IF NOT EXISTS courses (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,7 +56,6 @@ def init_db():
 
     # ------- Seed admin user -------
     # [EXPLANATION] Pehle check karo ki admin already exist karta hai ya nahi
-    # Agar nahi karta toh ek fixed admin account bana do
     admin_exists = conn.execute(
         "SELECT id FROM users WHERE username = 'admin'"
     ).fetchone()
@@ -77,14 +73,14 @@ def init_db():
     count = conn.execute("SELECT COUNT(*) FROM courses").fetchone()[0]
     if count == 0:
         courses = [
-            ("Python Fundamentals",       "Arjun Mehta",    "Python", "Beginner",     "14 hrs", 4.8, 12400, "Master Python from scratch. Variables, loops, functions, OOP and more.",          "#4f8ef7"),
-            ("Flask Web Development",     "Priya Sharma",   "Web",    "Intermediate", "18 hrs", 4.7,  8900, "Build real web apps with Flask. Routing, templates, databases, auth.",            "#7c3aed"),
-            ("Machine Learning Basics",   "Rahul Verma",    "AI",     "Intermediate", "22 hrs", 4.9,  6700, "Learn ML algorithms, data preprocessing, model training with scikit-learn.",     "#059669"),
-            ("Web Development Bootcamp",  "Sneha Iyer",     "Web",    "Beginner",     "30 hrs", 4.6, 15200, "HTML, CSS, JavaScript — build modern websites from scratch.",                    "#db2777"),
-            ("AI Introduction",           "Vikram Nair",    "AI",     "Beginner",     "10 hrs", 4.5,  9300, "Understand AI concepts, use cases, and how modern AI systems work.",             "#d97706"),
-            ("Data Structures & Algo",    "Ankit Gupta",    "Python", "Advanced",     "25 hrs", 4.9,  7800, "Master DSA with Python. Arrays, trees, graphs, dynamic programming.",            "#0891b2"),
-            ("React JS Complete Guide",   "Neha Kulkarni",  "Web",    "Intermediate", "20 hrs", 4.7, 11000, "Build dynamic UIs with React. Hooks, state management, REST APIs.",              "#ea580c"),
-            ("Deep Learning with PyTorch","Siddharth Rao",  "AI",     "Advanced",     "28 hrs", 4.8,  4200, "Neural networks, CNNs, RNNs — build and train deep learning models.",            "#16a34a"),
+            ("Python Fundamentals",        "Arjun Mehta",   "Python", "Beginner",     "14 hrs", 4.8, 12400, "Master Python from scratch. Variables, loops, functions, OOP and more.",        "#4f8ef7"),
+            ("Flask Web Development",      "Priya Sharma",  "Web",    "Intermediate", "18 hrs", 4.7,  8900, "Build real web apps with Flask. Routing, templates, databases, auth.",          "#7c3aed"),
+            ("Machine Learning Basics",    "Rahul Verma",   "AI",     "Intermediate", "22 hrs", 4.9,  6700, "Learn ML algorithms, data preprocessing, model training with scikit-learn.",   "#059669"),
+            ("Web Development Bootcamp",   "Sneha Iyer",    "Web",    "Beginner",     "30 hrs", 4.6, 15200, "HTML, CSS, JavaScript — build modern websites from scratch.",                  "#db2777"),
+            ("AI Introduction",            "Vikram Nair",   "AI",     "Beginner",     "10 hrs", 4.5,  9300, "Understand AI concepts, use cases, and how modern AI systems work.",           "#d97706"),
+            ("Data Structures & Algo",     "Ankit Gupta",   "Python", "Advanced",     "25 hrs", 4.9,  7800, "Master DSA with Python. Arrays, trees, graphs, dynamic programming.",          "#0891b2"),
+            ("React JS Complete Guide",    "Neha Kulkarni", "Web",    "Intermediate", "20 hrs", 4.7, 11000, "Build dynamic UIs with React. Hooks, state management, REST APIs.",            "#ea580c"),
+            ("Deep Learning with PyTorch", "Siddharth Rao", "AI",     "Advanced",     "28 hrs", 4.8,  4200, "Neural networks, CNNs, RNNs — build and train deep learning models.",          "#16a34a"),
         ]
         conn.executemany(
             "INSERT INTO courses (title,instructor,category,level,duration,rating,students,description,color) VALUES (?,?,?,?,?,?,?,?,?)",
@@ -112,17 +108,14 @@ def login_required():
 
 def admin_required():
     """Returns redirect if user is not logged in OR not an admin.
-    [EXPLANATION] Yeh helper do cheezein check karta hai:
-    1. User logged in hai ya nahi
-    2. Logged in hai toh admin hai ya nahi
-    Agar dono pass → None return karta hai (matlab sab theek hai)
-    Agar fail → redirect kar deta hai
+    [EXPLANATION] Do cheezein check karta hai:
+    1. Logged in hai ya nahi
+    2. Admin hai ya nahi
     """
     if 'user_id' not in session:
         return redirect('/login')
     if not session.get('is_admin'):
-        # [EXPLANATION] session mein is_admin store kiya hoga login ke time
-        # Agar 0 ya missing hai toh dashboard pe bhej do with error message
+        # [EXPLANATION] is_admin 0 ya missing → dashboard pe bhejo
         flash("Access denied. Admins only.", "danger")
         return redirect('/dashboard')
     return None
@@ -134,24 +127,27 @@ def admin_required():
 
 @app.route('/')
 def home():
-    return redirect('/dashboard')
+    # [EXPLANATION] Logged in hai → dashboard
+    # Logged in nahi → landing page
+    if 'user_id' in session:
+        return redirect('/dashboard')
+    return render_template('landing.html')
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username'].strip()
-        email    = request.form['email'].strip()
-        password = request.form['password']
+        username  = request.form['username'].strip()
+        email     = request.form['email'].strip()
+        password  = request.form['password']
 
-        # is_admin = 0 by default — normal student
         hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
         conn = get_db()
         try:
             conn.execute(
                 "INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)",
                 (username, email, hashed_pw, 0)
-                # [EXPLANATION] Naya register karne wala always student hoga (0)
+                # [EXPLANATION] Naya user always student hoga (0)
             )
             conn.commit()
             flash("Account created! Please login.", "success")
@@ -180,8 +176,7 @@ def login():
             session['user_id']  = user['id']
             session['username'] = user['username']
             session['is_admin'] = user['is_admin']
-            # [EXPLANATION] Login ke time is_admin bhi session mein daal do
-            # Taaki har route pe DB hit na karna pade — session se seedha pata chalega
+            # [EXPLANATION] is_admin session mein store → har route pe DB hit nahi karna padega
             return redirect('/dashboard')
 
         flash("Invalid username or password.", "danger")
@@ -237,7 +232,7 @@ def dashboard():
 
 
 # -------------------------------------------------------------------
-# COURSES (Student side — unchanged)
+# COURSES  (Student side)
 # -------------------------------------------------------------------
 
 @app.route('/courses')
@@ -245,8 +240,8 @@ def courses():
     guard = login_required()
     if guard: return guard
 
-    category = request.args.get('category', 'All')
-    conn     = get_db()
+    category    = request.args.get('category', 'All')
+    conn        = get_db()
 
     if category == 'All':
         all_courses = conn.execute("SELECT * FROM courses").fetchall()
@@ -372,18 +367,14 @@ def my_learning():
 
 @app.route('/users')
 def users():
-    """Show all registered users — login required.
-    [EXPLANATION] Yeh Task 1 ka route hai
-    Sirf logged-in users dekh sakte hain — admin bhi, student bhi
-    """
+    """Show all registered users — login required."""
     guard = login_required()
     if guard: return guard
 
     conn = get_db()
     all_users = conn.execute(
         "SELECT id, username, email, is_admin FROM users ORDER BY id ASC"
-        # [EXPLANATION] Password column SELECT nahi kiya — security best practice
-        # Kabhi bhi password UI pe show mat karo, chahe hashed ho
+        # [EXPLANATION] Password SELECT nahi kiya — security best practice
     ).fetchall()
     conn.close()
 
@@ -396,7 +387,7 @@ def users():
 
 @app.route('/admin/courses')
 def admin_courses():
-    """Admin dashboard — list all courses with edit/delete options."""
+    """Admin panel — list all courses."""
     guard = admin_required()
     if guard: return guard
 
@@ -409,16 +400,13 @@ def admin_courses():
 
 @app.route('/admin/courses/add', methods=['GET', 'POST'])
 def admin_add_course():
-    """Add a new course — GET shows form, POST saves to DB.
-    [EXPLANATION] methods=['GET', 'POST'] kyunki:
-    GET  → form dikhao (browser se page open karna)
-    POST → form submit hone pe data save karo
+    """Add a new course.
+    [EXPLANATION] GET → form dikhao | POST → DB mein save karo
     """
     guard = admin_required()
     if guard: return guard
 
     if request.method == 'POST':
-        # Form se saara data uthao
         title       = request.form['title'].strip()
         instructor  = request.form['instructor'].strip()
         category    = request.form['category']
@@ -442,20 +430,18 @@ def admin_add_course():
         flash(f'Course "{title}" added successfully!', "success")
         return redirect('/admin/courses')
 
-    # GET request — sirf form dikhao
     return render_template('admin_add.html')
 
 
 @app.route('/admin/courses/edit/<int:course_id>', methods=['GET', 'POST'])
 def admin_edit_course(course_id):
     """Edit existing course.
-    [EXPLANATION] GET pe: DB se existing data uthao, form mein pre-fill karo
-                  POST pe: updated data DB mein save karo
+    [EXPLANATION] GET → pre-filled form | POST → UPDATE query
     """
     guard = admin_required()
     if guard: return guard
 
-    conn = get_db()
+    conn   = get_db()
     course = conn.execute(
         "SELECT * FROM courses WHERE id = ?", (course_id,)
     ).fetchone()
@@ -482,8 +468,7 @@ def admin_edit_course(course_id):
                duration=?, rating=?, students=?, description=?, color=?
                WHERE id=?""",
             (title, instructor, category, level, duration, rating, students, description, color, course_id)
-            # [EXPLANATION] UPDATE query mein WHERE id=? bahut zaroori hai
-            # Bina WHERE ke saare courses update ho jayenge!
+            # [EXPLANATION] WHERE id=? bahut zaroori — bina iske saare courses update honge!
         )
         conn.commit()
         conn.close()
@@ -497,14 +482,11 @@ def admin_edit_course(course_id):
 
 @app.route('/admin/courses/delete/<int:course_id>')
 def admin_delete_course(course_id):
-    """Delete a course by ID.
-    [EXPLANATION] Delete ke liye alag template nahi chahiye
-    Seedha link click → course delete → admin page pe wapas
-    """
+    """Delete a course by ID."""
     guard = admin_required()
     if guard: return guard
 
-    conn = get_db()
+    conn   = get_db()
     course = conn.execute(
         "SELECT title FROM courses WHERE id = ?", (course_id,)
     ).fetchone()
