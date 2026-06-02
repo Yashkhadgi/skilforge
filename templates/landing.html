@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SkillForge — Learn Python, Web Development, AI and more for free.">
     <title>SkillForge — Learn Skills That Matter</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path d='M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z' stroke='%234f8ef7' stroke-width='1.5' fill='none'/></svg>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -36,18 +38,15 @@
 <!-- ─── HERO ─── -->
 <section class="landing-hero">
 
-    <!-- Animated glow orb behind text -->
     <div class="hero-orb"></div>
 
     <div class="hero-content">
 
-        <!-- Badge -->
         <div class="hero-badge">
             <i class="bi bi-stars"></i>
             Free Learning Platform
         </div>
 
-        <!-- Headline -->
         <h1 class="hero-title">
             Learn Skills That<br>
             <span class="hero-accent">Actually Matter</span>
@@ -58,7 +57,6 @@
             with structured courses, real projects, and zero cost.
         </p>
 
-        <!-- CTA Buttons -->
         <div class="hero-btns">
             <a href="/register" class="btn-primary-sf"
                style="width:auto; padding:13px 32px; text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-size:0.95rem;">
@@ -99,7 +97,7 @@
     </div>
 </section>
 
-<!-- ─── COURSES PREVIEW ─── -->
+<!-- ─── COURSES PREVIEW — Dynamic from DB ─── -->
 <section class="landing-section">
     <div class="landing-inner">
 
@@ -110,46 +108,20 @@
         </p>
 
         <div class="landing-cards-grid">
-
-            <div class="landing-course-card" style="--card-color: #4f8ef7;">
-                <div class="lc-icon" style="background: rgba(79,142,247,0.12);">
-                    <i class="bi bi-code-slash" style="color:#4f8ef7;"></i>
+            {% for course in featured %}
+            <div class="landing-course-card" style="--card-color: {{ course['color'] }};">
+                <div class="lc-icon" style="background: {{ course['color'] }}22;">
+                    <i class="bi bi-book-fill" style="color:{{ course['color'] }};"></i>
                 </div>
-                <h3>Python Fundamentals</h3>
-                <p>Variables, loops, functions, OOP — master Python from scratch.</p>
+                <h3>{{ course['title'] }}</h3>
+                <p>{{ course['description'] }}</p>
                 <div class="lc-meta">
-                    <span><i class="bi bi-clock"></i> 14 hrs</span>
-                    <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> 4.8</span>
-                    <span><i class="bi bi-people-fill"></i> 12.4K</span>
+                    <span><i class="bi bi-clock"></i> {{ course['duration'] }}</span>
+                    <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ course['rating'] }}</span>
+                    <span><i class="bi bi-people-fill"></i> {{ "{:,}".format(course['students']) }}</span>
                 </div>
             </div>
-
-            <div class="landing-course-card" style="--card-color: #7c3aed;">
-                <div class="lc-icon" style="background: rgba(124,58,237,0.12);">
-                    <i class="bi bi-globe" style="color:#7c3aed;"></i>
-                </div>
-                <h3>Flask Web Development</h3>
-                <p>Build real web apps with Flask — routing, templates, databases.</p>
-                <div class="lc-meta">
-                    <span><i class="bi bi-clock"></i> 18 hrs</span>
-                    <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> 4.7</span>
-                    <span><i class="bi bi-people-fill"></i> 8.9K</span>
-                </div>
-            </div>
-
-            <div class="landing-course-card" style="--card-color: #059669;">
-                <div class="lc-icon" style="background: rgba(5,150,105,0.12);">
-                    <i class="bi bi-cpu-fill" style="color:#059669;"></i>
-                </div>
-                <h3>Machine Learning Basics</h3>
-                <p>ML algorithms, data preprocessing, model training with scikit-learn.</p>
-                <div class="lc-meta">
-                    <span><i class="bi bi-clock"></i> 22 hrs</span>
-                    <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> 4.9</span>
-                    <span><i class="bi bi-people-fill"></i> 6.7K</span>
-                </div>
-            </div>
-
+            {% endfor %}
         </div>
 
         <div style="text-align:center; margin-top:32px;">

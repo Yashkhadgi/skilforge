@@ -3,19 +3,16 @@
 
 <div class="sf-page">
 
-    <!-- PAGE HEADER -->
     <div class="page-header" style="display:flex; align-items:center; justify-content:space-between;">
         <div>
             <h1><i class="bi bi-shield-fill" style="color:var(--accent);"></i> Course Management</h1>
             <p>Add, edit or delete courses from SkillForge.</p>
         </div>
-        <!-- Add Course button — top right -->
         <a href="/admin/courses/add" class="btn-primary-sf" style="width:auto; padding: 10px 20px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
             <i class="bi bi-plus-lg"></i> Add Course
         </a>
     </div>
 
-    <!-- STATS -->
     <div class="stats-grid" style="margin-bottom: 32px;">
         <div class="stat-card">
             <div class="stat-num" style="color:var(--accent);"
@@ -34,7 +31,6 @@
         </div>
     </div>
 
-    <!-- COURSES TABLE -->
     <div class="sf-card" style="overflow:hidden;">
 
         <div class="sf-table-header">
@@ -60,7 +56,6 @@
                     <tr>
                         <td style="color:var(--text-2);">{{ course['id'] }}</td>
 
-                        <!-- Color dot + title -->
                         <td>
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <div style="width:10px; height:10px; border-radius:50%; background:{{ course['color'] }}; flex-shrink:0;"></div>
@@ -70,43 +65,35 @@
 
                         <td style="color:var(--text-2);">{{ course['instructor'] }}</td>
 
-                        <!-- Category badge -->
                         <td>
                             <span class="badge badge-level">{{ course['category'] }}</span>
                         </td>
 
-                        <!-- Level badge -->
                         <td>
                             <span class="badge badge-level">{{ course['level'] }}</span>
                         </td>
 
-                        <!-- Rating with star -->
                         <td style="color:var(--warning);">
                             <i class="bi bi-star-fill" style="font-size:0.75rem;"></i>
                             {{ course['rating'] }}
                         </td>
 
-                        <!-- Edit + Delete buttons -->
                         <td>
-                            <div style="display:flex; gap:8px;">
+                            <div style="display:flex; gap:8px; align-items:center;">
 
                                 <a href="/admin/courses/edit/{{ course['id'] }}"
                                    class="action-btn action-edit">
                                     <i class="bi bi-pencil-fill"></i> Edit
                                 </a>
 
-                                <a href="/admin/courses/delete/{{ course['id'] }}"
-                                   class="action-btn action-delete"
-                                   onclick="return confirm('Delete \'{{ course['title'] }}\'? This cannot be undone.')">
-                                    <i class="bi bi-trash-fill"></i> Delete
-                                </a>
-                                <!--
-                                [EXPLANATION] onclick="return confirm(...)"
-                                Browser ek popup dikhayega "Are you sure?"
-                                User ne Cancel dabaya → return false → link kaam nahi karega
-                                User ne OK dabaya → return true → /admin/courses/delete/id pe jaayega
-                                Simple safety net hai — accidental delete se bachata hai
-                                -->
+                                <form method="POST"
+                                      action="/admin/courses/delete/{{ course['id'] }}"
+                                      style="display:inline; margin:0;"
+                                      onsubmit="return confirm('Delete \'{{ course['title'] }}\'? This cannot be undone.')">
+                                    <button type="submit" class="action-btn action-delete">
+                                        <i class="bi bi-trash-fill"></i> Delete
+                                    </button>
+                                </form>
 
                             </div>
                         </td>

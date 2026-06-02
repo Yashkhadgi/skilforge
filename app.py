@@ -1,9 +1,12 @@
 from flask import Flask, render_template, request, redirect, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
 import sqlite3
+import os
 
+load_dotenv()
 app = Flask(__name__)
-app.secret_key = "skillforge-secret-2025"
+app.secret_key = os.environ.get("SECRET_KEY", "fallback-dev-key")
 
 
 # -------------------------------------------------------------------
@@ -12,7 +15,7 @@ app.secret_key = "skillforge-secret-2025"
 
 def get_db():
     conn = sqlite3.connect("database.db")
-    conn.row_factory = sqlite3.Row   # row ko dict ki tarah access kar sakte hain
+    conn.row_factory = sqlite3.Row
     return conn
 
 
@@ -55,17 +58,16 @@ def init_db():
     conn.commit()
 
     # ------- Seed admin user -------
-    # [EXPLANATION] Pehle check karo ki admin already exist karta hai ya nahi
     admin_exists = conn.execute(
         "SELECT id FROM users WHERE username = 'admin'"
     ).fetchone()
 
     if not admin_exists:
-        hashed = generate_password_hash("admin123", method='pbkdf2:sha256')
+        admin_pw = os.environ.get("ADMIN_PASSWORD", "admin123")
+        hashed = generate_password_hash(admin_pw, method='pbkdf2:sha256')
         conn.execute(
             "INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)",
             ("admin", "admin@skillforge.com", hashed, 1)
-            # [EXPLANATION] is_admin = 1 kyunki yeh admin hai
         )
         conn.commit()
 
@@ -100,22 +102,15 @@ with app.app_context():
 # -------------------------------------------------------------------
 
 def login_required():
-    """Returns redirect if user is not logged in."""
     if 'user_id' not in session:
         return redirect('/login')
     return None
 
 
 def admin_required():
-    """Returns redirect if user is not logged in OR not an admin.
-    [EXPLANATION] Do cheezein check karta hai:
-    1. Logged in hai ya nahi
-    2. Admin hai ya nahi
-    """
     if 'user_id' not in session:
         return redirect('/login')
     if not session.get('is_admin'):
-        # [EXPLANATION] is_admin 0 ya missing → dashboard pe bhejo
         flash("Access denied. Admins only.", "danger")
         return redirect('/dashboard')
     return None
@@ -127,11 +122,12 @@ def admin_required():
 
 @app.route('/')
 def home():
-    # [EXPLANATION] Logged in hai → dashboard
-    # Logged in nahi → landing page
     if 'user_id' in session:
         return redirect('/dashboard')
-    return render_template('landing.html')
+    conn = get_db()
+    featured = conn.execute("SELECT * FROM courses LIMIT 3").fetchall()
+    conn.close()
+    return render_template('landing.html', featured=featured)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -147,7 +143,6 @@ def register():
             conn.execute(
                 "INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)",
                 (username, email, hashed_pw, 0)
-                # [EXPLANATION] Naya user always student hoga (0)
             )
             conn.commit()
             flash("Account created! Please login.", "success")
@@ -176,7 +171,6 @@ def login():
             session['user_id']  = user['id']
             session['username'] = user['username']
             session['is_admin'] = user['is_admin']
-            # [EXPLANATION] is_admin session mein store → har route pe DB hit nahi karna padega
             return redirect('/dashboard')
 
         flash("Invalid username or password.", "danger")
@@ -240,8 +234,8 @@ def courses():
     guard = login_required()
     if guard: return guard
 
-    category    = request.args.get('category', 'All')
-    conn        = get_db()
+    category = request.args.get('category', 'All')
+    conn     = get_db()
 
     if category == 'All':
         all_courses = conn.execute("SELECT * FROM courses").fetchall()
@@ -361,20 +355,42 @@ def my_learning():
     )
 
 
+@app.route('/update-progress/<int:enrollment_id>', methods=['POST'])
+def update_progress(enrollment_id):
+    guard = login_required()
+    if guard: return guard
+
+    try:
+        progress = int(request.form['progress'])
+        progress = max(0, min(100, progress))
+    except ValueError:
+        flash("Invalid progress value.", "danger")
+        return redirect('/my-learning')
+
+    conn = get_db()
+    conn.execute(
+        "UPDATE enrollments SET progress = ? WHERE id = ? AND user_id = ?",
+        (progress, enrollment_id, session['user_id'])
+    )
+    conn.commit()
+    conn.close()
+
+    flash("Progress updated!", "success")
+    return redirect('/my-learning')
+
+
 # -------------------------------------------------------------------
-# USERS PAGE  (Task 1)
+# USERS PAGE — Admin only
 # -------------------------------------------------------------------
 
 @app.route('/users')
 def users():
-    """Show all registered users — login required."""
-    guard = login_required()
+    guard = admin_required()
     if guard: return guard
 
     conn = get_db()
     all_users = conn.execute(
         "SELECT id, username, email, is_admin FROM users ORDER BY id ASC"
-        # [EXPLANATION] Password SELECT nahi kiya — security best practice
     ).fetchall()
     conn.close()
 
@@ -382,12 +398,11 @@ def users():
 
 
 # -------------------------------------------------------------------
-# ADMIN — COURSE CRUD  (Task 3)
+# ADMIN — COURSE CRUD
 # -------------------------------------------------------------------
 
 @app.route('/admin/courses')
 def admin_courses():
-    """Admin panel — list all courses."""
     guard = admin_required()
     if guard: return guard
 
@@ -400,9 +415,6 @@ def admin_courses():
 
 @app.route('/admin/courses/add', methods=['GET', 'POST'])
 def admin_add_course():
-    """Add a new course.
-    [EXPLANATION] GET → form dikhao | POST → DB mein save karo
-    """
     guard = admin_required()
     if guard: return guard
 
@@ -412,10 +424,15 @@ def admin_add_course():
         category    = request.form['category']
         level       = request.form['level']
         duration    = request.form['duration'].strip()
-        rating      = float(request.form['rating'])
-        students    = int(request.form['students'])
         description = request.form['description'].strip()
         color       = request.form['color']
+
+        try:
+            rating   = float(request.form['rating'])
+            students = int(request.form['students'])
+        except ValueError:
+            flash("Rating and Students must be valid numbers.", "danger")
+            return render_template('admin_add.html')
 
         conn = get_db()
         conn.execute(
@@ -435,9 +452,6 @@ def admin_add_course():
 
 @app.route('/admin/courses/edit/<int:course_id>', methods=['GET', 'POST'])
 def admin_edit_course(course_id):
-    """Edit existing course.
-    [EXPLANATION] GET → pre-filled form | POST → UPDATE query
-    """
     guard = admin_required()
     if guard: return guard
 
@@ -457,10 +471,15 @@ def admin_edit_course(course_id):
         category    = request.form['category']
         level       = request.form['level']
         duration    = request.form['duration'].strip()
-        rating      = float(request.form['rating'])
-        students    = int(request.form['students'])
         description = request.form['description'].strip()
         color       = request.form['color']
+
+        try:
+            rating   = float(request.form['rating'])
+            students = int(request.form['students'])
+        except ValueError:
+            flash("Rating and Students must be valid numbers.", "danger")
+            return render_template('admin_edit.html', course=course)
 
         conn.execute(
             """UPDATE courses SET
@@ -468,7 +487,6 @@ def admin_edit_course(course_id):
                duration=?, rating=?, students=?, description=?, color=?
                WHERE id=?""",
             (title, instructor, category, level, duration, rating, students, description, color, course_id)
-            # [EXPLANATION] WHERE id=? bahut zaroori — bina iske saare courses update honge!
         )
         conn.commit()
         conn.close()
@@ -480,9 +498,8 @@ def admin_edit_course(course_id):
     return render_template('admin_edit.html', course=course)
 
 
-@app.route('/admin/courses/delete/<int:course_id>')
+@app.route('/admin/courses/delete/<int:course_id>', methods=['POST'])
 def admin_delete_course(course_id):
-    """Delete a course by ID."""
     guard = admin_required()
     if guard: return guard
 
@@ -492,6 +509,7 @@ def admin_delete_course(course_id):
     ).fetchone()
 
     if course:
+        conn.execute("DELETE FROM enrollments WHERE course_id = ?", (course_id,))
         conn.execute("DELETE FROM courses WHERE id = ?", (course_id,))
         conn.commit()
         flash(f'Course "{course["title"]}" deleted.', "success")
@@ -500,6 +518,15 @@ def admin_delete_course(course_id):
 
     conn.close()
     return redirect('/admin/courses')
+
+
+# -------------------------------------------------------------------
+# ERROR HANDLERS
+# -------------------------------------------------------------------
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
 
 
 # -------------------------------------------------------------------

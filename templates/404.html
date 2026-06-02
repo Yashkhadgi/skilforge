@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="sf-page" style="text-align:center; padding:100px 0;">
+    <div style="font-size:4rem; margin-bottom:16px;">🔍</div>
+    <h1 style="font-size:2rem; margin-bottom:8px;">404 — Page Not Found</h1>
+    <p style="color:var(--text-2); margin-bottom:28px;">
+        Yeh page exist nahi karta ya remove ho gaya hai.
+    </p>
+    {% if session.get('username') %}
+    <a href="/dashboard" class="btn-primary-sf"
+       style="width:auto; display:inline-block; padding:12px 28px; text-decoration:none;">
+        Go to Dashboard
+    </a>
+    {% else %}
+    <a href="/" class="btn-primary-sf"
+       style="width:auto; display:inline-block; padding:12px 28px; text-decoration:none;">
+        Go to Home
+    </a>
+    {% endif %}
+</div>
+
+{% endblock %}

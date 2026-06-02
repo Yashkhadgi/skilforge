@@ -8,7 +8,6 @@
         <p>Track your progress across all enrolled courses.</p>
     </div>
 
-    <!-- STATS -->
     <div class="stats-grid">
         <div class="stat-card">
             <div class="stat-num" style="color:var(--accent);" data-count="{{ total }}">0</div>
@@ -30,41 +29,68 @@
     </div>
     <div class="courses-grid">
         {% for course in my_courses %}
-        <a href="/course/{{ course['id'] }}" class="course-card">
 
-            <div class="course-thumb" style="background: linear-gradient(135deg, {{ course['color'] }}22, {{ course['color'] }}44);">
-                <span>
-                    {% if course['category'] == 'Python' %}🐍
-                    {% elif course['category'] == 'Web' %}🌐
-                    {% elif course['category'] == 'AI' %}🤖
-                    {% else %}📚{% endif %}
-                </span>
-            </div>
+        <div class="course-card">
 
-            <div class="course-body">
-                <div>
-                    <div class="course-meta">
-                        <span class="badge badge-level">{{ course['level'] }}</span>
-                        <span class="badge badge-enrolled-pill">✓ Enrolled</span>
-                    </div>
-                    <div class="course-title mt-2">{{ course['title'] }}</div>
-                    <div class="course-instructor mt-1">{{ course['instructor'] }}</div>
+            <a href="/course/{{ course['id'] }}" style="text-decoration:none; color:inherit;">
+                <div class="course-thumb" style="background: linear-gradient(135deg, {{ course['color'] }}22, {{ course['color'] }}44);">
+                    <span>
+                        {% if course['category'] == 'Python' %}🐍
+                        {% elif course['category'] == 'Web' %}🌐
+                        {% elif course['category'] == 'AI' %}🤖
+                        {% else %}📚{% endif %}
+                    </span>
                 </div>
-                <div class="progress-wrap">
-                    <div class="progress-label">
-                        <span>Progress</span>
-                        <span>{{ course['progress'] }}%</span>
+
+                <div class="course-body">
+                    <div>
+                        <div class="course-meta">
+                            <span class="badge badge-level">{{ course['level'] }}</span>
+                            <span class="badge badge-enrolled-pill">✓ Enrolled</span>
+                        </div>
+                        <div class="course-title mt-2">{{ course['title'] }}</div>
+                        <div class="course-instructor mt-1">{{ course['instructor'] }}</div>
                     </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-bar-fill"
-                             style="background: {{ course['color'] }};"
-                             data-width="{{ course['progress'] }}">
+
+                    <div class="progress-wrap">
+                        <div class="progress-label">
+                            <span>Progress</span>
+                            <span>{{ course['progress'] }}%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill"
+                                 style="background: {{ course['color'] }};"
+                                 data-width="{{ course['progress'] }}">
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
 
-        </a>
+            <!-- Progress Update Form -->
+            <form method="POST" action="/update-progress/{{ course['enrollment_id'] }}"
+                  style="display:flex; gap:6px; align-items:center; padding: 0 16px 16px 16px;">
+                <input type="number" name="progress"
+                       value="{{ course['progress'] }}"
+                       min="0" max="100"
+                       style="width:65px; padding:5px 8px; border-radius:6px;
+                              border:1px solid var(--border); background:var(--bg-2);
+                              color:var(--text); font-size:0.8rem;">
+                <button type="submit"
+                        style="padding:5px 12px; border-radius:6px; border:none;
+                               background:var(--accent); color:#fff;
+                               font-size:0.8rem; cursor:pointer; font-weight:500;">
+                    Update
+                </button>
+                {% if course['progress'] >= 100 %}
+                <span style="font-size:0.78rem; color:var(--success);">
+                    <i class="bi bi-patch-check-fill"></i> Done!
+                </span>
+                {% endif %}
+            </form>
+
+        </div>
+
         {% endfor %}
     </div>
 
