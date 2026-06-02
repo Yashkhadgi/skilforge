@@ -771,3 +771,100 @@ body::before {
 .card-visible {
     animation: fadeUp 0.45s ease forwards;
 }
+
+/* ── Card (generic) ── */
+.sf-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    animation: fadeUp 0.5s ease forwards;
+}
+
+/* ── Table ── */
+.sf-table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-2);
+}
+
+.sf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.sf-table thead tr {
+    border-bottom: 1px solid var(--border);
+}
+
+.sf-table th {
+    padding: 12px 24px;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-2);
+}
+
+.sf-table td {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+}
+
+.sf-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.sf-table tbody tr {
+    transition: background 0.15s;
+}
+
+.sf-table tbody tr:hover {
+    background: var(--card-hover);
+}
+
+/* ── Role Badges ── */
+.role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+}
+
+.role-admin {
+    background: rgba(79,142,247,0.12);
+    color: var(--accent);
+    border: 1px solid rgba(79,142,247,0.25);
+}
+
+.role-student {
+    background: var(--bg-3);
+    color: var(--text-2);
+    border: 1px solid var(--border);
+}
+
+
+/* ── Admin Nav Link ── */
+.admin-link {
+    color: var(--accent) !important;
+    border: 1px solid rgba(79,142,247,0.2);
+    border-radius: var(--radius-sm);
+}
+
+.admin-link:hover, .admin-link.active {
+    background: var(--accent-dim) !important;
+    border-color: rgba(79,142,247,0.4) !important;
+}

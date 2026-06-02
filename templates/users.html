@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="sf-page">
+
+    <div class="page-header">
+        <h1>All Users</h1>
+        <p>Every registered account on SkillForge.</p>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom: 32px;">
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--accent);"
+                 data-count="{{ users|length }}">0</div>
+            <div class="stat-label">Total Users</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--warning);"
+                 data-count="{{ users|selectattr('is_admin','equalto',1)|list|length }}">0</div>
+            <div class="stat-label">Admins</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--success);"
+                 data-count="{{ users|selectattr('is_admin','equalto',0)|list|length }}">0</div>
+            <div class="stat-label">Students</div>
+        </div>
+    </div>
+
+    <div class="sf-card" style="overflow: hidden;">
+
+        <div class="sf-table-header">
+            <span>Registered Users</span>
+            <span style="color: var(--text-2); font-size: 0.82rem;">{{ users|length }} total</span>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="sf-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td style="color: var(--text-2);">{{ user['id'] }}</td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div class="sf-avatar">{{ user['username'][0]|upper }}</div>
+                                <span style="font-weight:500;">{{ user['username'] }}</span>
+                            </div>
+                        </td>
+                        <td style="color: var(--text-2);">{{ user['email'] }}</td>
+                        <td>
+                            {% if user['is_admin'] == 1 %}
+                                <span class="role-badge role-admin">
+                                    <i class="bi bi-shield-fill"></i> Admin
+                                </span>
+                            {% else %}
+                                <span class="role-badge role-student">
+                                    <i class="bi bi-person-fill"></i> Student
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
