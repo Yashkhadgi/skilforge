@@ -3,137 +3,202 @@
 
 <div class="sf-page">
 
-    <!-- PAGE HEADER -->
-    <div class="page-header">
-        <div style="margin-bottom:6px;">
-            <a href="/admin/courses" style="color:var(--text-2); text-decoration:none; font-size:0.85rem;">
-                <i class="bi bi-arrow-left"></i> Back to Courses
-            </a>
-        </div>
-        <h1><i class="bi bi-pencil-fill" style="color:var(--accent);"></i> Edit Course</h1>
-        <p>Editing: <strong style="color:var(--text);">{{ course['title'] }}</strong></p>
+  <!-- ── HEADER ── -->
+  <div class="reveal" style="margin-bottom:28px;">
+    <a href="/admin/courses"
+       style="font-size:0.8rem;color:var(--text-3);text-decoration:none;
+              display:inline-flex;align-items:center;gap:5px;margin-bottom:16px;
+              transition:color 0.2s;"
+       onmouseover="this.style.color='var(--text-2)'"
+       onmouseout="this.style.color='var(--text-3)'">
+      <i class="bi bi-arrow-left"></i> Back to Courses
+    </a>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="width:42px;height:42px;border-radius:12px;
+                  background:var(--blue-soft);
+                  display:flex;align-items:center;justify-content:center;
+                  color:var(--blue);font-size:1rem;flex-shrink:0;">
+        <i class="bi bi-pencil-fill"></i>
+      </div>
+      <div>
+        <h1 style="font-family:'Inter Tight',sans-serif;font-size:1.6rem;font-weight:900;
+                   letter-spacing:-0.04em;line-height:1.1;margin-bottom:2px;">
+          Edit Course
+        </h1>
+        <p style="color:var(--text-2);font-size:0.84rem;margin:0;">
+          Editing:
+          <strong style="color:var(--text);">{{ course['title'] }}</strong>
+          <span style="color:var(--text-3);">&nbsp;·&nbsp; ID #{{ course['id'] }}</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FORM CARD ── -->
+  <div class="sf-card reveal reveal-delay-1" style="max-width:760px;overflow:hidden;">
+
+    <div class="sf-table-header">
+      <span>Course Details</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="width:8px;height:8px;border-radius:50%;
+                    background:{{ course['color'] }};"></div>
+        <span style="font-size:0.76rem;color:var(--text-3);font-weight:400;">
+          {{ course['category'] }} · {{ course['level'] }}
+        </span>
+      </div>
     </div>
 
-    <!-- FORM CARD -->
-    <div class="sf-card" style="max-width:720px;">
-        <div class="sf-table-header">
-            <span>Course Details</span>
-            <span style="color:var(--text-2); font-size:0.82rem;">ID #{{ course['id'] }}</span>
+    <div style="padding:28px 32px;">
+      <form method="POST" action="/admin/courses/edit/{{ course['id'] }}" id="edit-form">
+
+        <!-- Row 1: Title + Instructor -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+          <div class="admin-field">
+            <label>Course Title</label>
+            <input type="text" name="title"
+                   value="{{ course['title'] }}" required maxlength="100">
+          </div>
+          <div class="admin-field">
+            <label>Instructor Name</label>
+            <input type="text" name="instructor"
+                   value="{{ course['instructor'] }}" required maxlength="60">
+          </div>
         </div>
 
-        <div style="padding:32px;">
-            <form method="POST" action="/admin/courses/edit/{{ course['id'] }}">
-            <!--
-            [EXPLANATION] action mein course['id'] dynamic hai
-            Jis course ko edit kar rahe hain uska id URL mein jaayega
-            app.py ka admin_edit_course(course_id) route yahi id receive karta hai
-            -->
-
-                <!-- Row 1: Title + Instructor -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-                    <div class="admin-field">
-                        <label>Course Title</label>
-                        <input type="text" name="title"
-                               value="{{ course['title'] }}" required>
-                        <!--
-                        [EXPLANATION] value="{{ course['title'] }}" → yahi magic hai
-                        Add form mein value blank tha
-                        Edit form mein DB se aaya data pehle se fill ho jaata hai
-                        User sirf change kare jo change karna ho
-                        -->
-                    </div>
-                    <div class="admin-field">
-                        <label>Instructor Name</label>
-                        <input type="text" name="instructor"
-                               value="{{ course['instructor'] }}" required>
-                    </div>
-                </div>
-
-                <!-- Row 2: Category + Level -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-                    <div class="admin-field">
-                        <label>Category</label>
-                        <select name="category">
-                            <option value="Python" {% if course['category'] == 'Python' %}selected{% endif %}>Python</option>
-                            <option value="Web"    {% if course['category'] == 'Web'    %}selected{% endif %}>Web</option>
-                            <option value="AI"     {% if course['category'] == 'AI'     %}selected{% endif %}>AI</option>
-                        </select>
-                        <!--
-                        [EXPLANATION] Dropdown mein "selected" attribute woh option ko
-                        default selected dikhata hai
-                        {% if course['category'] == 'Python' %}selected{% endif %}
-                        Matlab agar DB mein Python tha toh Python wala option selected dikhega
-                        -->
-                    </div>
-                    <div class="admin-field">
-                        <label>Level</label>
-                        <select name="level">
-                            <option value="Beginner"     {% if course['level'] == 'Beginner'     %}selected{% endif %}>Beginner</option>
-                            <option value="Intermediate" {% if course['level'] == 'Intermediate' %}selected{% endif %}>Intermediate</option>
-                            <option value="Advanced"     {% if course['level'] == 'Advanced'     %}selected{% endif %}>Advanced</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Row 3: Duration + Rating + Students -->
-                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
-                    <div class="admin-field">
-                        <label>Duration</label>
-                        <input type="text" name="duration"
-                               value="{{ course['duration'] }}" required>
-                    </div>
-                    <div class="admin-field">
-                        <label>Rating (1.0 - 5.0)</label>
-                        <input type="number" name="rating"
-                               value="{{ course['rating'] }}"
-                               min="1" max="5" step="0.1" required>
-                    </div>
-                    <div class="admin-field">
-                        <label>Students Enrolled</label>
-                        <input type="number" name="students"
-                               value="{{ course['students'] }}"
-                               min="0" required>
-                    </div>
-                </div>
-
-                <!-- Row 4: Description -->
-                <div class="admin-field" style="margin-bottom:16px;">
-                    <label>Description</label>
-                    <textarea name="description" rows="3">{{ course['description'] }}</textarea>
-                    <!--
-                    [EXPLANATION] Textarea mein value attribute nahi hota
-                    Instead opening aur closing tag ke beech mein content likhte hain
-                    {{ course['description'] }} → existing description pre-fill ho jaayega
-                    -->
-                </div>
-
-                <!-- Row 5: Color picker -->
-                <div class="admin-field" style="margin-bottom:28px;">
-                    <label>Card Accent Color</label>
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <input type="color" name="color"
-                               value="{{ course['color'] }}"
-                               style="width:48px; height:40px; border-radius:8px; cursor:pointer; background:transparent; border:1px solid var(--border); padding:2px;">
-                        <span style="color:var(--text-2); font-size:0.82rem;">
-                            Current color: <code style="color:var(--accent);">{{ course['color'] }}</code>
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Buttons -->
-                <div style="display:flex; gap:12px;">
-                    <button type="submit" class="btn-primary-sf" style="width:auto; padding:11px 28px;">
-                        <i class="bi bi-check-lg"></i> Update Course
-                    </button>
-                    <a href="/admin/courses" class="sf-btn-ghost" style="padding:11px 20px;">
-                        Cancel
-                    </a>
-                </div>
-
-            </form>
+        <!-- Row 2: Category + Level -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
+          <div class="admin-field">
+            <label>Category</label>
+            <select name="category">
+              <option value="Python" {% if course['category']=='Python' %}selected{% endif %}>🐍 Python</option>
+              <option value="Web"    {% if course['category']=='Web'    %}selected{% endif %}>🌐 Web</option>
+              <option value="AI"     {% if course['category']=='AI'     %}selected{% endif %}>🤖 AI</option>
+            </select>
+          </div>
+          <div class="admin-field">
+            <label>Level</label>
+            <select name="level">
+              <option value="Beginner"     {% if course['level']=='Beginner'     %}selected{% endif %}>Beginner</option>
+              <option value="Intermediate" {% if course['level']=='Intermediate' %}selected{% endif %}>Intermediate</option>
+              <option value="Advanced"     {% if course['level']=='Advanced'     %}selected{% endif %}>Advanced</option>
+            </select>
+          </div>
         </div>
+
+        <!-- Row 3: Duration + Rating + Students -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:18px;">
+          <div class="admin-field">
+            <label>Duration</label>
+            <input type="text" name="duration"
+                   value="{{ course['duration'] }}" required maxlength="20">
+          </div>
+          <div class="admin-field">
+            <label>Rating (1.0 – 5.0)</label>
+            <input type="number" name="rating"
+                   value="{{ course['rating'] }}"
+                   min="1" max="5" step="0.1" required>
+          </div>
+          <div class="admin-field">
+            <label>Students Enrolled</label>
+            <input type="number" name="students"
+                   value="{{ course['students'] }}"
+                   min="0" required>
+          </div>
+        </div>
+
+        <!-- Row 4: Description -->
+        <div class="admin-field" style="margin-bottom:18px;">
+          <label>Description</label>
+          <textarea name="description" rows="3"
+                    maxlength="300">{{ course['description'] }}</textarea>
+          <div style="font-size:0.7rem;color:var(--text-3);margin-top:4px;">
+            Max 300 characters
+          </div>
+        </div>
+
+        <!-- Row 5: Color picker -->
+        <div class="admin-field" style="margin-bottom:28px;">
+          <label>Card Accent Color</label>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <input type="color" name="color" id="color-pick"
+                   value="{{ course['color'] }}"
+                   style="width:48px;height:40px;border-radius:8px;cursor:pointer;
+                          background:transparent;border:1px solid var(--border-2);padding:2px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              {% for c in ['#4f8ef7','#7c3aed','#059669','#db2777','#d97706','#0891b2','#ea580c','#16a34a'] %}
+              <div onclick="document.getElementById('color-pick').value='{{ c }}';
+                            document.getElementById('color-preview').style.background='{{ c }}22';
+                            document.getElementById('color-preview').style.border='1px solid {{ c }}44';"
+                   style="width:22px;height:22px;border-radius:50%;background:{{ c }};
+                          cursor:pointer;transition:transform 0.15s;
+                          outline:{{ '2px solid ' + c if c == course['color'] else 'none' }};"
+                   onmouseover="this.style.transform='scale(1.2)'"
+                   onmouseout="this.style.transform='scale(1)'">
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div id="color-preview"
+               style="margin-top:12px;padding:12px 16px;border-radius:10px;
+                      background:{{ course['color'] }}22;
+                      border:1px solid {{ course['color'] }}33;
+                      font-size:0.78rem;color:var(--text-2);
+                      transition:background 0.3s,border 0.3s;">
+            <i class="bi bi-eye"></i>
+            Current color:
+            <code style="color:var(--accent);font-size:0.76rem;">{{ course['color'] }}</code>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex;gap:10px;padding-top:4px;
+                    border-top:1px solid var(--border);">
+          <button type="submit" class="btn-primary-sf"
+                  style="width:auto;padding:11px 28px;" id="submit-btn">
+            <i class="bi bi-check-lg"></i> Update Course
+          </button>
+          <a href="/admin/courses" class="sf-btn-ghost" style="padding:11px 20px;">
+            Cancel
+          </a>
+          <!-- Danger zone -->
+          <form method="POST"
+                action="/admin/courses/delete/{{ course['id'] }}"
+                style="margin:0;margin-left:auto;"
+                onsubmit="return confirm('Delete \'{{ course['title'] }}\'? This cannot be undone.')">
+            <button type="submit" class="sf-btn-ghost"
+                    style="padding:11px 16px;color:var(--danger);
+                           border-color:rgba(239,68,68,0.2);"
+                    onmouseover="this.style.background='var(--danger-soft)'"
+                    onmouseout="this.style.background='transparent'">
+              <i class="bi bi-trash-fill"></i> Delete
+            </button>
+          </form>
+        </div>
+
+      </form>
     </div>
+
+  </div>
 
 </div>
+
+<script>
+// Color picker live preview
+const pick    = document.getElementById('color-pick');
+const preview = document.getElementById('color-preview');
+pick.addEventListener('input', function() {
+  preview.style.background = this.value + '22';
+  preview.style.border     = '1px solid ' + this.value + '44';
+});
+
+// Submit loading state
+document.getElementById('edit-form').addEventListener('submit', function() {
+  const btn = document.getElementById('submit-btn');
+  btn.innerHTML           = '<i class="bi bi-hourglass-split"></i> Saving...';
+  btn.style.opacity       = '0.7';
+  btn.style.pointerEvents = 'none';
+});
+</script>
 
 {% endblock %}

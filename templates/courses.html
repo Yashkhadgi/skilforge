@@ -3,60 +3,156 @@
 
 <div class="sf-page">
 
-    <div class="page-header">
-        <h1>All Courses</h1>
-        <p>Explore our library of expert-led courses.</p>
+  <!-- ── HEADER ── -->
+  <div class="page-header reveal">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div class="hero-badge" style="margin-bottom:10px;display:inline-flex;">
+          <i class="bi bi-grid-fill"></i> Course Library
+        </div>
+        <h1 style="font-family:'Inter Tight',sans-serif;font-size:1.9rem;font-weight:900;
+                   letter-spacing:-0.04em;line-height:1.1;margin-bottom:6px;">All Courses</h1>
+        <p style="color:var(--text-2);font-size:0.88rem;">
+          Explore our library of expert-led courses. Free forever.
+        </p>
+      </div>
+      <!-- Search bar -->
+      <div style="position:relative;">
+        <i class="bi bi-search"
+           style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
+                  color:var(--text-3);font-size:0.82rem;pointer-events:none;"></i>
+        <input type="text" id="course-search" placeholder="Search courses..."
+               style="padding:9px 14px 9px 34px;background:var(--card);
+                      border:1px solid var(--border);border-radius:10px;
+                      color:var(--text);font-size:0.83rem;font-family:'Inter',sans-serif;
+                      outline:none;width:220px;transition:all 0.2s var(--ease);"
+               onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-soft)'"
+               onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+      </div>
     </div>
+  </div>
 
-    <!-- CATEGORY TABS -->
-    <div class="cat-tabs">
-        {% for cat in categories %}
-        <a href="/courses?category={{ cat }}"
-           class="cat-tab {% if cat == active_category %}active{% endif %}">
-            {{ cat }}
-        </a>
-        {% endfor %}
-    </div>
+  <!-- ── CATEGORY TABS ── -->
+  <div class="cat-tabs reveal reveal-delay-1">
+    {% for cat in categories %}
+    <a href="/courses?category={{ cat }}"
+       class="cat-tab {% if cat == active_category %}active{% endif %}">
+      {% if cat == 'All' %}<i class="bi bi-grid" style="font-size:0.75rem;"></i>{% endif %}
+      {% if cat == 'Python' %}🐍{% endif %}
+      {% if cat == 'Web' %}🌐{% endif %}
+      {% if cat == 'AI' %}🤖{% endif %}
+      {{ cat }}
+    </a>
+    {% endfor %}
+  </div>
 
-    <!-- COURSES GRID -->
-    <div class="courses-grid">
-        {% for course in courses %}
-        <a href="/course/{{ course['id'] }}" class="course-card">
+  <!-- ── RESULTS COUNT ── -->
+  <div id="results-count"
+       style="font-size:0.78rem;color:var(--text-3);margin-bottom:18px;margin-top:-8px;">
+    {{ courses|length }} course{{ 's' if courses|length != 1 else '' }} found
+  </div>
 
-            <div class="course-thumb" style="background: linear-gradient(135deg, {{ course['color'] }}22, {{ course['color'] }}55);">
-                <span>
-                    {% if course['category'] == 'Python' %}🐍
-                    {% elif course['category'] == 'Web' %}🌐
-                    {% elif course['category'] == 'AI' %}🤖
-                    {% else %}📚{% endif %}
-                </span>
-            </div>
+  <!-- ── COURSES GRID ── -->
+  <div class="courses-grid" id="courses-grid">
+    {% for course in courses %}
+    <a href="/course/{{ course['id'] }}" class="course-card"
+       data-title="{{ course['title']|lower }}"
+       data-instructor="{{ course['instructor']|lower }}"
+       data-category="{{ course['category']|lower }}">
 
-            <div class="course-body">
-                <div>
-                    <div class="course-meta">
-                        <span class="badge badge-level">{{ course['level'] }}</span>
-                        <span class="badge" style="background:{{ course['color'] }}22; color:{{ course['color'] }}; border:1px solid {{ course['color'] }}33;">
-                            {{ course['category'] }}
-                        </span>
-                        {% if course['id'] in enrolled_ids %}
-                        <span class="badge badge-enrolled-pill">✓ Enrolled</span>
-                        {% endif %}
-                    </div>
-                    <div class="course-title mt-2">{{ course['title'] }}</div>
-                    <div class="course-instructor mt-1">{{ course['instructor'] }}</div>
-                </div>
-                <div class="course-stats">
-                    <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ course['rating'] }}</span>
-                    <span><i class="bi bi-people"></i> {{ "{:,}".format(course['students']) }}</span>
-                    <span><i class="bi bi-clock"></i> {{ course['duration'] }}</span>
-                </div>
-            </div>
+      <div class="course-thumb"
+           style="background:linear-gradient(135deg,{{ course['color'] }}22,{{ course['color'] }}55);">
+        <span>
+          {% if course['category'] == 'Python' %}🐍
+          {% elif course['category'] == 'Web' %}🌐
+          {% elif course['category'] == 'AI' %}🤖
+          {% else %}📚{% endif %}
+        </span>
+        <!-- Hover shine effect -->
+        <div class="thumb-shine"></div>
+      </div>
 
-        </a>
-        {% endfor %}
-    </div>
+      <div class="course-body">
+        <div>
+          <div class="course-meta">
+            <span class="badge badge-level">{{ course['level'] }}</span>
+            <span class="badge"
+                  style="background:{{ course['color'] }}22;color:{{ course['color'] }};
+                         border:1px solid {{ course['color'] }}33;">
+              {{ course['category'] }}
+            </span>
+            {% if course['id'] in enrolled_ids %}
+            <span class="badge badge-enrolled-pill">
+              <i class="bi bi-check-lg" style="font-size:0.7rem;"></i> Enrolled
+            </span>
+            {% endif %}
+          </div>
+          <div class="course-title mt-2">{{ course['title'] }}</div>
+          <div class="course-instructor mt-1">
+            <i class="bi bi-person-circle" style="font-size:0.75rem;margin-right:3px;"></i>
+            {{ course['instructor'] }}
+          </div>
+        </div>
+        <div class="course-stats">
+          <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ course['rating'] }}</span>
+          <span><i class="bi bi-people"></i> {{ "{:,}".format(course['students']) }}</span>
+          <span><i class="bi bi-clock"></i> {{ course['duration'] }}</span>
+        </div>
+      </div>
+
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- ── EMPTY STATE ── -->
+  <div id="no-results"
+       style="display:none;text-align:center;padding:80px 0;">
+    <div style="font-size:3rem;margin-bottom:16px;">🔍</div>
+    <h3 style="font-family:'Inter Tight',sans-serif;font-weight:700;
+               letter-spacing:-0.03em;margin-bottom:8px;">No courses found</h3>
+    <p style="color:var(--text-2);font-size:0.88rem;">
+      Try a different search term or category.
+    </p>
+  </div>
 
 </div>
+
+<style>
+.thumb-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.06) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.5s var(--ease);
+}
+.course-card:hover .thumb-shine { transform: translateX(100%); }
+</style>
+
+<script>
+// Live search filter
+const searchInput = document.getElementById('course-search');
+const cards       = document.querySelectorAll('#courses-grid .course-card');
+const noResults   = document.getElementById('no-results');
+const countEl     = document.getElementById('results-count');
+
+searchInput.addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  let visible = 0;
+
+  cards.forEach(card => {
+    const title      = card.dataset.title      || '';
+    const instructor = card.dataset.instructor || '';
+    const category   = card.dataset.category   || '';
+    const match      = !q || title.includes(q) || instructor.includes(q) || category.includes(q);
+
+    card.style.display    = match ? '' : 'none';
+    card.style.opacity    = match ? '' : '0';
+    if (match) visible++;
+  });
+
+  noResults.style.display = visible === 0 ? 'block' : 'none';
+  countEl.textContent     = `${visible} course${visible !== 1 ? 's' : ''} found`;
+});
+</script>
 
 {% endblock %}

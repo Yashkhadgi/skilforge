@@ -1,89 +1,258 @@
-{% extends 'base.html' %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Create your free SkillForge account">
+  <title>Register — SkillForge</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path d='M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z' stroke='%23ffffff' stroke-width='1.5' fill='none'/></svg>">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
 
-<div class="auth-page">
+<div class="auth-wrap">
 
-    <div class="auth-left">
-        <div class="auth-orb"></div>
-        <div class="auth-left-content">
+  <!-- ── LEFT: FORM ── -->
+  <div class="auth-left">
 
-            <div class="sf-logo mb-4" style="font-size:1.2rem;">
-                <svg width="20" height="20" viewBox="0 0 18 18" fill="none">
-                    <path class="logo-bolt" d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
-                        stroke="#4f8ef7" stroke-width="1.5"
-                        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                </svg>
-                SkillForge
-            </div>
+    <a href="/" class="sf-logo" style="margin-bottom:52px;text-decoration:none;">
+      <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+        <path d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
+          stroke="#ffffff" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      SkillForge
+    </a>
 
-            <h1>Learn.<br><span>Build.</span><br>Grow.</h1>
-            <p style="margin-top:16px;">Join thousands of learners mastering in-demand skills with structured, project-based courses.</p>
+    <div class="auth-card">
 
-            <div class="auth-diagram">
-                <svg width="300" height="120" viewBox="0 0 300 120">
-                    <circle cx="40"  cy="60" r="18" fill="rgba(79,142,247,0.15)" stroke="rgba(79,142,247,0.4)" stroke-width="1"/>
-                    <circle cx="150" cy="30" r="18" fill="rgba(124,58,237,0.15)" stroke="rgba(124,58,237,0.4)" stroke-width="1"/>
-                    <circle cx="150" cy="90" r="18" fill="rgba(5,150,105,0.15)"  stroke="rgba(5,150,105,0.4)"  stroke-width="1"/>
-                    <circle cx="260" cy="60" r="18" fill="rgba(79,142,247,0.15)" stroke="rgba(79,142,247,0.4)" stroke-width="1"/>
-                    <line class="diagram-line" x1="58"  y1="60" x2="132" y2="35" stroke="rgba(79,142,247,0.3)"  stroke-width="1" stroke-dasharray="80" stroke-dashoffset="80"/>
-                    <line class="diagram-line" x1="58"  y1="60" x2="132" y2="85" stroke="rgba(79,142,247,0.3)"  stroke-width="1" stroke-dasharray="80" stroke-dashoffset="80"/>
-                    <line class="diagram-line" x1="168" y1="35" x2="242" y2="58" stroke="rgba(124,58,237,0.3)" stroke-width="1" stroke-dasharray="80" stroke-dashoffset="80"/>
-                    <line class="diagram-line" x1="168" y1="85" x2="242" y2="62" stroke="rgba(5,150,105,0.3)"  stroke-width="1" stroke-dasharray="80" stroke-dashoffset="80"/>
-                    <text x="28"  y="64" fill="#4f8ef7" font-size="9" font-family="Inter">You</text>
-                    <text x="136" y="34" fill="#7c3aed" font-size="8" font-family="Inter">Skills</text>
-                    <text x="134" y="94" fill="#059669" font-size="8" font-family="Inter">Projects</text>
-                    <text x="244" y="64" fill="#4f8ef7" font-size="8" font-family="Inter">Career</text>
-                </svg>
-            </div>
+      {% for category, message in get_flashed_messages(with_categories=true) %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
 
-            <div class="auth-stats">
-                <div class="auth-stat-item">
-                    <div class="auth-stat-num" data-count="8">0</div>
-                    <div class="auth-stat-label">Courses</div>
-                </div>
-                <div class="auth-stat-item">
-                    <div class="auth-stat-num" data-count="12400">0</div>
-                    <div class="auth-stat-label">Students</div>
-                </div>
-                <div class="auth-stat-item">
-                    <div class="auth-stat-num" data-count="98">0</div>
-                    <div class="auth-stat-label">% Satisfaction</div>
-                </div>
-            </div>
+      <p class="auth-title">Create account</p>
+      <p class="auth-sub">Free forever. No credit card needed.</p>
 
+      <form method="POST" action="/register" autocomplete="off">
+
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" name="username" class="form-control-sf"
+                 placeholder="choose_a_username" required autofocus
+                 pattern="[a-zA-Z0-9_]{3,20}"
+                 title="3–20 characters: letters, numbers, underscores">
         </div>
-    </div>
 
-    <div class="auth-right">
-        <div class="auth-form-box">
-            <h2>Create account</h2>
-            <p class="sub">Start your learning journey today</p>
-
-            <form method="POST">
-
-                <div class="input-group-sf">
-                    <input type="text" name="username" id="username" placeholder=" " required>
-                    <label for="username">Username</label>
-                </div>
-
-                <div class="input-group-sf">
-                    <input type="email" name="email" id="email" placeholder=" " required>
-                    <label for="email">Email address</label>
-                </div>
-
-                <div class="input-group-sf">
-                    <input type="password" name="password" id="password" placeholder=" " required>
-                    <label for="password">Password</label>
-                </div>
-
-                <button type="submit" class="btn-primary-sf">Create Account</button>
-
-            </form>
-
-            <p class="auth-switch">Already have an account? <a href="/login">Sign in</a></p>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-control-sf"
+                 placeholder="you@example.com" required>
         </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div style="position:relative;">
+            <input type="password" name="password" id="pw-input"
+                   class="form-control-sf"
+                   placeholder="min. 8 characters" required minlength="8"
+                   style="padding-right:42px;"
+                   oninput="checkStrength(this.value)">
+            <button type="button" id="pw-toggle"
+                    style="position:absolute;right:12px;top:50%;
+                           transform:translateY(-50%);background:none;
+                           border:none;color:rgba(255,255,255,0.25);
+                           cursor:pointer;font-size:0.88rem;padding:0;
+                           transition:color 0.2s;"
+                    onmouseover="this.style.color='rgba(255,255,255,0.6)'"
+                    onmouseout="this.style.color='rgba(255,255,255,0.25)'">
+              <i class="bi bi-eye" id="pw-icon"></i>
+            </button>
+          </div>
+          <div style="margin-top:8px;">
+            <div style="height:2px;background:rgba(255,255,255,0.06);
+                        border-radius:99px;overflow:hidden;">
+              <div id="strength-bar"
+                   style="height:100%;width:0%;border-radius:99px;
+                          transition:width 0.3s var(--ease),background 0.3s;">
+              </div>
+            </div>
+            <div id="strength-label"
+                 style="font-size:0.7rem;color:rgba(255,255,255,0.25);
+                        margin-top:5px;height:14px;transition:color 0.3s;">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary-sf" style="margin-top:10px;">
+          Create free account
+        </button>
+
+      </form>
+
+      <div class="auth-divider">or</div>
+
+      <div class="auth-link">
+        Already have an account? <a href="/login">Sign in</a>
+      </div>
+
     </div>
+  </div>
+
+  <!-- ── RIGHT: VISUAL PANEL ── -->
+  <div class="auth-right" style="background:#0a0a0a;">
+
+    <div style="position:relative;z-index:1;width:100%;max-width:360px;">
+
+      <div class="hero-badge" style="margin-bottom:28px;">
+        Start in 30 seconds
+      </div>
+
+      <h2 style="font-family:'Inter Tight',sans-serif;font-size:1.75rem;
+                 font-weight:800;letter-spacing:-0.04em;line-height:1.15;
+                 color:#fff;margin-bottom:10px;">
+        Your learning<br>
+        <span style="color:rgba(255,255,255,0.45);">journey starts here.</span>
+      </h2>
+      <p style="font-size:0.84rem;color:rgba(255,255,255,0.4);
+                margin-bottom:32px;line-height:1.65;">
+        Pick a course, track your progress, and build skills that matter.
+      </p>
+
+      <!-- Animated course previews -->
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:28px;">
+
+        <div class="glass-card"
+             style="padding:13px 15px;display:flex;align-items:center;gap:12px;
+                    animation:slide-in-card 0.5s var(--ease) 0.1s both;">
+          <div style="width:34px;height:34px;border-radius:9px;
+                      background:rgba(255,255,255,0.06);
+                      display:flex;align-items:center;justify-content:center;
+                      font-size:0.95rem;flex-shrink:0;">🐍</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.8rem;font-weight:500;color:rgba(255,255,255,0.8);
+                        margin-bottom:5px;">Python Fundamentals</div>
+            <div style="height:2px;background:rgba(255,255,255,0.06);
+                        border-radius:99px;overflow:hidden;">
+              <div style="width:65%;height:100%;background:rgba(255,255,255,0.5);
+                          border-radius:99px;"></div>
+            </div>
+          </div>
+          <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);
+                       font-weight:500;flex-shrink:0;">65%</span>
+        </div>
+
+        <div class="glass-card"
+             style="padding:13px 15px;display:flex;align-items:center;gap:12px;
+                    animation:slide-in-card 0.5s var(--ease) 0.22s both;">
+          <div style="width:34px;height:34px;border-radius:9px;
+                      background:rgba(255,255,255,0.06);
+                      display:flex;align-items:center;justify-content:center;
+                      font-size:0.95rem;flex-shrink:0;">🌐</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.8rem;font-weight:500;color:rgba(255,255,255,0.8);
+                        margin-bottom:5px;">Flask Web Dev</div>
+            <div style="height:2px;background:rgba(255,255,255,0.06);
+                        border-radius:99px;overflow:hidden;">
+              <div style="width:30%;height:100%;background:rgba(255,255,255,0.5);
+                          border-radius:99px;"></div>
+            </div>
+          </div>
+          <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);
+                       font-weight:500;flex-shrink:0;">30%</span>
+        </div>
+
+        <div class="glass-card"
+             style="padding:13px 15px;display:flex;align-items:center;gap:12px;
+                    animation:slide-in-card 0.5s var(--ease) 0.34s both;">
+          <div style="width:34px;height:34px;border-radius:9px;
+                      background:rgba(255,255,255,0.06);
+                      display:flex;align-items:center;justify-content:center;
+                      font-size:0.95rem;flex-shrink:0;">🤖</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.8rem;font-weight:500;color:rgba(255,255,255,0.8);
+                        margin-bottom:5px;">Machine Learning</div>
+            <div style="height:2px;background:rgba(255,255,255,0.06);
+                        border-radius:99px;overflow:hidden;">
+              <div style="width:8%;height:100%;background:rgba(255,255,255,0.5);
+                          border-radius:99px;"></div>
+            </div>
+          </div>
+          <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);
+                       font-weight:500;flex-shrink:0;">New</span>
+        </div>
+
+      </div>
+
+      <!-- Social proof -->
+      <div style="display:flex;align-items:center;gap:10px;
+                  padding-top:20px;border-top:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;">
+          {% for i in range(4) %}
+          <div style="width:24px;height:24px;border-radius:50%;
+                      background:rgba(255,255,255,{{ 0.1 + i*0.04 }});
+                      border:1.5px solid rgba(0,0,0,0.5);
+                      margin-left:{{ '-7px' if i > 0 else '0' }};
+                      display:flex;align-items:center;justify-content:center;
+                      font-size:0.58rem;font-weight:600;
+                      color:rgba(255,255,255,0.6);">
+            {{ ['A','R','S','V'][i] }}
+          </div>
+          {% endfor %}
+        </div>
+        <span style="font-size:0.76rem;color:rgba(255,255,255,0.35);">
+          <strong style="color:rgba(255,255,255,0.6);font-weight:600;">50,000+</strong>
+          learners already joined
+        </span>
+      </div>
+
+    </div>
+  </div>
 
 </div>
 
-{% endblock %}
+<style>
+@keyframes slide-in-card {
+  from { opacity:0; transform:translateX(16px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='main.js') }}"></script>
+<script>
+  document.getElementById('pw-toggle').addEventListener('click', function() {
+    const inp  = document.getElementById('pw-input');
+    const icon = document.getElementById('pw-icon');
+    inp.type   = inp.type === 'password' ? 'text' : 'password';
+    icon.className = inp.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+  });
+
+  function checkStrength(val) {
+    const bar   = document.getElementById('strength-bar');
+    const label = document.getElementById('strength-label');
+    if (!val) { bar.style.width='0%'; label.textContent=''; return; }
+    let score = 0;
+    if (val.length >= 8)           score++;
+    if (/[A-Z]/.test(val))         score++;
+    if (/[0-9]/.test(val))         score++;
+    if (/[^A-Za-z0-9]/.test(val))  score++;
+    const levels = [
+      { w:'25%', bg:'rgba(255,68,68,0.7)',   text:'Weak'     },
+      { w:'50%', bg:'rgba(245,158,11,0.7)',  text:'Fair'     },
+      { w:'75%', bg:'rgba(0,153,255,0.7)',   text:'Good'     },
+      { w:'100%',bg:'rgba(255,255,255,0.6)', text:'Strong 💪'},
+    ];
+    const lvl = levels[score-1] || levels[0];
+    bar.style.width      = lvl.w;
+    bar.style.background = lvl.bg;
+    label.textContent    = lvl.text;
+    label.style.color    = lvl.bg;
+  }
+</script>
+</body>
+</html>

@@ -3,108 +3,259 @@
 
 <div class="sf-page">
 
-    <!-- HEADER -->
-    <div class="page-header">
-        <h1 id="greeting">Hello, {{ session['username'] }} 👋</h1>
-        <p>Here's what's happening with your learning today.</p>
+  <!-- ── DASHBOARD HEADER ── -->
+  <div style="display:flex; align-items:flex-start; justify-content:space-between;
+              margin-bottom:32px; flex-wrap:wrap; gap:16px;">
+    <div>
+      <div class="hero-badge" style="margin-bottom:10px; display:inline-flex;">
+        <i class="bi bi-circle-fill" style="color:var(--success); font-size:0.45rem;"></i>
+        Active Session
+      </div>
+      <h1 id="greeting"
+          style="font-family:'Inter Tight',sans-serif; font-size:1.9rem; font-weight:900;
+                 letter-spacing:-0.04em; line-height:1.1; color:var(--text); margin-bottom:6px;">
+        Good morning, {{ session.get('username') }} 👋
+      </h1>
+      <p style="color:var(--text-2); font-size:0.88rem;">
+        Here's what's happening with your learning today.
+      </p>
     </div>
+    <a href="/courses" class="btn-primary-sf"
+       style="width:auto; padding:10px 20px; text-decoration:none;">
+      <i class="bi bi-plus-lg"></i> New Course
+    </a>
+  </div>
 
-    <!-- STATS -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-num" style="color:var(--accent);"
-                 data-count="{{ total_enrolled }}">0</div>
-            <div class="stat-label">Enrolled Courses</div>
+  <!-- ── STATS ── -->
+  <div class="stats-grid reveal">
+    <div class="stat-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--accent-soft);
+                    display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:0.9rem;">
+          <i class="bi bi-collection-fill"></i>
         </div>
-        <div class="stat-card">
-            <div class="stat-num" style="color:var(--success);"
-                 data-count="{{ avg_progress }}">0</div>
-            <div class="stat-label">Avg Progress %</div>
+        <span style="font-size:0.7rem;color:var(--text-3);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;">Enrolled</span>
+      </div>
+      <div class="stat-num" style="color:var(--accent);" data-count="{{ total_enrolled }}">0</div>
+      <div class="stat-label">Enrolled Courses</div>
+    </div>
+
+    <div class="stat-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--success-soft);
+                    display:flex;align-items:center;justify-content:center;color:var(--success);font-size:0.9rem;">
+          <i class="bi bi-graph-up-arrow"></i>
         </div>
-        <div class="stat-card">
-            <div class="stat-num" style="color:var(--warning);"
-                 data-count="8">0</div>
-            <div class="stat-label">Total Courses</div>
+        <span style="font-size:0.7rem;color:var(--text-3);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;">Progress</span>
+      </div>
+      <div class="stat-num" style="color:var(--success);" data-count="{{ avg_progress }}">0</div>
+      <div class="stat-label">Avg Progress %</div>
+    </div>
+
+    <div class="stat-card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--warning-soft);
+                    display:flex;align-items:center;justify-content:center;color:var(--warning);font-size:0.9rem;">
+          <i class="bi bi-grid-fill"></i>
         </div>
+        <span style="font-size:0.7rem;color:var(--text-3);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;">Library</span>
+      </div>
+      <div class="stat-num" style="color:var(--warning);" data-count="8">0</div>
+      <div class="stat-label">Total Courses</div>
     </div>
+  </div>
 
-    <!-- CONTINUE LEARNING -->
-    {% if enrolled %}
-    <div class="section-head">
-        <p class="section-title">Continue Learning</p>
-        <a href="/my-learning" class="section-link">View all →</a>
-    </div>
-    <div class="courses-grid">
-        {% for course in enrolled[:3] %}
-        <a href="/course/{{ course['id'] }}" class="course-card">
-            <div class="course-thumb" style="background: linear-gradient(135deg, {{ course['color'] }}22, {{ course['color'] }}44);">
-                <span>📚</span>
-            </div>
-            <div class="course-body">
-                <div>
-                    <div class="course-meta">
-                        <span class="badge badge-level">{{ course['level'] }}</span>
-                    </div>
-                    <div class="course-title mt-2">{{ course['title'] }}</div>
-                    <div class="course-instructor mt-1">{{ course['instructor'] }}</div>
-                </div>
-                <div class="progress-wrap">
-                    <div class="progress-label">
-                        <span>Progress</span>
-                        <span>{{ course['progress'] }}%</span>
-                    </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-bar-fill"
-                             style="background: {{ course['color'] }};"
-                             data-width="{{ course['progress'] }}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </a>
-        {% endfor %}
-    </div>
-    {% endif %}
+  <!-- ── CONTINUE LEARNING ── -->
+  {% if enrolled %}
+  <div class="section-head reveal reveal-delay-1">
+    <p class="section-title">Continue Learning</p>
+    <a href="/my-learning" class="section-link">View all →</a>
+  </div>
 
-    <!-- RECOMMENDED -->
-    {% if recommended %}
-    <div class="section-head">
-        <p class="section-title">Recommended For You</p>
-        <a href="/courses" class="section-link">Browse all →</a>
-    </div>
-    <div class="courses-grid">
-        {% for course in recommended %}
-        <a href="/course/{{ course['id'] }}" class="course-card">
-            <div class="course-thumb" style="background: linear-gradient(135deg, {{ course['color'] }}22, {{ course['color'] }}44);">
-                <span>🎯</span>
-            </div>
-            <div class="course-body">
-                <div>
-                    <div class="course-meta">
-                        <span class="badge badge-level">{{ course['level'] }}</span>
-                        <span class="badge" style="background:{{ course['color'] }}22; color:{{ course['color'] }}; border:1px solid {{ course['color'] }}44;">{{ course['category'] }}</span>
-                    </div>
-                    <div class="course-title mt-2">{{ course['title'] }}</div>
-                    <div class="course-instructor mt-1">{{ course['instructor'] }}</div>
-                </div>
-                <div class="course-stats">
-                    <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ course['rating'] }}</span>
-                    <span><i class="bi bi-people"></i> {{ "{:,}".format(course['students']) }}</span>
-                    <span><i class="bi bi-clock"></i> {{ course['duration'] }}</span>
-                </div>
-            </div>
-        </a>
-        {% endfor %}
-    </div>
-    {% endif %}
+  <div class="courses-grid">
+    {% for course in enrolled[:3] %}
+    <a href="/course/{{ course['id'] }}" class="course-card">
+      <div class="course-thumb"
+           style="background:linear-gradient(135deg,{{ course['color'] }}22,{{ course['color'] }}44);">
+        <span>
+          {% if course['category'] == 'Python' %}🐍
+          {% elif course['category'] == 'Web' %}🌐
+          {% elif course['category'] == 'AI' %}🤖
+          {% else %}📚{% endif %}
+        </span>
+        <!-- Progress ring overlay -->
+        <div style="position:absolute; top:10px; right:10px; z-index:2;">
+          <svg width="32" height="32" viewBox="0 0 32 32">
+            <circle cx="16" cy="16" r="13" fill="none"
+                    stroke="rgba(255,255,255,0.08)" stroke-width="2.5"/>
+            <circle cx="16" cy="16" r="13" fill="none"
+                    stroke="{{ course['color'] }}" stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-dasharray="{{ (course['progress'] / 100 * 81.68)|round(1) }} 81.68"
+                    transform="rotate(-90 16 16)"
+                    style="transition:stroke-dasharray 1s var(--ease);"/>
+          </svg>
+          <span style="position:absolute;inset:0;display:flex;align-items:center;
+                       justify-content:center;font-size:0.52rem;font-weight:700;
+                       color:{{ course['color'] }};">
+            {{ course['progress'] }}%
+          </span>
+        </div>
+      </div>
 
-    {% if not enrolled and not recommended %}
-    <div style="text-align:center; padding: 80px 0; color: var(--text-2);">
-        <div style="font-size:3rem; margin-bottom:16px;">🚀</div>
-        <p style="font-size:1rem; margin-bottom:20px;">No courses yet. Start your journey!</p>
-        <a href="/courses" class="btn-primary-sf" style="width:auto; display:inline-block; padding: 12px 28px;">Browse Courses</a>
+      <div class="course-body">
+        <div>
+          <div class="course-meta">
+            <span class="badge badge-level">{{ course['level'] }}</span>
+            <span class="badge" style="background:{{ course['color'] }}22;
+                  color:{{ course['color'] }};border:1px solid {{ course['color'] }}44;">
+              {{ course['category'] }}
+            </span>
+          </div>
+          <div class="course-title mt-2">{{ course['title'] }}</div>
+          <div class="course-instructor mt-1">{{ course['instructor'] }}</div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span>Progress</span>
+            <span>{{ course['progress'] }}%</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill"
+                 style="background:{{ course['color'] }};"
+                 data-width="{{ course['progress'] }}">
+            </div>
+          </div>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── RECOMMENDED ── -->
+  {% if recommended %}
+  <div class="section-head reveal reveal-delay-2" style="margin-top:40px;">
+    <p class="section-title">Recommended For You</p>
+    <a href="/courses" class="section-link">Browse all →</a>
+  </div>
+
+  <div class="courses-grid">
+    {% for course in recommended %}
+    <a href="/course/{{ course['id'] }}" class="course-card">
+      <div class="course-thumb"
+           style="background:linear-gradient(135deg,{{ course['color'] }}22,{{ course['color'] }}44);">
+        <span>
+          {% if course['category'] == 'Python' %}🐍
+          {% elif course['category'] == 'Web' %}🌐
+          {% elif course['category'] == 'AI' %}🤖
+          {% else %}📚{% endif %}
+        </span>
+      </div>
+      <div class="course-body">
+        <div>
+          <div class="course-meta">
+            <span class="badge badge-level">{{ course['level'] }}</span>
+            <span class="badge"
+                  style="background:{{ course['color'] }}22;color:{{ course['color'] }};
+                         border:1px solid {{ course['color'] }}44;">
+              {{ course['category'] }}
+            </span>
+          </div>
+          <div class="course-title mt-2">{{ course['title'] }}</div>
+          <div class="course-instructor mt-1">{{ course['instructor'] }}</div>
+        </div>
+        <div class="course-stats">
+          <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ course['rating'] }}</span>
+          <span><i class="bi bi-people"></i> {{ "{:,}".format(course['students']) }}</span>
+          <span><i class="bi bi-clock"></i> {{ course['duration'] }}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── EMPTY STATE ── -->
+  {% if not enrolled and not recommended %}
+  <div class="reveal" style="text-align:center; padding:80px 0;">
+    <div style="width:72px;height:72px;border-radius:20px;background:var(--accent-soft);
+                display:flex;align-items:center;justify-content:center;
+                font-size:2rem;margin:0 auto 20px;">🚀</div>
+    <h3 style="font-family:'Inter Tight',sans-serif;font-weight:700;
+               letter-spacing:-0.03em;margin-bottom:8px;">Start your journey</h3>
+    <p style="color:var(--text-2);font-size:0.88rem;margin-bottom:24px;">
+      No courses yet. Pick something that excites you.
+    </p>
+    <a href="/courses" class="btn-primary-sf"
+       style="width:auto;display:inline-flex;padding:12px 28px;">
+      Browse Courses
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- ── QUICK ACTIONS ── -->
+  <div class="reveal reveal-delay-3" style="margin-top:48px;">
+    <p class="section-title" style="margin-bottom:14px;">Quick Actions</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">
+
+      <a href="/courses" style="text-decoration:none;">
+        <div class="sf-card" style="padding:16px 18px;display:flex;align-items:center;
+             gap:12px;cursor:pointer;transition:all 0.25s var(--ease);"
+             onmouseover="this.style.transform='translateY(-2px)';this.style.borderColor='var(--border-2)'"
+             onmouseout="this.style.transform='';this.style.borderColor='var(--border)'">
+          <div style="width:34px;height:34px;border-radius:9px;background:var(--accent-soft);
+                      display:flex;align-items:center;justify-content:center;
+                      color:var(--accent);font-size:0.88rem;flex-shrink:0;">
+            <i class="bi bi-compass-fill"></i>
+          </div>
+          <div>
+            <div style="font-size:0.82rem;font-weight:600;color:var(--text);">Explore</div>
+            <div style="font-size:0.74rem;color:var(--text-3);">Browse all courses</div>
+          </div>
+        </div>
+      </a>
+
+      <a href="/my-learning" style="text-decoration:none;">
+        <div class="sf-card" style="padding:16px 18px;display:flex;align-items:center;
+             gap:12px;cursor:pointer;transition:all 0.25s var(--ease);"
+             onmouseover="this.style.transform='translateY(-2px)';this.style.borderColor='var(--border-2)'"
+             onmouseout="this.style.transform='';this.style.borderColor='var(--border)'">
+          <div style="width:34px;height:34px;border-radius:9px;background:var(--blue-soft);
+                      display:flex;align-items:center;justify-content:center;
+                      color:var(--blue);font-size:0.88rem;flex-shrink:0;">
+            <i class="bi bi-journal-check"></i>
+          </div>
+          <div>
+            <div style="font-size:0.82rem;font-weight:600;color:var(--text);">My Learning</div>
+            <div style="font-size:0.74rem;color:var(--text-3);">Track progress</div>
+          </div>
+        </div>
+      </a>
+
+      <div style="text-decoration:none;">
+        <div class="sf-card" style="padding:16px 18px;display:flex;align-items:center;
+             gap:12px;cursor:pointer;transition:all 0.25s var(--ease);"
+             onmouseover="this.style.transform='translateY(-2px)';this.style.borderColor='var(--border-2)'"
+             onmouseout="this.style.transform='';this.style.borderColor='var(--border)'"
+             onclick="document.dispatchEvent(new KeyboardEvent('keydown',{key:'k',ctrlKey:true}))">
+          <div style="width:34px;height:34px;border-radius:9px;background:var(--warning-soft);
+                      display:flex;align-items:center;justify-content:center;
+                      color:var(--warning);font-size:0.88rem;flex-shrink:0;">
+            <i class="bi bi-search"></i>
+          </div>
+          <div>
+            <div style="font-size:0.82rem;font-weight:600;color:var(--text);">Search</div>
+            <div style="font-size:0.74rem;color:var(--text-3);">
+              Press <kbd style="background:var(--bg-3);padding:1px 5px;border-radius:4px;
+              font-size:0.65rem;border:1px solid var(--border-2);">Ctrl K</kbd>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
-    {% endif %}
+  </div>
 
 </div>
 

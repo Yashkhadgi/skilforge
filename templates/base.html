@@ -1,61 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SkillForge — Learn Python, Web Development, AI and more for free.">
-    <title>SkillForge</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path d='M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z' stroke='%234f8ef7' stroke-width='1.5' fill='none'/></svg>">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SkillForge — Learn Python, Web Development, AI and more for free.">
+  <title>SkillForge</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path d='M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z' stroke='%23ffffff' stroke-width='1.5' fill='none'/></svg>">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
 {% if session.get('username') %}
 <nav class="sf-nav">
-    <div class="sf-nav-inner">
+  <div class="sf-nav-inner">
 
-        <a href="/dashboard" class="sf-logo">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path class="logo-bolt"
-                    d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
-                    stroke="#4f8ef7" stroke-width="1.5"
-                    stroke-linecap="round" stroke-linejoin="round"
-                    fill="none"/>
-            </svg>
-            SkillForge
-        </a>
+    <a href="/dashboard" class="sf-logo">
+      <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+        <path class="logo-bolt"
+          d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
+          stroke="#ffffff" stroke-width="1.5"
+          stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      SkillForge
+    </a>
 
-        <div class="sf-nav-links">
-            <a href="/dashboard"   class="sf-nav-link {% if request.path == '/dashboard' %}active{% endif %}">Dashboard</a>
-            <a href="/courses"     class="sf-nav-link {% if request.path == '/courses' %}active{% endif %}">Courses</a>
-            <a href="/my-learning" class="sf-nav-link {% if request.path == '/my-learning' %}active{% endif %}">My Learning</a>
-
-            {% if session.get('is_admin') == 1 %}
-            <a href="/users" class="sf-nav-link {% if request.path == '/users' %}active{% endif %}">Users</a>
-            <a href="/admin/courses" class="sf-nav-link admin-link {% if '/admin' in request.path %}active{% endif %}">
-                <i class="bi bi-shield-fill"></i> Admin
-            </a>
-            {% endif %}
-        </div>
-
-        <div class="sf-nav-right">
-            <div class="sf-avatar">{{ session['username'][0]|upper }}</div>
-            <a href="/logout" class="sf-btn-ghost">Logout</a>
-        </div>
-
+    <div class="sf-nav-links">
+      <a href="/dashboard"
+         class="sf-nav-link {% if request.path == '/dashboard' %}active{% endif %}">
+        Dashboard
+      </a>
+      <a href="/courses"
+         class="sf-nav-link {% if request.path == '/courses' %}active{% endif %}">
+        Courses
+      </a>
+      <a href="/my-learning"
+         class="sf-nav-link {% if request.path == '/my-learning' %}active{% endif %}">
+        My Learning
+      </a>
+      {% if session.get('is_admin') == 1 %}
+      <a href="/users"
+         class="sf-nav-link {% if request.path == '/users' %}active{% endif %}">
+        Users
+      </a>
+      <a href="/admin/courses"
+         class="sf-nav-link admin-link {% if '/admin' in request.path %}active{% endif %}">
+        <i class="bi bi-shield-fill" style="font-size:0.72rem;"></i> Admin
+      </a>
+      {% endif %}
     </div>
+
+    <div class="sf-nav-right">
+      <div class="sf-avatar">{{ session['username'][0]|upper }}</div>
+      <a href="/logout" class="sf-btn-ghost" style="font-size:0.8rem;">Logout</a>
+    </div>
+
+  </div>
 </nav>
 {% endif %}
 
 <div class="container mt-3">
-    {% for category, message in get_flashed_messages(with_categories=true) %}
-    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
-    </div>
-    {% endfor %}
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+  <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
 </div>
 
 {% block content %}{% endblock %}

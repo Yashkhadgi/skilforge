@@ -3,94 +3,244 @@
 
 <div class="sf-page">
 
-    <!-- HERO -->
-    <div class="detail-hero">
-        <div>
-            <div class="course-meta mb-3">
-                <span class="badge badge-level">{{ course['level'] }}</span>
-                <span class="badge" style="background:{{ course['color'] }}22; color:{{ course['color'] }}; border:1px solid {{ course['color'] }}33;">
-                    {{ course['category'] }}
-                </span>
-            </div>
+  <!-- ── BREADCRUMB ── -->
+  <div class="reveal" style="margin-bottom:20px;">
+    <a href="/courses"
+       style="font-size:0.8rem;color:var(--text-3);text-decoration:none;
+              display:inline-flex;align-items:center;gap:5px;
+              transition:color 0.2s;"
+       onmouseover="this.style.color='var(--text-2)'"
+       onmouseout="this.style.color='var(--text-3)'">
+      <i class="bi bi-arrow-left"></i> Back to Courses
+    </a>
+  </div>
 
-            <h1>{{ course['title'] }}</h1>
-            <p>{{ course['description'] }}</p>
+  <!-- ── HERO GRID ── -->
+  <div class="detail-hero reveal">
 
-            <div class="detail-meta">
-                <span><i class="bi bi-person-circle"></i> {{ course['instructor'] }}</span>
-                <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ course['rating'] }} rating</span>
-                <span><i class="bi bi-people"></i> {{ "{:,}".format(course['students']) }} students</span>
-                <span><i class="bi bi-clock"></i> {{ course['duration'] }}</span>
-            </div>
+    <!-- LEFT: Info -->
+    <div>
+      <div class="course-meta mb-3">
+        <span class="badge badge-level">{{ course['level'] }}</span>
+        <span class="badge"
+              style="background:{{ course['color'] }}22;color:{{ course['color'] }};
+                     border:1px solid {{ course['color'] }}33;">
+          {{ course['category'] }}
+        </span>
+        <span class="badge"
+              style="background:var(--success-soft);color:var(--success);
+                     border:1px solid rgba(16,185,129,0.2);">
+          <i class="bi bi-patch-check-fill" style="font-size:0.68rem;"></i> Free
+        </span>
+      </div>
+
+      <h1 style="font-family:'Inter Tight',sans-serif;font-size:2rem;font-weight:900;
+                 letter-spacing:-0.04em;line-height:1.15;margin-bottom:12px;">
+        {{ course['title'] }}
+      </h1>
+
+      <p style="color:var(--text-2);font-size:0.9rem;line-height:1.7;margin-bottom:20px;">
+        {{ course['description'] }}
+      </p>
+
+      <div class="detail-meta">
+        <span>
+          <i class="bi bi-person-circle" style="color:var(--accent);"></i>
+          {{ course['instructor'] }}
+        </span>
+        <span>
+          <i class="bi bi-star-fill" style="color:#f59e0b;"></i>
+          {{ course['rating'] }} rating
+        </span>
+        <span>
+          <i class="bi bi-people" style="color:var(--blue);"></i>
+          {{ "{:,}".format(course['students']) }} students
+        </span>
+        <span>
+          <i class="bi bi-clock" style="color:var(--success);"></i>
+          {{ course['duration'] }}
+        </span>
+      </div>
+
+      <!-- What you learn -->
+      <div style="margin-top:28px;background:var(--card);border:1px solid var(--border);
+                  border-radius:var(--radius-lg);padding:20px 22px;">
+        <div style="font-size:0.82rem;font-weight:700;color:var(--text);
+                    margin-bottom:14px;display:flex;align-items:center;gap:6px;">
+          <i class="bi bi-lightbulb-fill" style="color:var(--warning);"></i>
+          What You'll Learn
         </div>
-
-        <!-- ENROLL BOX -->
-        <div class="enroll-box">
-            <div class="price">Free</div>
-            <div class="free-tag">Full access included</div>
-
-            {% if enrollment %}
-                <a href="/my-learning" class="btn-enrolled-big">
-                    <i class="bi bi-check-circle-fill me-1"></i> Enrolled
-                </a>
-                <div class="progress-wrap mt-3">
-                    <div class="progress-label">
-                        <span>Progress</span>
-                        <span>{{ enrollment['progress'] }}%</span>
-                    </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-bar-fill"
-                             style="background: {{ course['color'] }};"
-                             data-width="{{ enrollment['progress'] }}">
-                        </div>
-                    </div>
-                </div>
-            {% else %}
-                <a href="/enroll/{{ course['id'] }}" class="btn-enroll-big">
-                    Enroll Now — Free
-                </a>
-            {% endif %}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          {% set outcomes = [
+            'Core concepts and real-world applications',
+            'Hands-on projects and exercises',
+            'Industry best practices',
+            'Portfolio-ready final project',
+            'Code review and debugging skills',
+            'Modern tooling and workflows'
+          ] %}
+          {% for item in outcomes %}
+          <div style="display:flex;align-items:flex-start;gap:8px;font-size:0.82rem;
+                      color:var(--text-2);">
+            <i class="bi bi-check2-circle"
+               style="color:var(--success);flex-shrink:0;margin-top:2px;font-size:0.85rem;"></i>
+            {{ item }}
+          </div>
+          {% endfor %}
         </div>
-
+      </div>
     </div>
 
-    <!-- WHAT YOU LEARN -->
-    <div class="curriculum-section">
-        <h3><i class="bi bi-lightbulb me-2" style="color:var(--accent);"></i>What You'll Learn</h3>
-        <div style="padding: 20px 24px; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-            <div style="font-size:0.86rem; color:var(--text-2); display:flex; gap:8px;">
-                <i class="bi bi-check2" style="color:var(--success); flex-shrink:0; margin-top:2px;"></i>
-                Core concepts and real-world applications
-            </div>
-            <div style="font-size:0.86rem; color:var(--text-2); display:flex; gap:8px;">
-                <i class="bi bi-check2" style="color:var(--success); flex-shrink:0; margin-top:2px;"></i>
-                Hands-on projects and exercises
-            </div>
-            <div style="font-size:0.86rem; color:var(--text-2); display:flex; gap:8px;">
-                <i class="bi bi-check2" style="color:var(--success); flex-shrink:0; margin-top:2px;"></i>
-                Industry best practices
-            </div>
-            <div style="font-size:0.86rem; color:var(--text-2); display:flex; gap:8px;">
-                <i class="bi bi-check2" style="color:var(--success); flex-shrink:0; margin-top:2px;"></i>
-                Portfolio-ready final project
-            </div>
+    <!-- RIGHT: Enroll Box -->
+    <div>
+      <div class="enroll-box" style="position:sticky;top:76px;">
+
+        <!-- Course preview thumbnail -->
+        <div style="height:130px;border-radius:12px;margin-bottom:18px;overflow:hidden;
+                    background:linear-gradient(135deg,{{ course['color'] }}22,{{ course['color'] }}55);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:3.5rem;position:relative;">
+          {% if course['category'] == 'Python' %}🐍
+          {% elif course['category'] == 'Web' %}🌐
+          {% elif course['category'] == 'AI' %}🤖
+          {% else %}📚{% endif %}
+          <div style="position:absolute;inset:0;
+                      background:radial-gradient(circle at 50% 50%,
+                        {{ course['color'] }}33 0%, transparent 70%);"></div>
         </div>
+
+        <div class="price">Free</div>
+        <div class="free-tag">
+          <i class="bi bi-infinity"></i> Full lifetime access
+        </div>
+
+        {% if enrollment %}
+          <a href="/my-learning" class="btn-enrolled-big">
+            <i class="bi bi-check-circle-fill"></i> Already Enrolled
+          </a>
+          <div class="progress-wrap mt-3">
+            <div class="progress-label">
+              <span>Your Progress</span>
+              <span style="color:{{ course['color'] }};">{{ enrollment['progress'] }}%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill"
+                   style="background:{{ course['color'] }};"
+                   data-width="{{ enrollment['progress'] }}"></div>
+            </div>
+          </div>
+        {% else %}
+          <a href="/enroll/{{ course['id'] }}" class="btn-enroll-big" id="enroll-btn">
+            <i class="bi bi-rocket-takeoff-fill"></i> Enroll Now — Free
+          </a>
+        {% endif %}
+
+        <!-- Course includes -->
+        <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);">
+          <div style="font-size:0.74rem;font-weight:700;color:var(--text-3);
+                      text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">
+            This course includes
+          </div>
+          {% set includes = [
+            ('bi-play-circle', 'Self-paced video content'),
+            ('bi-code-slash',  'Coding exercises'),
+            ('bi-trophy-fill', 'Final project'),
+            ('bi-infinity',    'Lifetime access'),
+          ] %}
+          {% for icon, label in includes %}
+          <div style="display:flex;align-items:center;gap:9px;font-size:0.8rem;
+                      color:var(--text-2);margin-bottom:9px;">
+            <i class="bi {{ icon }}" style="color:var(--text-3);width:14px;text-align:center;"></i>
+            {{ label }}
+          </div>
+          {% endfor %}
+        </div>
+
+      </div>
     </div>
 
-    <!-- CURRICULUM -->
-    <div class="curriculum-section">
-        <h3><i class="bi bi-journal-text me-2" style="color:var(--accent);"></i>Course Curriculum</h3>
-        {% for item in curriculum %}
-        <div class="curriculum-item">
-            <div class="mod-name">
-                <i class="bi bi-play-circle" style="color:var(--text-2);"></i>
-                {{ item['module'] }}
-            </div>
-            <div class="mod-count">{{ item['lessons'] }} lessons</div>
+  </div>
+
+  <!-- ── CURRICULUM ── -->
+  <div class="curriculum-section reveal" style="margin-top:8px;">
+    <h3 style="display:flex;align-items:center;justify-content:space-between;">
+      <span>
+        <i class="bi bi-journal-text me-2" style="color:var(--accent);"></i>
+        Course Curriculum
+      </span>
+      <span style="font-size:0.76rem;color:var(--text-3);font-weight:400;">
+        {{ curriculum|length }} modules
+      </span>
+    </h3>
+
+    {% for item in curriculum %}
+    <div class="curriculum-item" style="cursor:pointer;"
+         onmouseover="this.querySelector('.mod-arrow').style.opacity='1';
+                      this.querySelector('.mod-arrow').style.transform='translateX(0)'"
+         onmouseout="this.querySelector('.mod-arrow').style.opacity='0';
+                     this.querySelector('.mod-arrow').style.transform='translateX(-4px)'">
+      <div class="mod-name">
+        <div style="width:28px;height:28px;border-radius:8px;
+                    background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:0.7rem;font-weight:700;color:var(--accent);flex-shrink:0;">
+          {{ loop.index }}
         </div>
-        {% endfor %}
+        {{ item['module'] }}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="mod-count">{{ item['lessons'] }} lessons</div>
+        <i class="bi bi-chevron-right mod-arrow"
+           style="font-size:0.72rem;color:var(--text-3);opacity:0;
+                  transform:translateX(-4px);transition:all 0.2s var(--ease);"></i>
+      </div>
     </div>
+    {% endfor %}
+  </div>
+
+  <!-- ── INSTRUCTOR CARD ── -->
+  <div class="sf-card reveal" style="padding:22px;margin-top:16px;
+       display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+    <div style="width:52px;height:52px;border-radius:50%;flex-shrink:0;
+                background:linear-gradient(135deg,var(--accent),var(--blue));
+                display:flex;align-items:center;justify-content:center;
+                font-size:1.2rem;font-weight:800;color:#fff;">
+      {{ course['instructor'][0]|upper }}
+    </div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-family:'Inter Tight',sans-serif;font-weight:700;
+                  letter-spacing:-0.02em;margin-bottom:2px;">
+        {{ course['instructor'] }}
+      </div>
+      <div style="font-size:0.78rem;color:var(--text-3);">
+        Course Instructor &nbsp;·&nbsp;
+        <span style="color:var(--warning);">
+          <i class="bi bi-star-fill" style="font-size:0.68rem;"></i>
+          {{ course['rating'] }} rating
+        </span>
+        &nbsp;·&nbsp;
+        <span style="color:var(--text-3);">
+          {{ "{:,}".format(course['students']) }} students
+        </span>
+      </div>
+    </div>
+    <div class="hero-badge" style="font-size:0.72rem;">
+      <i class="bi bi-patch-check-fill"></i> Verified Instructor
+    </div>
+  </div>
 
 </div>
+
+<script>
+// Enroll button loading state
+const enrollBtn = document.getElementById('enroll-btn');
+if (enrollBtn) {
+  enrollBtn.addEventListener('click', function() {
+    this.innerHTML = '<i class="bi bi-hourglass-split"></i> Enrolling...';
+    this.style.opacity = '0.7';
+    this.style.pointerEvents = 'none';
+  });
+}
+</script>
 
 {% endblock %}

@@ -103,31 +103,29 @@ document.querySelectorAll('.btn-primary-sf, .btn-enroll-big').forEach(btn => {
 
 
 // ── 8. MAGNETIC BUTTONS ──────────────────────────────────────────
-document.querySelectorAll('.btn-primary-sf, .btn-enroll-big, .sf-btn-ghost').forEach(btn => {
+// ── 8. MAGNETIC BUTTONS (subtle, Framer-style) ──
+document.querySelectorAll('.btn-primary-sf, .btn-enroll-big').forEach(btn => {
   btn.addEventListener('mousemove', function(e) {
     const rect = btn.getBoundingClientRect();
-    const x = (e.clientX - rect.left - rect.width  / 2) * 0.18;
-    const y = (e.clientY - rect.top  - rect.height / 2) * 0.18;
+    const x = (e.clientX - rect.left - rect.width  / 2) * 0.12;
+    const y = (e.clientY - rect.top  - rect.height / 2) * 0.12;
     btn.style.transform = `translate(${x}px, ${y}px)`;
   });
   btn.addEventListener('mouseleave', function() {
-    btn.style.transform = '';
+    btn.style.transition = 'transform 0.4s var(--ease)';
+    btn.style.transform  = '';
+    setTimeout(() => btn.style.transition = '', 400);
   });
 });
 
 
-// ── 9. MOUSE-TRACKING CARD BORDER GLOW ───────────────────────────
-document.querySelectorAll('.course-card, .landing-course-card, .stat-card').forEach(card => {
+// ── 9. CARD SPOTLIGHT (subtle Framer style) ──
+document.querySelectorAll('.course-card, .landing-course-card, .sf-card').forEach(card => {
   card.addEventListener('mousemove', function(e) {
     const rect = card.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width)  * 100;
-    const y = ((e.clientY - rect.top)  / rect.height) * 100;
-    card.style.setProperty('--mouse-x', x + '%');
-    card.style.setProperty('--mouse-y', y + '%');
-    card.style.background = `
-      radial-gradient(circle at ${x}% ${y}%, rgba(124,58,237,0.07) 0%, transparent 60%),
-      var(--card)
-    `;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    card.style.background = `radial-gradient(300px circle at ${x}px ${y}px, rgba(255,255,255,0.04) 0%, transparent 60%), var(--card)`;
   });
   card.addEventListener('mouseleave', function() {
     card.style.background = '';
