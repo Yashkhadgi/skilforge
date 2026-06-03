@@ -1,247 +1,1393 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SkillForge — Learn Python, Web Development, AI and more for free.">
-    <title>SkillForge — Learn Skills That Matter</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path d='M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z' stroke='%234f8ef7' stroke-width='1.5' fill='none'/></svg>">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SkillForge — The learning platform for next-gen builders. Free forever.">
+  <title>SkillForge — Learn skills that matter</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path d='M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z' stroke='%23ffffff' stroke-width='1.5' fill='none'/></svg>">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Inter+Tight:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #000;
+      color: #fff;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+    ::selection { background: rgba(255,255,255,0.1); }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── ANNOUNCEMENT BAR ── */
+    .announce-bar {
+      background: #fff;
+      color: #000;
+      text-align: center;
+      padding: 10px 24px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      z-index: 200;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .announce-bar:hover { background: #f0f0f0; }
+    .announce-bar span { opacity: 0.5; }
+
+    /* ── NAV ── */
+    .l-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      transition: border-color 0.3s;
+    }
+    .l-nav-inner {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .l-logo {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: 'Inter Tight', sans-serif;
+      font-weight: 800;
+      font-size: 0.95rem;
+      letter-spacing: -0.03em;
+      color: #fff;
+      margin-right: 28px;
+      flex-shrink: 0;
+    }
+    .l-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex: 1;
+    }
+    .l-nav-link {
+      padding: 5px 12px;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.5);
+      transition: color 0.15s;
+      white-space: nowrap;
+      border-radius: 6px;
+    }
+    .l-nav-link:hover { color: rgba(255,255,255,0.9); }
+    .l-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .btn-ghost-nav {
+      padding: 6px 14px;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.55);
+      border-radius: 7px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .btn-ghost-nav:hover { color: #fff; background: rgba(255,255,255,0.06); }
+    .btn-cta-nav {
+      padding: 7px 16px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      background: #fff;
+      color: #000;
+      border-radius: 7px;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .btn-cta-nav:hover { background: rgba(255,255,255,0.88); transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .l-hero {
+      min-height: calc(100vh - 88px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .l-hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(ellipse 65% 65% at 50% 35%, black 10%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 65% 65% at 50% 35%, black 10%, transparent 100%);
+      pointer-events: none;
+    }
+    .l-hero-content { position: relative; z-index: 1; max-width: 720px; }
+    .l-hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 13px;
+      border-radius: 99px;
+      border: 1px solid rgba(255,255,255,0.12);
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 28px;
+      transition: border-color 0.2s, color 0.2s;
+      cursor: pointer;
+    }
+    .l-hero-eyebrow:hover { border-color: rgba(255,255,255,0.25); color: rgba(255,255,255,0.8); }
+    .l-hero-eyebrow-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #fff;
+      opacity: 0.4;
+    }
+    .l-hero-h1 {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(3rem, 7vw, 5.2rem);
+      font-weight: 900;
+      letter-spacing: -0.055em;
+      line-height: 0.95;
+      color: #fff;
+      margin-bottom: 22px;
+    }
+    .l-hero-h1 em {
+      font-style: normal;
+      color: rgba(255,255,255,0.38);
+    }
+    .l-hero-sub {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.45);
+      line-height: 1.65;
+      max-width: 440px;
+      margin: 0 auto 36px;
+      font-weight: 400;
+    }
+    .l-hero-btns {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 52px;
+    }
+    .btn-hero-primary {
+      padding: 12px 22px;
+      background: #fff;
+      color: #000;
+      font-size: 0.88rem;
+      font-weight: 600;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: background 0.15s, transform 0.2s cubic-bezier(0.16,1,0.3,1);
+    }
+    .btn-hero-primary:hover { background: rgba(255,255,255,0.88); transform: translateY(-2px); }
+    .btn-hero-ghost {
+      padding: 12px 18px;
+      background: transparent;
+      color: rgba(255,255,255,0.55);
+      font-size: 0.88rem;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.15s;
+    }
+    .btn-hero-ghost:hover { color: #fff; border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); }
+
+    /* Social proof */
+    .l-social-proof {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.3);
+    }
+    .l-avatars { display: flex; }
+    .l-avatar {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(0,0,0,0.8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.6rem; font-weight: 700;
+      color: rgba(255,255,255,0.7);
+      margin-left: -7px;
+    }
+    .l-avatars .l-avatar:first-child { margin-left: 0; }
+    .proof-div { width: 1px; height: 14px; background: rgba(255,255,255,0.1); }
+    .l-stars { display: flex; gap: 2px; }
+    .l-stars i { font-size: 0.62rem; color: rgba(255,255,255,0.5); }
+
+    /* ── SCROLLING GALLERY ── */
+    .l-gallery {
+      padding: 0;
+      overflow: hidden;
+      position: relative;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .l-gallery::before, .l-gallery::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 160px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .l-gallery::before { left: 0; background: linear-gradient(90deg, #000, transparent); }
+    .l-gallery::after  { right: 0; background: linear-gradient(-90deg, #000, transparent); }
+    .l-gallery-track {
+      display: flex;
+      gap: 12px;
+      padding: 16px 0;
+      width: max-content;
+      animation: marquee-scroll 40s linear infinite;
+    }
+    .l-gallery-track:hover { animation-play-state: paused; }
+    @keyframes marquee-scroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .l-gallery-card {
+      width: 220px;
+      height: 160px;
+      border-radius: 12px;
+      background: #111;
+      border: 1px solid rgba(255,255,255,0.07);
+      overflow: hidden;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+    .l-gallery-card:hover { border-color: rgba(255,255,255,0.14); }
+    .l-gallery-card-inner {
+      padding: 16px;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .card-cat-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 5px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.4);
+      width: fit-content;
+    }
+    .card-title-sm {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.25;
+    }
+    .card-bar {
+      height: 2px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .card-bar-fill {
+      height: 100%;
+      background: rgba(255,255,255,0.3);
+      border-radius: 99px;
+    }
+    .card-meta-sm {
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.25);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* ── TABS SECTION ── */
+    .l-section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 100px 24px;
+    }
+    .l-section-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 14px;
+    }
+    .l-section-h2 {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(1.9rem, 4vw, 2.8rem);
+      font-weight: 900;
+      letter-spacing: -0.045em;
+      line-height: 1.05;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+    .l-section-h2 em {
+      font-style: normal;
+      color: rgba(255,255,255,0.35);
+    }
+    .l-section-sub {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.4);
+      line-height: 1.6;
+      max-width: 460px;
+    }
+    .l-divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+    }
+
+    /* Tabs */
+    .l-tabs {
+      display: flex;
+      gap: 2px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      margin-bottom: 32px;
+    }
+    .l-tab {
+      padding: 10px 16px;
+      font-size: 0.83rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.35);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .l-tab:hover { color: rgba(255,255,255,0.7); }
+    .l-tab.active { color: #fff; border-bottom-color: #fff; }
+
+    .l-tab-panel { display: none; }
+    .l-tab-panel.active { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center; }
+
+    .tab-visual {
+      background: #0d0d0d;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      overflow: hidden;
+      height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .tab-visual-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+    .tab-visual-content { position: relative; z-index: 1; padding: 24px; width: 100%; }
+    .mini-course-row {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 9px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+    .mini-course-row:hover { border-color: rgba(255,255,255,0.14); }
+    .mini-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; flex-shrink: 0;
+    }
+    .mini-title { font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.8); margin-bottom: 4px; }
+    .mini-bar-wrap { flex: 1; }
+    .mini-bar { height: 2px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
+    .mini-bar-fill { height: 100%; background: rgba(255,255,255,0.25); border-radius: 99px; }
+    .mini-pct { font-size: 0.65rem; color: rgba(255,255,255,0.25); margin-top: 3px; }
+
+    .tab-info h3 {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: #fff;
+      margin-bottom: 10px;
+      line-height: 1.15;
+    }
+    .tab-info p { font-size: 0.87rem; color: rgba(255,255,255,0.4); line-height: 1.65; margin-bottom: 20px; }
+    .tab-learn-link {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.15s;
+    }
+    .tab-learn-link:hover { color: #fff; }
+
+    /* ── BENTO GRID ── */
+    .l-bento {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: auto;
+      gap: 10px;
+    }
+    .bento-card {
+      background: #0d0d0d;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 28px;
+      overflow: hidden;
+      position: relative;
+      transition: border-color 0.25s cubic-bezier(0.16,1,0.3,1), transform 0.25s cubic-bezier(0.16,1,0.3,1);
+    }
+    .bento-card:hover {
+      border-color: rgba(255,255,255,0.13);
+      transform: translateY(-2px);
+    }
+    .bc-1 { grid-column: span 7; }
+    .bc-2 { grid-column: span 5; }
+    .bc-3 { grid-column: span 4; }
+    .bc-4 { grid-column: span 4; }
+    .bc-5 { grid-column: span 4; }
+
+    .bento-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .bento-h {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      color: #fff;
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .bento-p {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.35);
+      line-height: 1.6;
+    }
+
+    /* Bento visual elements */
+    .bento-visual-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 9px;
+      margin-top: 16px;
+    }
+    .bento-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .bento-line { flex: 1; height: 2px; background: rgba(255,255,255,0.06); border-radius: 99px; }
+    .bento-line-fill { height: 100%; border-radius: 99px; background: rgba(255,255,255,0.2); }
+
+    .bento-stat-big {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      color: #fff;
+      line-height: 1;
+      margin: 16px 0 4px;
+    }
+
+    /* ── MARQUEE LOGOS ── */
+    .l-marquee-section {
+      padding: 48px 0;
+      overflow: hidden;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: #040404;
+    }
+    .l-marquee-label {
+      text-align: center;
+      font-size: 0.74rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .l-marquee-track {
+      display: flex;
+      gap: 48px;
+      width: max-content;
+      animation: marquee-scroll 30s linear infinite;
+    }
+    .l-marquee-track-2 {
+      animation-direction: reverse;
+      animation-duration: 25s;
+    }
+    .l-marquee-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.12);
+      white-space: nowrap;
+      font-family: 'Inter Tight', sans-serif;
+      letter-spacing: -0.02em;
+      transition: color 0.2s;
+    }
+    .l-marquee-item:hover { color: rgba(255,255,255,0.3); }
+    .l-marquee-item i { font-size: 1rem; }
+
+    /* ── TESTIMONIALS ── */
+    .l-testimonials-grid {
+      columns: 3;
+      column-gap: 10px;
+    }
+    .l-tcard {
+      break-inside: avoid;
+      background: #0d0d0d;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .l-tcard:hover { border-color: rgba(255,255,255,0.13); transform: translateY(-2px); }
+    .l-tcard-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .l-tcard-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 700;
+      color: rgba(255,255,255,0.6);
+      flex-shrink: 0;
+    }
+    .l-tcard-name { font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.8); }
+    .l-tcard-handle { font-size: 0.72rem; color: rgba(255,255,255,0.25); }
+    .l-tcard-body { font-size: 0.82rem; color: rgba(255,255,255,0.45); line-height: 1.6; }
+    .l-tcard-body strong { color: rgba(255,255,255,0.75); font-weight: 500; }
+
+    /* ── FINAL CTA ── */
+    .l-final-cta {
+      text-align: center;
+      padding: 120px 24px;
+      position: relative;
+      overflow: hidden;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .l-final-cta::before {
+      content: '';
+      position: absolute;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .l-final-h {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 900;
+      letter-spacing: -0.055em;
+      line-height: 0.95;
+      color: #fff;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .l-final-h em { font-style: normal; color: rgba(255,255,255,0.3); }
+    .l-final-sub {
+      font-size: 0.92rem;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 36px;
+      position: relative;
+    }
+
+    /* ── FOOTER ── */
+    .l-footer {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 48px 24px 32px;
+      background: #000;
+    }
+    .l-footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+    .l-footer-brand p {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.25);
+      line-height: 1.6;
+      margin-top: 12px;
+      max-width: 220px;
+    }
+    .l-footer-col h4 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+      margin-bottom: 14px;
+    }
+    .l-footer-col a {
+      display: block;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 9px;
+      transition: color 0.15s;
+    }
+    .l-footer-col a:hover { color: rgba(255,255,255,0.8); }
+    .l-footer-bottom {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.76rem;
+      color: rgba(255,255,255,0.2);
+    }
+
+    /* ── ANIMATIONS ── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.65s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.65s cubic-bezier(0.16,1,0.3,1);
+    }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+    .fd-1 { transition-delay: 0.05s; }
+    .fd-2 { transition-delay: 0.12s; }
+    .fd-3 { transition-delay: 0.19s; }
+    .fd-4 { transition-delay: 0.26s; }
+
+    @media (max-width: 800px) {
+      .l-footer-inner { grid-template-columns: 1fr 1fr; }
+      .l-bento { grid-template-columns: 1fr; }
+      .bc-1,.bc-2,.bc-3,.bc-4,.bc-5 { grid-column: span 1; }
+      .l-tab-panel.active { grid-template-columns: 1fr; }
+      .l-testimonials-grid { columns: 1; }
+      .l-nav-links { display: none; }
+    }
+  </style>
 </head>
 <body>
 
-<!-- ─── NAVBAR ─── -->
-<nav class="sf-nav">
-    <div class="sf-nav-inner">
-        <a href="/" class="sf-logo">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path class="logo-bolt"
-                    d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
-                    stroke="#4f8ef7" stroke-width="1.5"
-                    stroke-linecap="round" stroke-linejoin="round"
-                    fill="none"/>
-            </svg>
-            SkillForge
-        </a>
-        <div style="display:flex; align-items:center; gap:10px;">
-            <a href="/login"    class="sf-btn-ghost">Login</a>
-            <a href="/register" class="btn-primary-sf"
-               style="width:auto; padding:8px 20px; text-decoration:none; display:inline-block;">
-               Get Started
-            </a>
-        </div>
+<!-- ── ANNOUNCEMENT BAR ── -->
+<a href="/register" class="announce-bar">
+  <span>✦</span>
+  Free forever — no credit card needed. Start learning today
+  <span style="opacity:0.35;">→</span>
+</a>
+
+<!-- ── NAV ── -->
+<nav class="l-nav">
+  <div class="l-nav-inner">
+    <a href="/" class="l-logo">
+      <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
+        <path d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
+          stroke="#fff" stroke-width="1.6"
+          stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      SkillForge
+    </a>
+    <div class="l-nav-links">
+      <a href="/courses"     class="l-nav-link">Courses</a>
+      <a href="#features"    class="l-nav-link">Features</a>
+      <a href="#testimonials"class="l-nav-link">Stories</a>
     </div>
+    <div class="l-nav-right">
+      <a href="/login"    class="btn-ghost-nav">Log in</a>
+      <a href="/register" class="btn-cta-nav">Start for free</a>
+    </div>
+  </div>
 </nav>
 
-<!-- ─── HERO ─── -->
-<section class="landing-hero">
-  <div class="hero-grid"></div>
+<!-- ── HERO ── -->
+<section class="l-hero">
+  <div class="l-hero-grid"></div>
+  <div class="l-hero-content">
 
-  <div class="hero-content">
-
-    <a href="/register" class="hero-badge" style="text-decoration:none;cursor:pointer;
-       transition:border-color 0.2s;"
-       onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'"
-       onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
-      Free for everyone &nbsp;→
+    <a href="/register" class="l-hero-eyebrow fade-up">
+      <span class="l-hero-eyebrow-dot"></span>
+      Free for students everywhere
+      <span style="opacity:0.35;">→</span>
     </a>
 
-    <h1 class="hero-title">
-      Learn skills that<br>
-      <span class="hero-accent">land you jobs.</span>
+    <h1 class="l-hero-h1 fade-up fd-1">
+      Learn skills<br>
+      <em>that land jobs.</em>
     </h1>
 
-    <p class="hero-sub">
-      Structured courses in Python, Web, and AI.
-      Track progress. Build real projects. Zero cost.
+    <p class="l-hero-sub fade-up fd-2">
+      SkillForge is the learning platform trusted by 50,000+ students.
+      Build real skills in Python, Web Dev, and AI — completely free.
     </p>
 
-    <div class="hero-btns">
-      <a href="/register" class="btn-primary-sf"
-         style="width:auto;padding:12px 24px;font-size:0.9rem;">
-        Start learning free
+    <div class="l-hero-btns fade-up fd-3">
+      <a href="/register" class="btn-hero-primary">
+        Start for free
+        <i class="bi bi-arrow-right" style="font-size:0.78rem;"></i>
       </a>
-      <a href="/login" class="sf-btn-ghost" style="padding:12px 20px;font-size:0.9rem;">
-        Sign in
+      <a href="/courses" class="btn-hero-ghost">
+        Browse courses
       </a>
     </div>
 
-    <!-- Social proof -->
-    <div style="margin-top:40px;display:flex;align-items:center;justify-content:center;
-                gap:20px;flex-wrap:wrap;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div style="display:flex;">
-          {% for i in range(4) %}
-          <div style="width:24px;height:24px;border-radius:50%;
-                      background:rgba(255,255,255,{{ 0.15 + i * 0.05 }});
-                      border:1.5px solid rgba(0,0,0,0.4);
-                      margin-left:{{ '-7px' if i > 0 else '0' }};
-                      display:flex;align-items:center;justify-content:center;
-                      font-size:0.58rem;font-weight:700;color:rgba(255,255,255,0.7);">
-            {{ ['A','R','S','V'][i] }}
+    <div class="l-social-proof fade-up fd-4">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="l-avatars">
+          <div class="l-avatar">A</div>
+          <div class="l-avatar">R</div>
+          <div class="l-avatar">S</div>
+          <div class="l-avatar">V</div>
+          <div class="l-avatar">+</div>
+        </div>
+        <span>50,000+ learners</span>
+      </div>
+      <div class="proof-div"></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div class="l-stars">
+          <i class="bi bi-star-fill"></i>
+          <i class="bi bi-star-fill"></i>
+          <i class="bi bi-star-fill"></i>
+          <i class="bi bi-star-fill"></i>
+          <i class="bi bi-star-fill"></i>
+        </div>
+        <span>4.9 avg rating</span>
+      </div>
+      <div class="proof-div"></div>
+      <span>100% free forever</span>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── SCROLLING GALLERY ── -->
+<div class="l-gallery">
+  <div class="l-gallery-track" id="gallery-track">
+    {% set gallery_items = [
+      ('🐍','Python Fundamentals','Beginner','68'),
+      ('🌐','Flask Web Dev','Intermediate','45'),
+      ('🤖','Machine Learning','Intermediate','32'),
+      ('💻','Web Dev Bootcamp','Beginner','81'),
+      ('🧠','AI Intro','Beginner','57'),
+      ('⚡','Data Structures','Advanced','29'),
+      ('⚛️','React JS Complete','Intermediate','73'),
+      ('🔥','Deep Learning','Advanced','19'),
+    ] %}
+    {% for emoji, title, level, pct in gallery_items %}
+    <div class="l-gallery-card">
+      <div class="l-gallery-card-inner">
+        <div>
+          <div class="card-cat-tag">{{ emoji }} {{ level }}</div>
+        </div>
+        <div>
+          <div class="card-title-sm" style="margin-bottom:10px;">{{ title }}</div>
+          <div class="card-bar">
+            <div class="card-bar-fill" style="width:{{ pct }}%;"></div>
           </div>
-          {% endfor %}
+          <div class="card-meta-sm" style="margin-top:5px;">
+            <span>Progress</span>
+            <span>{{ pct }}%</span>
+          </div>
         </div>
-        <span style="font-size:0.78rem;color:rgba(255,255,255,0.4);">
-          50,000+ learners
-        </span>
-      </div>
-      <div style="width:1px;height:16px;background:rgba(255,255,255,0.1);"></div>
-      <div style="display:flex;align-items:center;gap:5px;">
-        {% for i in range(5) %}
-        <i class="bi bi-star-fill" style="font-size:0.65rem;color:rgba(255,255,255,0.6);"></i>
-        {% endfor %}
-        <span style="font-size:0.78rem;color:rgba(255,255,255,0.4);margin-left:4px;">4.9 avg rating</span>
       </div>
     </div>
-
-  </div>
-</section>
-
-<!-- ─── STATS BAR ─── -->
-<div class="section-divider"></div>
-<section class="landing-stats">
-  <div class="stats-inner">
-    <div class="landing-stat">
-      <span class="landing-stat-num" data-count="8" style="color:#fff;">0</span>
-      <span class="landing-stat-label">Expert courses</span>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="landing-stat">
-      <span class="landing-stat-num" data-count="50" style="color:#fff;">0</span>
-      <span class="landing-stat-label">K+ students</span>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="landing-stat">
-      <span class="landing-stat-num" data-count="100" style="color:#fff;">0</span>
-      <span class="landing-stat-label">% free forever</span>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="landing-stat">
-      <span class="landing-stat-num" data-count="49" style="color:#fff;">0</span>
-      <span class="landing-stat-label">Avg rating / 50</span>
-    </div>
-  </div>
-</section>
-<div class="section-divider"></div>
-
-<!-- ─── COURSES PREVIEW — Dynamic from DB ─── -->
-<section class="landing-section">
-    <div class="landing-inner">
-
-      <div class="section-label"
-     style="background:rgba(255,255,255,0.05);
-            border-color:rgba(255,255,255,0.08);
-            color:rgba(255,255,255,0.5);">
-  Featured Courses
-</div>
-            Handpicked courses to get you from zero to job-ready.
-        </p>
-
-        <div class="landing-cards-grid">
-            {% for course in featured %}
-            <div class="landing-course-card" style="--card-color: {{ course['color'] }};">
-                <div class="lc-icon" style="background: {{ course['color'] }}22;">
-                    <i class="bi bi-book-fill" style="color:{{ course['color'] }};"></i>
-                </div>
-                <h3>{{ course['title'] }}</h3>
-                <p>{{ course['description'] }}</p>
-                <div class="lc-meta">
-                    <span><i class="bi bi-clock"></i> {{ course['duration'] }}</span>
-                    <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ course['rating'] }}</span>
-                    <span><i class="bi bi-people-fill"></i> {{ "{:,}".format(course['students']) }}</span>
-                </div>
-            </div>
-            {% endfor %}
+    {% endfor %}
+    <!-- Duplicate for seamless loop -->
+    {% for emoji, title, level, pct in gallery_items %}
+    <div class="l-gallery-card">
+      <div class="l-gallery-card-inner">
+        <div>
+          <div class="card-cat-tag">{{ emoji }} {{ level }}</div>
         </div>
-
-        <div style="text-align:center; margin-top:32px;">
-            <a href="/register" class="sf-btn-ghost" style="padding:11px 28px;">
-                View All Courses <i class="bi bi-arrow-right"></i>
-            </a>
+        <div>
+          <div class="card-title-sm" style="margin-bottom:10px;">{{ title }}</div>
+          <div class="card-bar">
+            <div class="card-bar-fill" style="width:{{ pct }}%;"></div>
+          </div>
+          <div class="card-meta-sm" style="margin-top:5px;">
+            <span>Progress</span>
+            <span>{{ pct }}%</span>
+          </div>
         </div>
-
+      </div>
     </div>
-</section>
-
-<!-- ─── FEATURES ─── -->
-<section class="landing-section" style="background: var(--bg-2);">
-    <div class="landing-inner">
-
-        <div class="section-label"
-     style="background:rgba(255,255,255,0.05);
-            border-color:rgba(255,255,255,0.08);
-            color:rgba(255,255,255,0.5);">
-  Why SkillForge
+    {% endfor %}
+  </div>
 </div>
 
-        <div class="features-grid">
-
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="bi bi-lightning-charge-fill"></i>
-                </div>
-                <h3>Structured Learning</h3>
-                <p>Courses broken into modules — learn at your own pace, track your progress.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(5,150,105,0.12); color:#059669;">
-                    <i class="bi bi-patch-check-fill"></i>
-                </div>
-                <h3>100% Free</h3>
-                <p>No hidden fees, no subscriptions. Every course is completely free forever.</p>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(124,58,237,0.12); color:#7c3aed;">
-                    <i class="bi bi-people-fill"></i>
-                </div>
-                <h3>Growing Community</h3>
-                <p>Join thousands of learners building real skills for real careers.</p>
-            </div>
-
-        </div>
-
+<!-- ── TABS SECTION ── -->
+<div id="features">
+  <div class="l-section fade-up">
+    <div style="max-width:520px;margin-bottom:40px;">
+      <div class="l-section-label">Platform</div>
+      <h2 class="l-section-h2">
+        Everything you need<br>
+        <em>to go from zero to hired.</em>
+      </h2>
     </div>
-</section>
 
-<!-- ─── CTA ─── -->
-<section class="landing-cta">
-    <div class="cta-orb"></div>
-    <div class="landing-inner" style="position:relative; z-index:1; text-align:center;">
-        <h2 class="landing-heading">Ready to Start Learning?</h2>
-        <p class="landing-subheading">
-            Join SkillForge today — it's free, forever.
-        </p>
-        <a href="/register" class="btn-primary-sf"
-           style="width:auto; padding:14px 40px; text-decoration:none;
-                  display:inline-flex; align-items:center; gap:8px;
-                  font-size:1rem; margin-top:8px;">
-            <i class="bi bi-rocket-takeoff-fill"></i> Get Started Free
+    <div class="l-tabs">
+      <div class="l-tab active" data-tab="learn">
+        <i class="bi bi-play-circle" style="font-size:0.82rem;"></i> Learn
+      </div>
+      <div class="l-tab" data-tab="track">
+        <i class="bi bi-graph-up" style="font-size:0.82rem;"></i> Track
+      </div>
+      <div class="l-tab" data-tab="build">
+        <i class="bi bi-code-slash" style="font-size:0.82rem;"></i> Build
+      </div>
+    </div>
+
+    <!-- Tab: Learn -->
+    <div class="l-tab-panel active" id="tab-learn">
+      <div class="tab-visual">
+        <div class="tab-visual-grid"></div>
+        <div class="tab-visual-content">
+          <div class="mini-course-row">
+            <div class="mini-icon">🐍</div>
+            <div class="mini-bar-wrap">
+              <div class="mini-title">Python Fundamentals</div>
+              <div class="mini-bar"><div class="mini-bar-fill" style="width:68%;"></div></div>
+              <div class="mini-pct">68% complete · 5 lessons left</div>
+            </div>
+          </div>
+          <div class="mini-course-row">
+            <div class="mini-icon">🌐</div>
+            <div class="mini-bar-wrap">
+              <div class="mini-title">Flask Web Development</div>
+              <div class="mini-bar"><div class="mini-bar-fill" style="width:30%;"></div></div>
+              <div class="mini-pct">30% complete · 12 lessons left</div>
+            </div>
+          </div>
+          <div class="mini-course-row" style="opacity:0.45;">
+            <div class="mini-icon">🤖</div>
+            <div class="mini-bar-wrap">
+              <div class="mini-title">Machine Learning Basics</div>
+              <div class="mini-bar"><div class="mini-bar-fill" style="width:0%;"></div></div>
+              <div class="mini-pct">Not started</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-info">
+        <h3>Self-paced structured learning</h3>
+        <p>Expert-built courses broken into focused modules. Learn at your own speed — pause, rewind, revisit anytime. No deadlines, no pressure.</p>
+        <a href="/courses" class="tab-learn-link">
+          Browse all courses <i class="bi bi-arrow-right" style="font-size:0.75rem;"></i>
         </a>
+      </div>
     </div>
-</section>
 
-<!-- ─── FOOTER ─── -->
-<footer class="landing-footer">
-    <div class="sf-logo" style="justify-content:center; margin-bottom:8px;">
-        <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-            <path d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
-                stroke="#4f8ef7" stroke-width="1.5"
-                stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <!-- Tab: Track -->
+    <div class="l-tab-panel" id="tab-track">
+      <div class="tab-visual">
+        <div class="tab-visual-grid"></div>
+        <div class="tab-visual-content">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+                        border-radius:9px;padding:14px;">
+              <div style="font-size:0.65rem;color:rgba(255,255,255,0.25);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">Enrolled</div>
+              <div style="font-family:'Inter Tight',sans-serif;font-size:1.8rem;font-weight:900;letter-spacing:-0.04em;color:#fff;">4</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+                        border-radius:9px;padding:14px;">
+              <div style="font-size:0.65rem;color:rgba(255,255,255,0.25);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;">Avg Progress</div>
+              <div style="font-family:'Inter Tight',sans-serif;font-size:1.8rem;font-weight:900;letter-spacing:-0.04em;color:#fff;">62%</div>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);
+                      border-radius:9px;padding:14px;">
+            <div style="font-size:0.65rem;color:rgba(255,255,255,0.25);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;">Weekly Activity</div>
+            <div style="display:flex;gap:4px;align-items:flex-end;height:36px;">
+              {% for h in [40,65,30,85,50,90,70] %}
+              <div style="flex:1;background:rgba(255,255,255,{{ 0.08 + (h/100)*0.2 }});
+                          border-radius:3px;height:{{ h }}%;transition:height 0.5s;"></div>
+              {% endfor %}
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:0.6rem;color:rgba(255,255,255,0.2);">
+              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-info">
+        <h3>Your personal learning dashboard</h3>
+        <p>See exactly where you are across every course. Track weekly activity, monitor progress, and stay consistent with your learning goals.</p>
+        <a href="/register" class="tab-learn-link">
+          Get your dashboard <i class="bi bi-arrow-right" style="font-size:0.75rem;"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Tab: Build -->
+    <div class="l-tab-panel" id="tab-build">
+      <div class="tab-visual">
+        <div class="tab-visual-grid"></div>
+        <div class="tab-visual-content">
+          <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+                      border-radius:9px;padding:16px;font-family:monospace;">
+            <div style="display:flex;gap:5px;margin-bottom:12px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:rgba(255,68,68,0.4);"></div>
+              <div style="width:8px;height:8px;border-radius:50%;background:rgba(245,158,11,0.4);"></div>
+              <div style="width:8px;height:8px;border-radius:50%;background:rgba(0,201,81,0.3);"></div>
+            </div>
+            <div style="font-size:0.72rem;line-height:1.8;color:rgba(255,255,255,0.4);">
+              <span style="color:rgba(130,170,255,0.7);">def</span>
+              <span style="color:rgba(255,255,255,0.7);"> greet</span>
+              <span style="color:rgba(255,255,255,0.4);">(name):</span><br>
+              &nbsp;&nbsp;<span style="color:rgba(130,170,255,0.7);">return</span>
+              <span style="color:rgba(255,200,100,0.7);"> f"Hello, {name}!"</span><br><br>
+              <span style="color:rgba(255,255,255,0.4);">print(greet(</span>
+              <span style="color:rgba(255,200,100,0.7);">"SkillForge"</span>
+              <span style="color:rgba(255,255,255,0.4);">))</span><br><br>
+              <span style="color:rgba(0,201,81,0.6);"># Output: Hello, SkillForge!</span>
+            </div>
+          </div>
+          <div class="mini-course-row" style="margin-top:8px;">
+            <div class="mini-icon" style="color:rgba(0,201,81,0.7);background:rgba(0,201,81,0.06);">
+              <i class="bi bi-check2-circle"></i>
+            </div>
+            <div>
+              <div style="font-size:0.75rem;font-weight:600;color:rgba(255,255,255,0.6);">Project submitted</div>
+              <div style="font-size:0.65rem;color:rgba(255,255,255,0.2);">Python Basics — Module 3</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tab-info">
+        <h3>Build real projects, not toy exercises</h3>
+        <p>Every course ends with a project you can put in your portfolio. Apply what you learn to problems that actually matter in the industry.</p>
+        <a href="/courses" class="tab-learn-link">
+          See what you'll build <i class="bi bi-arrow-right" style="font-size:0.75rem;"></i>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="l-divider"></div>
+
+<!-- ── BENTO GRID ── -->
+<div class="l-section fade-up">
+  <div style="max-width:500px;margin-bottom:40px;">
+    <div class="l-section-label">Why SkillForge</div>
+    <h2 class="l-section-h2">
+      Built for learners<br>
+      <em>who mean business.</em>
+    </h2>
+  </div>
+
+  <div class="l-bento">
+    <!-- Big card -->
+    <div class="bento-card bc-1">
+      <div class="bento-tag"><i class="bi bi-collection"></i> 8 Courses</div>
+      <div class="bento-h">Everything from zero<br>to job-ready.</div>
+      <div class="bento-p">Python, Web Dev, AI, React, Data Structures — all in one place. No scattered resources, no confusion.</div>
+      <div style="margin-top:20px;display:flex;flex-direction:column;gap:6px;">
+        {% for name, pct, color in [('Python Fundamentals','68','rgba(255,255,255,0.4)'),
+           ('Flask Web Dev','30','rgba(255,255,255,0.3)'),('ML Basics','15','rgba(255,255,255,0.2)')] %}
+        <div class="bento-visual-row">
+          <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);width:120px;flex-shrink:0;">{{ name }}</span>
+          <div class="bento-line"><div class="bento-line-fill" style="width:{{ pct }}%;background:{{ color }};"></div></div>
+          <span style="font-size:0.65rem;color:rgba(255,255,255,0.2);width:28px;text-align:right;flex-shrink:0;">{{ pct }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Stat card -->
+    <div class="bento-card bc-2" style="display:flex;flex-direction:column;justify-content:space-between;">
+      <div class="bento-tag"><i class="bi bi-people"></i> Community</div>
+      <div>
+        <div class="bento-stat-big">50K+</div>
+        <div class="bento-h" style="font-size:1rem;">Active learners<br>worldwide.</div>
+      </div>
+      <div class="bento-p">Students from 40+ countries building careers with SkillForge.</div>
+    </div>
+
+    <!-- Free card -->
+    <div class="bento-card bc-3">
+      <div class="bento-tag"><i class="bi bi-infinity"></i> Pricing</div>
+      <div class="bento-stat-big">$0</div>
+      <div class="bento-h" style="font-size:1rem;margin-top:4px;">Free forever.</div>
+      <div class="bento-p" style="margin-top:6px;">No subscription. No paywall. Every course, every feature — free.</div>
+    </div>
+
+    <!-- Rating card -->
+    <div class="bento-card bc-4">
+      <div class="bento-tag"><i class="bi bi-star-fill"></i> Quality</div>
+      <div class="bento-stat-big">4.9</div>
+      <div class="bento-h" style="font-size:1rem;margin-top:4px;">Average rating</div>
+      <div class="bento-p" style="margin-top:6px;">Across all courses, rated by real students.</div>
+    </div>
+
+    <!-- Self-paced card -->
+    <div class="bento-card bc-5">
+      <div class="bento-tag"><i class="bi bi-clock"></i> Pace</div>
+      <div class="bento-h" style="margin-top:12px;">Your schedule.<br>Your speed.</div>
+      <div class="bento-p" style="margin-top:8px;">No deadlines. No pressure. Learn when you want, as fast as you want.</div>
+      <div style="margin-top:16px;display:flex;gap:6px;">
+        {% for t in ['Morning','Evening','Weekend'] %}
+        <span style="padding:4px 9px;background:rgba(255,255,255,0.04);
+                     border:1px solid rgba(255,255,255,0.07);border-radius:5px;
+                     font-size:0.66rem;color:rgba(255,255,255,0.3);">{{ t }}</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="l-divider"></div>
+
+<!-- ── MARQUEE LOGOS ── -->
+<div class="l-marquee-section">
+  <div class="l-marquee-label">Learners placed at top companies</div>
+  <div style="overflow:hidden;margin-bottom:16px;">
+    <div class="l-marquee-track">
+      {% for name, icon in [('Google','bi-google'),('Amazon','bi-amazon'),('Microsoft','bi-microsoft'),
+         ('Meta','bi-meta'),('Apple','bi-apple'),('Netflix','bi-display'),('Uber','bi-car-front'),
+         ('Airbnb','bi-house'),('Spotify','bi-spotify'),('Twitter','bi-twitter-x')] %}
+      <div class="l-marquee-item">
+        <i class="bi {{ icon }}"></i> {{ name }}
+      </div>
+      {% endfor %}
+      {% for name, icon in [('Google','bi-google'),('Amazon','bi-amazon'),('Microsoft','bi-microsoft'),
+         ('Meta','bi-meta'),('Apple','bi-apple'),('Netflix','bi-display'),('Uber','bi-car-front'),
+         ('Airbnb','bi-house'),('Spotify','bi-spotify'),('Twitter','bi-twitter-x')] %}
+      <div class="l-marquee-item">
+        <i class="bi {{ icon }}"></i> {{ name }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="l-divider"></div>
+
+<!-- ── TESTIMONIALS ── -->
+<div id="testimonials" class="l-section fade-up">
+  <div style="max-width:460px;margin-bottom:48px;">
+    <div class="l-section-label">Testimonials</div>
+    <h2 class="l-section-h2">
+      Loved by learners<br>
+      <em>everywhere.</em>
+    </h2>
+  </div>
+
+  <div class="l-testimonials-grid">
+   {% set testimonials = [
+  ('Arjun M','@arjundev','A','SkillForge helped me land my first dev internship. The <strong>Python course was incredible</strong> — structured, clear, and actually practical.'),
+  ('Sneha R','@snehacodes','S','I tried 4 platforms before this. SkillForge is the only one that kept me consistent. <strong>The progress tracking is addictive.</strong>'),
+  ('Rahul V','@rahulbuilds','R','Started Flask Web Dev with zero backend knowledge. 3 months later, <strong>I built and shipped my first SaaS.</strong> Insane.'),
+  ('Priya K','@priyaml','P',"The ML course is <strong>genuinely the best free resource</strong> I've found. Better than most paid courses I've taken."),
+  ('Vikram S','@vikramcodes','V','Clean UI, great content, zero BS. <strong>This is what every learning platform should be.</strong>'),
+  ('Ananya J','@ananyajs','A',"I got placed at a product startup. SkillForge's React course was literally <strong>the thing that got me the job.</strong>"),
+  ('Dev P','@devpython','D',"The fact that it's 100% free is insane. I keep waiting for a paywall that never comes. <strong>Thank you SkillForge.</strong>"),
+  ('Meera T','@meeratech','M','Dashboard shows my progress so clearly. <strong>Went from 0% to 100% on Python</strong> in 6 weeks. Never looked back.'),
+] %}
+    {% for name, handle, initial, text in testimonials %}
+    <div class="l-tcard">
+      <div class="l-tcard-header">
+        <div class="l-tcard-avatar">{{ initial }}</div>
+        <div>
+          <div class="l-tcard-name">{{ name }}</div>
+          <div class="l-tcard-handle">{{ handle }}</div>
+        </div>
+      </div>
+      <div class="l-tcard-body">{{ text }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="l-divider"></div>
+
+<!-- ── FEATURED COURSES ── -->
+<div class="l-section fade-up">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;
+              margin-bottom:32px;flex-wrap:wrap;gap:16px;">
+    <div>
+      <div class="l-section-label">Courses</div>
+      <h2 class="l-section-h2" style="margin-bottom:0;">
+        Start with<br><em>the best.</em>
+      </h2>
+    </div>
+    <a href="/courses" style="font-size:0.82rem;color:rgba(255,255,255,0.35);
+       display:inline-flex;align-items:center;gap:5px;transition:color 0.15s;"
+       onmouseover="this.style.color='rgba(255,255,255,0.7)'"
+       onmouseout="this.style.color='rgba(255,255,255,0.35)'">
+      View all courses
+      <i class="bi bi-arrow-right" style="font-size:0.75rem;"></i>
+    </a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+    {% for course in featured %}
+    <a href="/register" style="display:block;background:#0d0d0d;
+       border:1px solid rgba(255,255,255,0.07);border-radius:14px;
+       overflow:hidden;text-decoration:none;color:#fff;
+       transition:border-color 0.25s,transform 0.25s cubic-bezier(0.16,1,0.3,1);"
+       onmouseover="this.style.borderColor='rgba(255,255,255,0.14)';this.style.transform='translateY(-3px)'"
+       onmouseout="this.style.borderColor='rgba(255,255,255,0.07)';this.style.transform=''">
+      <div style="height:100px;background:rgba(255,255,255,0.03);
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:2.2rem;border-bottom:1px solid rgba(255,255,255,0.05);">
+        {% if course['category']=='Python' %}🐍
+        {% elif course['category']=='Web' %}🌐
+        {% elif course['category']=='AI' %}🤖
+        {% else %}📚{% endif %}
+      </div>
+      <div style="padding:18px;">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+          <span style="padding:2px 7px;background:rgba(255,255,255,0.05);
+                       border:1px solid rgba(255,255,255,0.08);border-radius:4px;
+                       font-size:0.65rem;font-weight:600;
+                       color:rgba(255,255,255,0.35);letter-spacing:0.04em;">
+            {{ course['level']|upper }}
+          </span>
+          <span style="padding:2px 7px;background:rgba(255,255,255,0.05);
+                       border:1px solid rgba(255,255,255,0.08);border-radius:4px;
+                       font-size:0.65rem;font-weight:600;
+                       color:rgba(255,255,255,0.35);letter-spacing:0.04em;">
+            {{ course['category']|upper }}
+          </span>
+        </div>
+        <div style="font-family:'Inter Tight',sans-serif;font-size:0.95rem;
+                    font-weight:800;letter-spacing:-0.03em;
+                    color:rgba(255,255,255,0.9);margin-bottom:6px;">
+          {{ course['title'] }}
+        </div>
+        <div style="font-size:0.75rem;color:rgba(255,255,255,0.3);margin-bottom:14px;">
+          {{ course['instructor'] }}
+        </div>
+        <div style="display:flex;gap:12px;font-size:0.72rem;
+                    color:rgba(255,255,255,0.25);
+                    padding-top:12px;border-top:1px solid rgba(255,255,255,0.05);">
+          <span>⭐ {{ course['rating'] }}</span>
+          <span>{{ "{:,}".format(course['students']) }} students</span>
+          <span>{{ course['duration'] }}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="l-divider"></div>
+
+<!-- ── FINAL CTA ── -->
+<div class="l-final-cta fade-up">
+  <h2 class="l-final-h">
+    Ready to start<br>
+    <em>your journey?</em>
+  </h2>
+  <p class="l-final-sub">
+    Join 50,000+ learners. Free forever. No credit card needed.
+  </p>
+  <div style="display:flex;align-items:center;justify-content:center;gap:10px;position:relative;">
+    <a href="/register" class="btn-hero-primary" style="font-size:0.9rem;padding:13px 26px;">
+      Start for free
+      <i class="bi bi-arrow-right" style="font-size:0.78rem;"></i>
+    </a>
+    <a href="/courses" class="btn-hero-ghost" style="font-size:0.9rem;padding:13px 20px;">
+      Browse courses
+    </a>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer class="l-footer">
+  <div class="l-footer-inner">
+    <div class="l-footer-brand">
+      <div style="display:flex;align-items:center;gap:7px;font-family:'Inter Tight',sans-serif;
+                  font-weight:800;font-size:0.95rem;letter-spacing:-0.03em;color:#fff;">
+        <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+          <path d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
+            stroke="#fff" stroke-width="1.6"
+            stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
         SkillForge
+      </div>
+      <p>The learning platform for people who mean business. Free forever.</p>
     </div>
-    <p style="color:var(--text-2); font-size:0.8rem;">
-        © 2025 SkillForge. Built with Flask.
-    </p>
+    <div class="l-footer-col">
+      <h4>Courses</h4>
+      <a href="/courses?category=Python">Python</a>
+      <a href="/courses?category=Web">Web Dev</a>
+      <a href="/courses?category=AI">AI & ML</a>
+    </div>
+    <div class="l-footer-col">
+      <h4>Platform</h4>
+      <a href="/register">Get Started</a>
+      <a href="/login">Sign In</a>
+      <a href="/courses">Browse</a>
+    </div>
+    <div class="l-footer-col">
+      <h4>Info</h4>
+      <a href="#">About</a>
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+    </div>
+  </div>
+  <div class="l-footer-bottom">
+    <span>© 2025 SkillForge. All rights reserved.</span>
+    <span>Built with Flask &amp; ❤️</span>
+  </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{{ url_for('static', filename='main.js') }}"></script>
+<script>
+// ── SCROLL REVEAL ──
+const fadeEls = document.querySelectorAll('.fade-up');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach((en, i) => {
+    if (en.isIntersecting) {
+      setTimeout(() => en.target.classList.add('visible'), i * 40);
+      obs.unobserve(en.target);
+    }
+  });
+}, { threshold: 0.08 });
+fadeEls.forEach(el => obs.observe(el));
+
+// Trigger hero immediately
+document.querySelectorAll('.l-hero-content .fade-up').forEach((el, i) => {
+  setTimeout(() => el.classList.add('visible'), 100 + i * 90);
+});
+
+// ── TABS ──
+document.querySelectorAll('.l-tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.l-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.l-tab-panel').forEach(p => p.classList.remove('active'));
+    this.classList.add('active');
+    const panel = document.getElementById('tab-' + this.dataset.tab);
+    if (panel) {
+      panel.classList.add('active');
+      panel.style.opacity = '0';
+      panel.style.transform = 'translateY(8px)';
+      requestAnimationFrame(() => {
+        panel.style.transition = 'opacity 0.35s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1)';
+        panel.style.opacity = '1';
+        panel.style.transform = 'translateY(0)';
+      });
+    }
+  });
+});
+
+// ── COUNT-UP ──
+function countUp(el) {
+  const target = parseInt(el.getAttribute('data-count')) || 0;
+  const dur = 1200;
+  const start = performance.now();
+  function step(now) {
+    const p = Math.min((now - start) / dur, 1);
+    const e = 1 - Math.pow(1 - p, 4);
+    el.textContent = Math.floor(e * target).toLocaleString();
+    if (p < 1) requestAnimationFrame(step);
+    else el.textContent = target.toLocaleString();
+  }
+  requestAnimationFrame(step);
+}
+const cObs = new IntersectionObserver(entries => {
+  entries.forEach(en => {
+    if (en.isIntersecting) { countUp(en.target); cObs.unobserve(en.target); }
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('[data-count]').forEach(el => cObs.observe(el));
+
+// ── CARD SPOTLIGHT ──
+document.querySelectorAll('.bento-card, .l-tcard').forEach(card => {
+  card.addEventListener('mousemove', function(e) {
+    const r = card.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    card.style.background = `radial-gradient(280px circle at ${x}px ${y}px, rgba(255,255,255,0.04) 0%, transparent 65%), #0d0d0d`;
+  });
+  card.addEventListener('mouseleave', function() {
+    card.style.background = '';
+  });
+});
+
+// ── MAGNETIC BTNS ──
+document.querySelectorAll('.btn-hero-primary, .btn-cta-nav').forEach(btn => {
+  btn.addEventListener('mousemove', function(e) {
+    const r = btn.getBoundingClientRect();
+    const x = (e.clientX - r.left - r.width/2) * 0.15;
+    const y = (e.clientY - r.top - r.height/2) * 0.15;
+    btn.style.transform = `translate(${x}px,${y}px)`;
+  });
+  btn.addEventListener('mouseleave', function() {
+    btn.style.transition = 'transform 0.5s cubic-bezier(0.16,1,0.3,1), background 0.15s';
+    btn.style.transform = '';
+    setTimeout(() => btn.style.transition = '', 500);
+  });
+});
+</script>
 
 </body>
 </html>

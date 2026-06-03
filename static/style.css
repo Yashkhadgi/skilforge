@@ -830,21 +830,16 @@ body {
   z-index: 0;
 }
 
-.hero-orb {
+.hero-grid {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -60%);
-  width: 700px;
-  height: 700px;
-  background: radial-gradient(circle,
-    rgba(124,58,237,0.18) 0%,
-    rgba(79,142,247,0.08) 40%,
-    transparent 70%);
-  border-radius: 50%;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, black 20%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, black 20%, transparent 100%);
   pointer-events: none;
-  animation: orb-breathe 8s ease-in-out infinite;
-  z-index: 0;
 }
 
 @keyframes orb-breathe {
@@ -902,12 +897,10 @@ body {
 }
 
 .hero-accent {
-  background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #a78bfa 100%);
-  background-size: 200%;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.55) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: gradient-shift 4s ease infinite;
 }
 @keyframes gradient-shift {
   0%   { background-position: 0% 50%; }
