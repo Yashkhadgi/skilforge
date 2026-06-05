@@ -1,12 +1,26 @@
 from flask import Flask, render_template, request, redirect, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
+from functools import wraps
+from datetime import datetime
 import sqlite3
 import os
+import re
+import secrets
 
 load_dotenv()
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "fallback-dev-key")
+
+_secret = os.environ.get("SECRET_KEY")
+if not _secret:
+    import warnings
+    warnings.warn(
+        "SECRET_KEY is not set. Using an insecure fallback. "
+        "Set SECRET_KEY in your environment before deploying.",
+        stacklevel=2
+    )
+    _secret = "fallback-dev-key-do-not-use-in-production"
+app.secret_key = _secret
 
 
 # -------------------------------------------------------------------
@@ -21,76 +35,85 @@ def get_db():
 
 def init_db():
     conn = get_db()
-    conn.executescript("""
+    try:
+        conn.executescript("""
 
-        CREATE TABLE IF NOT EXISTS users (
-            id       INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email    TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            is_admin INTEGER DEFAULT 0
-        );
+            CREATE TABLE IF NOT EXISTS users (
+                id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                email    TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                is_admin INTEGER DEFAULT 0
+            );
 
-        CREATE TABLE IF NOT EXISTS courses (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            title       TEXT NOT NULL,
-            instructor  TEXT NOT NULL,
-            category    TEXT NOT NULL,
-            level       TEXT NOT NULL,
-            duration    TEXT NOT NULL,
-            rating      REAL NOT NULL,
-            students    INTEGER NOT NULL,
-            description TEXT NOT NULL,
-            color       TEXT NOT NULL
-        );
+            CREATE TABLE IF NOT EXISTS courses (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                title       TEXT NOT NULL,
+                instructor  TEXT NOT NULL,
+                category    TEXT NOT NULL,
+                level       TEXT NOT NULL,
+                duration    TEXT NOT NULL,
+                rating      REAL NOT NULL,
+                students    INTEGER NOT NULL,
+                description TEXT NOT NULL,
+                color       TEXT NOT NULL
+            );
 
-        CREATE TABLE IF NOT EXISTS enrollments (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id     INTEGER NOT NULL,
-            course_id   INTEGER NOT NULL,
-            progress    INTEGER DEFAULT 0,
-            enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id)   REFERENCES users(id),
-            FOREIGN KEY (course_id) REFERENCES courses(id)
-        );
+            CREATE TABLE IF NOT EXISTS enrollments (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     INTEGER NOT NULL,
+                course_id   INTEGER NOT NULL,
+                progress    INTEGER DEFAULT 0,
+                enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id)   REFERENCES users(id),
+                FOREIGN KEY (course_id) REFERENCES courses(id)
+            );
 
-    """)
-    conn.commit()
-
-    # ------- Seed admin user -------
-    admin_exists = conn.execute(
-        "SELECT id FROM users WHERE username = 'admin'"
-    ).fetchone()
-
-    if not admin_exists:
-        admin_pw = os.environ.get("ADMIN_PASSWORD", "admin123")
-        hashed = generate_password_hash(admin_pw, method='pbkdf2:sha256')
-        conn.execute(
-            "INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)",
-            ("admin", "admin@skillforge.com", hashed, 1)
-        )
+        """)
         conn.commit()
 
-    # ------- Seed courses -------
-    count = conn.execute("SELECT COUNT(*) FROM courses").fetchone()[0]
-    if count == 0:
-        courses = [
-            ("Python Fundamentals",        "Arjun Mehta",   "Python", "Beginner",     "14 hrs", 4.8, 12400, "Master Python from scratch. Variables, loops, functions, OOP and more.",        "#4f8ef7"),
-            ("Flask Web Development",      "Priya Sharma",  "Web",    "Intermediate", "18 hrs", 4.7,  8900, "Build real web apps with Flask. Routing, templates, databases, auth.",          "#7c3aed"),
-            ("Machine Learning Basics",    "Rahul Verma",   "AI",     "Intermediate", "22 hrs", 4.9,  6700, "Learn ML algorithms, data preprocessing, model training with scikit-learn.",   "#059669"),
-            ("Web Development Bootcamp",   "Sneha Iyer",    "Web",    "Beginner",     "30 hrs", 4.6, 15200, "HTML, CSS, JavaScript — build modern websites from scratch.",                  "#db2777"),
-            ("AI Introduction",            "Vikram Nair",   "AI",     "Beginner",     "10 hrs", 4.5,  9300, "Understand AI concepts, use cases, and how modern AI systems work.",           "#d97706"),
-            ("Data Structures & Algo",     "Ankit Gupta",   "Python", "Advanced",     "25 hrs", 4.9,  7800, "Master DSA with Python. Arrays, trees, graphs, dynamic programming.",          "#0891b2"),
-            ("React JS Complete Guide",    "Neha Kulkarni", "Web",    "Intermediate", "20 hrs", 4.7, 11000, "Build dynamic UIs with React. Hooks, state management, REST APIs.",            "#ea580c"),
-            ("Deep Learning with PyTorch", "Siddharth Rao", "AI",     "Advanced",     "28 hrs", 4.8,  4200, "Neural networks, CNNs, RNNs — build and train deep learning models.",          "#16a34a"),
-        ]
-        conn.executemany(
-            "INSERT INTO courses (title,instructor,category,level,duration,rating,students,description,color) VALUES (?,?,?,?,?,?,?,?,?)",
-            courses
-        )
-        conn.commit()
+        # ------- Seed admin user -------
+        admin_exists = conn.execute(
+            "SELECT id FROM users WHERE username = 'admin'"
+        ).fetchone()
 
-    conn.close()
+        if not admin_exists:
+            admin_pw = os.environ.get("ADMIN_PASSWORD")
+            if not admin_pw:
+                import warnings
+                warnings.warn(
+                    "ADMIN_PASSWORD is not set. Defaulting to 'admin123'. "
+                    "Change this immediately in production.",
+                    stacklevel=2
+                )
+                admin_pw = "admin123"
+            hashed = generate_password_hash(admin_pw, method='pbkdf2:sha256')
+            conn.execute(
+                "INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)",
+                ("admin", "admin@skillforge.com", hashed, 1)
+            )
+            conn.commit()
+
+        # ------- Seed courses -------
+        count = conn.execute("SELECT COUNT(*) FROM courses").fetchone()[0]
+        if count == 0:
+            courses = [
+                ("Python Fundamentals",        "Arjun Mehta",   "Python", "Beginner",     "14 hrs", 4.8, 12400, "Master Python from scratch. Variables, loops, functions, OOP and more.",        "#4f8ef7"),
+                ("Flask Web Development",      "Priya Sharma",  "Web",    "Intermediate", "18 hrs", 4.7,  8900, "Build real web apps with Flask. Routing, templates, databases, auth.",          "#7c3aed"),
+                ("Machine Learning Basics",    "Rahul Verma",   "AI",     "Intermediate", "22 hrs", 4.9,  6700, "Learn ML algorithms, data preprocessing, model training with scikit-learn.",   "#059669"),
+                ("Web Development Bootcamp",   "Sneha Iyer",    "Web",    "Beginner",     "30 hrs", 4.6, 15200, "HTML, CSS, JavaScript — build modern websites from scratch.",                  "#db2777"),
+                ("AI Introduction",            "Vikram Nair",   "AI",     "Beginner",     "10 hrs", 4.5,  9300, "Understand AI concepts, use cases, and how modern AI systems work.",           "#d97706"),
+                ("Data Structures & Algo",     "Ankit Gupta",   "Python", "Advanced",     "25 hrs", 4.9,  7800, "Master DSA with Python. Arrays, trees, graphs, dynamic programming.",          "#0891b2"),
+                ("React JS Complete Guide",    "Neha Kulkarni", "Web",    "Intermediate", "20 hrs", 4.7, 11000, "Build dynamic UIs with React. Hooks, state management, REST APIs.",            "#ea580c"),
+                ("Deep Learning with PyTorch", "Siddharth Rao", "AI",     "Advanced",     "28 hrs", 4.8,  4200, "Neural networks, CNNs, RNNs — build and train deep learning models.",          "#16a34a"),
+            ]
+            conn.executemany(
+                "INSERT INTO courses (title,instructor,category,level,duration,rating,students,description,color) VALUES (?,?,?,?,?,?,?,?,?)",
+                courses
+            )
+            conn.commit()
+    finally:
+        conn.close()
 
 
 with app.app_context():
@@ -101,19 +124,40 @@ with app.app_context():
 # HELPERS
 # -------------------------------------------------------------------
 
-def login_required():
-    if 'user_id' not in session:
-        return redirect('/login')
-    return None
+def generate_csrf_token():
+    if 'csrf_token' not in session:
+        session['csrf_token'] = secrets.token_hex(32)
+    return session['csrf_token']
+
+def validate_csrf():
+    token = request.form.get('csrf_token')
+    if not token or token != session.get('csrf_token'):
+        flash("Invalid request. Please try again.", "danger")
+        return False
+    return True
+
+app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 
-def admin_required():
-    if 'user_id' not in session:
-        return redirect('/login')
-    if not session.get('is_admin'):
-        flash("Access denied. Admins only.", "danger")
-        return redirect('/dashboard')
-    return None
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(f'/login?next={request.path}')
+        return f(*args, **kwargs)
+    return decorated
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect('/login')
+        if not session.get('is_admin'):
+            flash("Access denied. Admins only.", "danger")
+            return redirect('/dashboard')
+        return f(*args, **kwargs)
+    return decorated
 
 
 # -------------------------------------------------------------------
@@ -133,9 +177,21 @@ def home():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username  = request.form['username'].strip()
-        email     = request.form['email'].strip()
-        password  = request.form['password']
+        if not validate_csrf():
+            return redirect('/register')
+
+        username         = request.form['username'].strip()
+        email            = request.form['email'].strip()
+        password         = request.form['password']
+        confirm_password = request.form.get('confirm_password', '')
+
+        if password != confirm_password:
+            flash("Passwords do not match.", "danger")
+            return render_template('register.html')
+
+        if len(password) < 8:
+            flash("Password must be at least 8 characters.", "danger")
+            return render_template('register.html')
 
         hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
         conn = get_db()
@@ -158,6 +214,9 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        if not validate_csrf():
+            return redirect('/login')
+
         username = request.form['username'].strip()
         password = request.form['password']
 
@@ -171,6 +230,9 @@ def login():
             session['user_id']  = user['id']
             session['username'] = user['username']
             session['is_admin'] = user['is_admin']
+            next_url = request.args.get('next')
+            if next_url and next_url.startswith('/'):
+                return redirect(next_url)
             return redirect('/dashboard')
 
         flash("Invalid username or password.", "danger")
@@ -190,10 +252,8 @@ def logout():
 # -------------------------------------------------------------------
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
-    guard = login_required()
-    if guard: return guard
-
     conn = get_db()
 
     enrolled = conn.execute("""
@@ -212,16 +272,28 @@ def dashboard():
         LIMIT 4
     """, (session['user_id'],)).fetchall()
 
+    total_courses = conn.execute("SELECT COUNT(*) FROM courses").fetchone()[0]
+
     conn.close()
 
     total_enrolled = len(enrolled)
     avg_progress   = round(sum(c['progress'] for c in enrolled) / total_enrolled) if total_enrolled else 0
 
+    hour = datetime.now().hour
+    if hour < 12:
+        greeting = "Good morning"
+    elif hour < 17:
+        greeting = "Good afternoon"
+    else:
+        greeting = "Good evening"
+
     return render_template('dashboard.html',
         enrolled=enrolled,
         recommended=recommended,
         total_enrolled=total_enrolled,
-        avg_progress=avg_progress
+        avg_progress=avg_progress,
+        total_courses=total_courses,
+        greeting=greeting
     )
 
 
@@ -230,10 +302,8 @@ def dashboard():
 # -------------------------------------------------------------------
 
 @app.route('/courses')
+@login_required
 def courses():
-    guard = login_required()
-    if guard: return guard
-
     category = request.args.get('category', 'All')
     conn     = get_db()
 
@@ -262,10 +332,8 @@ def courses():
 
 
 @app.route('/course/<int:course_id>')
+@login_required
 def course_detail(course_id):
-    guard = login_required()
-    if guard: return guard
-
     conn   = get_db()
     course = conn.execute("SELECT * FROM courses WHERE id = ?", (course_id,)).fetchone()
 
@@ -296,10 +364,11 @@ def course_detail(course_id):
     )
 
 
-@app.route('/enroll/<int:course_id>')
+@app.route('/enroll/<int:course_id>', methods=['POST'])
+@login_required
 def enroll(course_id):
-    guard = login_required()
-    if guard: return guard
+    if not validate_csrf():
+        return redirect(f'/course/{course_id}')
 
     conn = get_db()
 
@@ -327,10 +396,8 @@ def enroll(course_id):
 # -------------------------------------------------------------------
 
 @app.route('/my-learning')
+@login_required
 def my_learning():
-    guard = login_required()
-    if guard: return guard
-
     conn = get_db()
 
     my_courses = conn.execute("""
@@ -356,9 +423,10 @@ def my_learning():
 
 
 @app.route('/update-progress/<int:enrollment_id>', methods=['POST'])
+@login_required
 def update_progress(enrollment_id):
-    guard = login_required()
-    if guard: return guard
+    if not validate_csrf():
+        return redirect('/my-learning')
 
     try:
         progress = int(request.form['progress'])
@@ -384,10 +452,8 @@ def update_progress(enrollment_id):
 # -------------------------------------------------------------------
 
 @app.route('/users')
+@admin_required
 def users():
-    guard = admin_required()
-    if guard: return guard
-
     conn = get_db()
     all_users = conn.execute(
         "SELECT id, username, email, is_admin FROM users ORDER BY id ASC"
@@ -402,10 +468,8 @@ def users():
 # -------------------------------------------------------------------
 
 @app.route('/admin/courses')
+@admin_required
 def admin_courses():
-    guard = admin_required()
-    if guard: return guard
-
     conn = get_db()
     all_courses = conn.execute("SELECT * FROM courses ORDER BY id ASC").fetchall()
     conn.close()
@@ -414,11 +478,12 @@ def admin_courses():
 
 
 @app.route('/admin/courses/add', methods=['GET', 'POST'])
+@admin_required
 def admin_add_course():
-    guard = admin_required()
-    if guard: return guard
-
     if request.method == 'POST':
+        if not validate_csrf():
+            return redirect('/admin/courses/add')
+
         title       = request.form['title'].strip()
         instructor  = request.form['instructor'].strip()
         category    = request.form['category']
@@ -427,11 +492,26 @@ def admin_add_course():
         description = request.form['description'].strip()
         color       = request.form['color']
 
+        if not re.match(r'^#[0-9A-Fa-f]{6}$', color):
+            color = '#4f8ef7'
+
+        if not title or not instructor or not duration or not description:
+            flash("All text fields are required and cannot be blank.", "danger")
+            return render_template('admin_add.html')
+
         try:
             rating   = float(request.form['rating'])
             students = int(request.form['students'])
         except ValueError:
             flash("Rating and Students must be valid numbers.", "danger")
+            return render_template('admin_add.html')
+
+        if not (1.0 <= rating <= 5.0):
+            flash("Rating must be between 1.0 and 5.0.", "danger")
+            return render_template('admin_add.html')
+
+        if students < 0:
+            flash("Students enrolled cannot be negative.", "danger")
             return render_template('admin_add.html')
 
         conn = get_db()
@@ -451,10 +531,8 @@ def admin_add_course():
 
 
 @app.route('/admin/courses/edit/<int:course_id>', methods=['GET', 'POST'])
+@admin_required
 def admin_edit_course(course_id):
-    guard = admin_required()
-    if guard: return guard
-
     conn   = get_db()
     course = conn.execute(
         "SELECT * FROM courses WHERE id = ?", (course_id,)
@@ -466,6 +544,10 @@ def admin_edit_course(course_id):
         return redirect('/admin/courses')
 
     if request.method == 'POST':
+        if not validate_csrf():
+            conn.close()
+            return redirect(f'/admin/courses/edit/{course_id}')
+
         title       = request.form['title'].strip()
         instructor  = request.form['instructor'].strip()
         category    = request.form['category']
@@ -474,11 +556,30 @@ def admin_edit_course(course_id):
         description = request.form['description'].strip()
         color       = request.form['color']
 
+        if not re.match(r'^#[0-9A-Fa-f]{6}$', color):
+            color = '#4f8ef7'
+
+        if not title or not instructor or not duration or not description:
+            flash("All text fields are required and cannot be blank.", "danger")
+            conn.close()
+            return render_template('admin_edit.html', course=course)
+
         try:
             rating   = float(request.form['rating'])
             students = int(request.form['students'])
         except ValueError:
             flash("Rating and Students must be valid numbers.", "danger")
+            conn.close()
+            return render_template('admin_edit.html', course=course)
+
+        if not (1.0 <= rating <= 5.0):
+            flash("Rating must be between 1.0 and 5.0.", "danger")
+            conn.close()
+            return render_template('admin_edit.html', course=course)
+
+        if students < 0:
+            flash("Students enrolled cannot be negative.", "danger")
+            conn.close()
             return render_template('admin_edit.html', course=course)
 
         conn.execute(
@@ -499,9 +600,10 @@ def admin_edit_course(course_id):
 
 
 @app.route('/admin/courses/delete/<int:course_id>', methods=['POST'])
+@admin_required
 def admin_delete_course(course_id):
-    guard = admin_required()
-    if guard: return guard
+    if not validate_csrf():
+        return redirect('/admin/courses')
 
     conn   = get_db()
     course = conn.execute(

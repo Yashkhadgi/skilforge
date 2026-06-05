@@ -49,7 +49,10 @@
     </div>
 
     <div style="padding:28px 32px;">
+
+      <!-- EDIT FORM -->
       <form method="POST" action="/admin/courses/edit/{{ course['id'] }}" id="edit-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- Row 1: Title + Instructor -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
@@ -110,7 +113,7 @@
         <div class="admin-field" style="margin-bottom:18px;">
           <label>Description</label>
           <textarea name="description" rows="3"
-                    maxlength="300">{{ course['description'] }}</textarea>
+                    maxlength="300" required>{{ course['description'] }}</textarea>
           <div style="font-size:0.7rem;color:var(--text-3);margin-top:4px;">
             Max 300 characters
           </div>
@@ -161,22 +164,25 @@
           <a href="/admin/courses" class="sf-btn-ghost" style="padding:11px 20px;">
             Cancel
           </a>
-          <!-- Danger zone -->
-          <form method="POST"
-                action="/admin/courses/delete/{{ course['id'] }}"
-                style="margin:0;margin-left:auto;"
-                onsubmit="return confirm('Delete \'{{ course['title'] }}\'? This cannot be undone.')">
-            <button type="submit" class="sf-btn-ghost"
-                    style="padding:11px 16px;color:var(--danger);
-                           border-color:rgba(239,68,68,0.2);"
-                    onmouseover="this.style.background='var(--danger-soft)'"
-                    onmouseout="this.style.background='transparent'">
-              <i class="bi bi-trash-fill"></i> Delete
-            </button>
-          </form>
         </div>
 
       </form>
+
+      <!-- DELETE FORM — outside the edit form to prevent nested forms -->
+      <form method="POST"
+            action="/admin/courses/delete/{{ course['id'] }}"
+            style="margin:16px 0 0 0;"
+            onsubmit="return confirm('Delete {{ course['title'] }}? This cannot be undone.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="sf-btn-ghost"
+                style="padding:11px 16px;color:var(--danger);
+                       border-color:rgba(239,68,68,0.2);"
+                onmouseover="this.style.background='var(--danger-soft)'"
+                onmouseout="this.style.background='transparent'">
+          <i class="bi bi-trash-fill"></i> Delete This Course
+        </button>
+      </form>
+
     </div>
 
   </div>

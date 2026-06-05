@@ -14,7 +14,7 @@
       <h1 id="greeting"
           style="font-family:'Inter Tight',sans-serif; font-size:1.9rem; font-weight:900;
                  letter-spacing:-0.04em; line-height:1.1; color:var(--text); margin-bottom:6px;">
-        Good morning, {{ session.get('username') }} 👋
+        {{ greeting }}, {{ session.get('username') }} 👋
       </h1>
       <p style="color:var(--text-2); font-size:0.88rem;">
         Here's what's happening with your learning today.
@@ -60,7 +60,7 @@
         </div>
         <span style="font-size:0.7rem;color:var(--text-3);font-weight:600;letter-spacing:0.04em;text-transform:uppercase;">Library</span>
       </div>
-      <div class="stat-num" style="color:var(--warning);" data-count="8">0</div>
+      <div class="stat-num" style="color:var(--warning);" data-count="{{ total_courses }}">0</div>
       <div class="stat-label">Total Courses</div>
     </div>
   </div>

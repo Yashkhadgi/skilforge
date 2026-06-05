@@ -39,6 +39,7 @@
       <p class="auth-sub">Free forever. No credit card needed.</p>
 
       <form method="POST" action="/register" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="form-group">
           <label class="form-label">Username</label>
@@ -61,7 +62,7 @@
                    class="form-control-sf"
                    placeholder="min. 8 characters" required minlength="8"
                    style="padding-right:42px;"
-                   oninput="checkStrength(this.value)">
+                   oninput="checkStrength(this.value); checkConfirm();">
             <button type="button" id="pw-toggle"
                     style="position:absolute;right:12px;top:50%;
                            transform:translateY(-50%);background:none;
@@ -88,7 +89,17 @@
           </div>
         </div>
 
-        <button type="submit" class="btn-primary-sf" style="margin-top:10px;">
+        <div class="form-group" style="margin-top:14px;">
+          <label class="form-label">Confirm Password</label>
+          <input type="password" name="confirm_password" id="confirm-pw-input"
+                 class="form-control-sf"
+                 placeholder="repeat your password" required minlength="8"
+                 oninput="checkConfirm()">
+          <div id="confirm-label"
+               style="font-size:0.7rem;margin-top:5px;height:14px;color:rgba(255,255,255,0.25);"></div>
+        </div>
+
+        <button type="submit" class="btn-primary-sf" style="margin-top:10px;" id="register-btn">
           Create free account
         </button>
 
@@ -231,6 +242,20 @@
     inp.type   = inp.type === 'password' ? 'text' : 'password';
     icon.className = inp.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
   });
+
+  function checkConfirm() {
+    const pw  = document.getElementById('pw-input').value;
+    const cpw = document.getElementById('confirm-pw-input').value;
+    const lbl = document.getElementById('confirm-label');
+    if (!cpw) { lbl.textContent = ''; return; }
+    if (pw === cpw) {
+      lbl.textContent = 'Passwords match ✓';
+      lbl.style.color = 'rgba(16,185,129,0.8)';
+    } else {
+      lbl.textContent = 'Passwords do not match';
+      lbl.style.color = 'rgba(255,68,68,0.8)';
+    }
+  }
 
   function checkStrength(val) {
     const bar   = document.getElementById('strength-bar');

@@ -103,7 +103,6 @@ document.querySelectorAll('.btn-primary-sf, .btn-enroll-big').forEach(btn => {
 
 
 // ── 8. MAGNETIC BUTTONS ──────────────────────────────────────────
-// ── 8. MAGNETIC BUTTONS (subtle, Framer-style) ──
 document.querySelectorAll('.btn-primary-sf, .btn-enroll-big').forEach(btn => {
   btn.addEventListener('mousemove', function(e) {
     const rect = btn.getBoundingClientRect();
@@ -119,7 +118,7 @@ document.querySelectorAll('.btn-primary-sf, .btn-enroll-big').forEach(btn => {
 });
 
 
-// ── 9. CARD SPOTLIGHT (subtle Framer style) ──
+// ── 9. CARD SPOTLIGHT ────────────────────────────────────────────
 document.querySelectorAll('.course-card, .landing-course-card, .sf-card').forEach(card => {
   card.addEventListener('mousemove', function(e) {
     const rect = card.getBoundingClientRect();
@@ -142,13 +141,13 @@ document.querySelectorAll('.diagram-line').forEach((line, i) => {
 });
 
 
-// ── 11. GREETING ─────────────────────────────────────────────────
+// ── 11. GREETING (kept for JS enhancement, server sets default) ──
 const greetingEl = document.getElementById('greeting');
 if (greetingEl) {
   const hour = new Date().getHours();
-  const name = greetingEl.textContent.split(',')[1]?.trim() || '';
+  const name = greetingEl.textContent.split(',')[1]?.trim().replace('👋','').trim() || '';
   const prefix = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  greetingEl.textContent = `${prefix}, ${name}`;
+  greetingEl.textContent = `${prefix}, ${name} 👋`;
 }
 
 
@@ -217,12 +216,16 @@ function buildCommandPalette() {
 
   document.body.appendChild(overlay);
 
+  // Only show Admin Panel link if the user is actually an admin
+  // (detected by whether the admin nav link exists in the DOM)
+  const isAdmin = document.querySelector('.sf-nav [href="/admin/courses"]') !== null;
+
   const links = [
-    { label: 'Dashboard',       icon: 'bi-speedometer2', url: '/dashboard' },
-    { label: 'Browse Courses',  icon: 'bi-grid',         url: '/courses' },
-    { label: 'My Learning',     icon: 'bi-journal-check',url: '/my-learning' },
-    { label: 'Admin Panel',     icon: 'bi-shield-fill',  url: '/admin/courses' },
-    { label: 'Logout',          icon: 'bi-box-arrow-right', url: '/logout' },
+    { label: 'Dashboard',      icon: 'bi-speedometer2',    url: '/dashboard' },
+    { label: 'Browse Courses', icon: 'bi-grid',            url: '/courses' },
+    { label: 'My Learning',    icon: 'bi-journal-check',   url: '/my-learning' },
+    ...(isAdmin ? [{ label: 'Admin Panel', icon: 'bi-shield-fill', url: '/admin/courses' }] : []),
+    { label: 'Logout',         icon: 'bi-box-arrow-right', url: '/logout' },
   ];
 
   function renderResults(query) {

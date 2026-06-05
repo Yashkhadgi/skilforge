@@ -70,9 +70,10 @@
             <!-- Progress Update Form -->
             <form method="POST" action="/update-progress/{{ course['enrollment_id'] }}"
                   style="display:flex; gap:6px; align-items:center; padding: 0 16px 16px 16px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="number" name="progress"
                        value="{{ course['progress'] }}"
-                       min="0" max="100"
+                       min="0" max="100" required
                        style="width:65px; padding:5px 8px; border-radius:6px;
                               border:1px solid var(--border); background:var(--bg-2);
                               color:var(--text); font-size:0.8rem;">

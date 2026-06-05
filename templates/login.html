@@ -39,6 +39,7 @@
       <p class="auth-sub">Enter your credentials to continue learning.</p>
 
       <form method="POST" action="/login" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="form-group">
           <label class="form-label">Username</label>

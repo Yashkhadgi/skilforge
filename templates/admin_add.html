@@ -37,12 +37,13 @@
     <div class="sf-table-header">
       <span>Course Details</span>
       <span style="font-size:0.76rem;color:var(--text-3);font-weight:400;">
-        All fields required unless marked optional
+        All fields required
       </span>
     </div>
 
     <div style="padding:28px 32px;">
       <form method="POST" action="/admin/courses/add" id="add-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- Row 1: Title + Instructor -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
@@ -106,7 +107,7 @@
           <label>Description</label>
           <textarea name="description" rows="3"
                     placeholder="A short, compelling course description..."
-                    maxlength="300"></textarea>
+                    maxlength="300" required></textarea>
           <div style="font-size:0.7rem;color:var(--text-3);margin-top:4px;">
             Max 300 characters
           </div>

@@ -29,6 +29,11 @@
                  data-count="{{ courses|selectattr('level','equalto','Intermediate')|list|length }}">0</div>
             <div class="stat-label">Intermediate</div>
         </div>
+        <div class="stat-card">
+            <div class="stat-num" style="color:var(--danger);"
+                 data-count="{{ courses|selectattr('level','equalto','Advanced')|list|length }}">0</div>
+            <div class="stat-label">Advanced</div>
+        </div>
     </div>
 
     <div class="sf-card" style="overflow:hidden;">
@@ -89,7 +94,8 @@
                                 <form method="POST"
                                       action="/admin/courses/delete/{{ course['id'] }}"
                                       style="display:inline; margin:0;"
-                                      onsubmit="return confirm('Delete \'{{ course['title'] }}\'? This cannot be undone.')">
+                                      onsubmit="return confirm('Delete {{ course['title'] }}? This cannot be undone.')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="action-btn action-delete">
                                         <i class="bi bi-trash-fill"></i> Delete
                                     </button>
