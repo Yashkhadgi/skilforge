@@ -231,7 +231,7 @@ def login():
             session['username'] = user['username']
             session['is_admin'] = user['is_admin']
             next_url = request.args.get('next')
-            if next_url and next_url.startswith('/'):
+            if next_url and next_url.startswith('/') and not next_url.startswith('//'):
                 return redirect(next_url)
             return redirect('/dashboard')
 
@@ -305,13 +305,30 @@ def dashboard():
 @login_required
 def courses():
     category = request.args.get('category', 'All')
+    q        = request.args.get('q', '').strip()
+    
     conn     = get_db()
 
-    if category == 'All':
+    if category == 'All' and not q:
         all_courses = conn.execute("SELECT * FROM courses").fetchall()
-    else:
+    elif category == 'All' and q:
+        all_courses = conn.execute(
+            """SELECT * FROM courses
+               WHERE lower(title)      LIKE ?
+                  OR lower(instructor) LIKE ?""",
+            (f'%{q.lower()}%', f'%{q.lower()}%')
+        ).fetchall()
+    elif category != 'All' and not q:
         all_courses = conn.execute(
             "SELECT * FROM courses WHERE category = ?", (category,)
+        ).fetchall()
+    else:  
+        all_courses = conn.execute(
+            """SELECT * FROM courses
+               WHERE category = ?
+                 AND (lower(title)      LIKE ?
+                   OR lower(instructor) LIKE ?)""",
+            (category, f'%{q.lower()}%', f'%{q.lower()}%')
         ).fetchall()
 
     enrolled_ids = [row['course_id'] for row in conn.execute(
@@ -327,7 +344,8 @@ def courses():
         courses=all_courses,
         enrolled_ids=enrolled_ids,
         categories=categories,
-        active_category=category
+        active_category=category,
+        search_query=q
     )
 
 

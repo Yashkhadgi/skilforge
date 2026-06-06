@@ -253,9 +253,10 @@ body {
   border-radius: var(--radius-lg);
   padding: 20px 22px;
   transition: all 0.3s var(--ease);
+  position: relative;
 }
 .stat-card:hover {
-  border-color: rgba(255,255,255,0.1);
+  border-color: var(--border-2);
   transform: translateY(-2px);
 }
 
@@ -266,9 +267,9 @@ body {
   background: linear-gradient(135deg, rgba(124,58,237,0.03), transparent);
   opacity: 0;
   transition: opacity 0.3s var(--ease);
+  border-radius: var(--radius-lg);
 }
 .stat-card:hover::before { opacity: 1; }
-.stat-card:hover { border-color: var(--border-2); transform: translateY(-2px); }
 
 .stat-num {
   font-family: 'Inter Tight', sans-serif;
@@ -328,9 +329,9 @@ body {
 }
 .course-card.card-visible { opacity: 1; transform: translateY(0); }
 .course-card:hover {
-  border-color: rgba(255,255,255,0.12);
-  transform: translateY(-4px);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  border-color: var(--border-2);
+  transform: translateY(-5px) scale(1.01);
+  box-shadow: var(--shadow-lg);
   color: var(--text);
 }
 .course-card::after {
@@ -349,13 +350,6 @@ body {
   pointer-events: none;
 }
 .course-card:hover::after { opacity: 1; }
-.course-card.card-visible { opacity: 1; transform: translateY(0); }
-.course-card:hover {
-  border-color: var(--border-2);
-  transform: translateY(-5px) scale(1.01);
-  box-shadow: var(--shadow-lg);
-  color: var(--text);
-}
 
 .course-thumb {
   height: 110px;

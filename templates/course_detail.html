@@ -130,9 +130,13 @@
             </div>
           </div>
         {% else %}
-          <a href="/enroll/{{ course['id'] }}" class="btn-enroll-big" id="enroll-btn">
-            <i class="bi bi-rocket-takeoff-fill"></i> Enroll Now — Free
-          </a>
+          <!-- FIX #1: Changed from <a href> GET to a POST form -->
+          <form method="POST" action="/enroll/{{ course['id'] }}" id="enroll-form" style="margin:0;">
+            <button type="submit" class="btn-enroll-big" id="enroll-btn"
+                    style="width:100%;border:none;cursor:pointer;">
+              <i class="bi bi-rocket-takeoff-fill"></i> Enroll Now — Free
+            </button>
+          </form>
         {% endif %}
 
         <!-- Course includes -->
@@ -232,13 +236,14 @@
 </div>
 
 <script>
-// Enroll button loading state
-const enrollBtn = document.getElementById('enroll-btn');
-if (enrollBtn) {
-  enrollBtn.addEventListener('click', function() {
-    this.innerHTML = '<i class="bi bi-hourglass-split"></i> Enrolling...';
-    this.style.opacity = '0.7';
-    this.style.pointerEvents = 'none';
+// FIX #1: Loading state now listens to form submit, not anchor click
+const enrollForm = document.getElementById('enroll-form');
+if (enrollForm) {
+  enrollForm.addEventListener('submit', function() {
+    const btn = document.getElementById('enroll-btn');
+    btn.innerHTML      = '<i class="bi bi-hourglass-split"></i> Enrolling...';
+    btn.style.opacity  = '0.7';
+    btn.style.pointerEvents = 'none';
   });
 }
 </script>

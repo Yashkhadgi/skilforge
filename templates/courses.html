@@ -16,26 +16,60 @@
           Explore our library of expert-led courses. Free forever.
         </p>
       </div>
-      <!-- Search bar -->
-      <div style="position:relative;">
-        <i class="bi bi-search"
-           style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
-                  color:var(--text-3);font-size:0.82rem;pointer-events:none;"></i>
-        <input type="text" id="course-search" placeholder="Search courses..."
-               style="padding:9px 14px 9px 34px;background:var(--card);
-                      border:1px solid var(--border);border-radius:10px;
-                      color:var(--text);font-size:0.83rem;font-family:'Inter',sans-serif;
-                      outline:none;width:220px;transition:all 0.2s var(--ease);"
-               onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-soft)'"
-               onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
-      </div>
+
+      <!-- Search bar — now submits to backend via GET -->
+      <form method="GET" action="/courses" id="search-form"
+            style="position:relative;display:flex;align-items:center;gap:8px;">
+        <!-- Preserve active category when searching -->
+        {% if active_category != 'All' %}
+        <input type="hidden" name="category" value="{{ active_category }}">
+        {% endif %}
+
+        <div style="position:relative;">
+          <i class="bi bi-search"
+             style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
+                    color:var(--text-3);font-size:0.82rem;pointer-events:none;"></i>
+          <input type="text" name="q" id="course-search"
+                 placeholder="Search courses..."
+                 value="{{ search_query }}"
+                 autocomplete="off"
+                 style="padding:9px 36px 9px 34px;background:var(--card);
+                        border:1px solid var(--border);border-radius:10px;
+                        color:var(--text);font-size:0.83rem;font-family:'Inter',sans-serif;
+                        outline:none;width:220px;transition:all 0.2s var(--ease);"
+                 onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-soft)'"
+                 onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+          <!-- Clear button — shown only when there is a search query -->
+          {% if search_query %}
+          <a href="/courses?category={{ active_category }}"
+             title="Clear search"
+             style="position:absolute;right:10px;top:50%;transform:translateY(-50%);
+                    color:var(--text-3);font-size:0.8rem;text-decoration:none;
+                    transition:color 0.2s;"
+             onmouseover="this.style.color='var(--text)'"
+             onmouseout="this.style.color='var(--text-3)'">
+            <i class="bi bi-x-lg"></i>
+          </a>
+          {% endif %}
+        </div>
+
+        <button type="submit"
+                style="padding:9px 14px;background:var(--accent);color:#fff;
+                       border:none;border-radius:10px;font-size:0.83rem;
+                       font-family:'Inter',sans-serif;cursor:pointer;
+                       transition:opacity 0.2s;"
+                onmouseover="this.style.opacity='0.85'"
+                onmouseout="this.style.opacity='1'">
+          Search
+        </button>
+      </form>
     </div>
   </div>
 
-  <!-- ── CATEGORY TABS ── -->
+  <!-- ── CATEGORY TABS — preserve search query when switching categories ── -->
   <div class="cat-tabs reveal reveal-delay-1">
     {% for cat in categories %}
-    <a href="/courses?category={{ cat }}"
+    <a href="/courses?category={{ cat }}{% if search_query %}&q={{ search_query }}{% endif %}"
        class="cat-tab {% if cat == active_category %}active{% endif %}">
       {% if cat == 'All' %}<i class="bi bi-grid" style="font-size:0.75rem;"></i>{% endif %}
       {% if cat == 'Python' %}🐍{% endif %}
@@ -49,7 +83,13 @@
   <!-- ── RESULTS COUNT ── -->
   <div id="results-count"
        style="font-size:0.78rem;color:var(--text-3);margin-bottom:18px;margin-top:-8px;">
-    {{ courses|length }} course{{ 's' if courses|length != 1 else '' }} found
+    {% if search_query %}
+      {{ courses|length }} result{{ 's' if courses|length != 1 else '' }} for
+      <strong style="color:var(--text);">"{{ search_query }}"</strong>
+      {% if active_category != 'All' %}in <strong style="color:var(--text);">{{ active_category }}</strong>{% endif %}
+    {% else %}
+      {{ courses|length }} course{{ 's' if courses|length != 1 else '' }} found
+    {% endif %}
   </div>
 
   <!-- ── COURSES GRID ── -->
@@ -68,7 +108,6 @@
           {% elif course['category'] == 'AI' %}🤖
           {% else %}📚{% endif %}
         </span>
-        <!-- Hover shine effect -->
         <div class="thumb-shine"></div>
       </div>
 
@@ -105,15 +144,23 @@
   </div>
 
   <!-- ── EMPTY STATE ── -->
-  <div id="no-results"
-       style="display:none;text-align:center;padding:80px 0;">
+  {% if courses|length == 0 %}
+  <div style="text-align:center;padding:80px 0;">
     <div style="font-size:3rem;margin-bottom:16px;">🔍</div>
     <h3 style="font-family:'Inter Tight',sans-serif;font-weight:700;
                letter-spacing:-0.03em;margin-bottom:8px;">No courses found</h3>
-    <p style="color:var(--text-2);font-size:0.88rem;">
-      Try a different search term or category.
+    <p style="color:var(--text-2);font-size:0.88rem;margin-bottom:20px;">
+      {% if search_query %}
+        No results for "{{ search_query }}". Try a different keyword.
+      {% else %}
+        No courses in this category yet.
+      {% endif %}
     </p>
+    <a href="/courses" style="color:var(--accent);font-size:0.85rem;text-decoration:none;">
+      ← Clear filters and show all courses
+    </a>
   </div>
+  {% endif %}
 
 </div>
 
@@ -129,10 +176,9 @@
 </style>
 
 <script>
-// Live search filter
+// Live client-side filter (instant feedback while typing, before form submits)
 const searchInput = document.getElementById('course-search');
 const cards       = document.querySelectorAll('#courses-grid .course-card');
-const noResults   = document.getElementById('no-results');
 const countEl     = document.getElementById('results-count');
 
 searchInput.addEventListener('input', function() {
@@ -140,18 +186,23 @@ searchInput.addEventListener('input', function() {
   let visible = 0;
 
   cards.forEach(card => {
-    const title      = card.dataset.title      || '';
-    const instructor = card.dataset.instructor || '';
-    const category   = card.dataset.category   || '';
-    const match      = !q || title.includes(q) || instructor.includes(q) || category.includes(q);
+    const match = !q
+      || card.dataset.title.includes(q)
+      || card.dataset.instructor.includes(q)
+      || card.dataset.category.includes(q);
 
-    card.style.display    = match ? '' : 'none';
-    card.style.opacity    = match ? '' : '0';
+    card.style.display = match ? '' : 'none';
     if (match) visible++;
   });
 
-  noResults.style.display = visible === 0 ? 'block' : 'none';
-  countEl.textContent     = `${visible} course${visible !== 1 ? 's' : ''} found`;
+  countEl.textContent = `${visible} course${visible !== 1 ? 's' : ''} found`;
+});
+
+// Submit form on Enter key (already works natively, but also on small delay for UX)
+searchInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    document.getElementById('search-form').submit();
+  }
 });
 </script>
 
