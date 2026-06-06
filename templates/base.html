@@ -60,10 +60,26 @@
 </nav>
 {% endif %}
 
-<div class="container mt-3">
+<div class="container mt-3" id="flash-container">
   {% for category, message in get_flashed_messages(with_categories=true) %}
   <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+
+    <!-- Icon based on message type -->
+    {% if category == 'success' %}
+      <i class="bi bi-check-circle-fill me-2"></i>
+    {% elif category == 'danger' %}
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    {% elif category == 'warning' %}
+      <i class="bi bi-exclamation-circle-fill me-2"></i>
+    {% else %}
+      <i class="bi bi-info-circle-fill me-2"></i>
+    {% endif %}
+
     {{ message }}
+
+    <!-- Progress bar showing time remaining before auto-dismiss -->
+    <div class="flash-timer-bar"></div>
+
     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
   </div>
   {% endfor %}
@@ -73,5 +89,56 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='main.js') }}"></script>
+
+<script>
+// Auto-dismiss flash messages after 4 seconds with animated timer bar
+(function () {
+  const DISMISS_AFTER = 4000;   // ms before fade starts
+  const FADE_DURATION  = 500;   // ms for the fade-out transition
+
+  document.querySelectorAll('#flash-container .alert').forEach(function (alert) {
+    // Animate the timer bar shrinking across 4 seconds
+    const bar = alert.querySelector('.flash-timer-bar');
+    if (bar) {
+      bar.style.transition = `width ${DISMISS_AFTER}ms linear`;
+      // Tiny delay so the transition actually runs (not instant on paint)
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          bar.style.width = '0%';
+        });
+      });
+    }
+
+    // After 4 s, fade out then remove from DOM
+    const timer = setTimeout(function () {
+      alert.style.transition = `opacity ${FADE_DURATION}ms ease`;
+      alert.style.opacity    = '0';
+      setTimeout(function () {
+        alert.remove();
+      }, FADE_DURATION);
+    }, DISMISS_AFTER);
+
+    // If the user manually closes it, cancel the auto-dismiss timer
+    alert.querySelector('.btn-close').addEventListener('click', function () {
+      clearTimeout(timer);
+    });
+  });
+})();
+</script>
+
+<!-- Flash timer bar style -->
+<style>
+.flash-timer-bar {
+  position  : absolute;
+  bottom    : 0;
+  left      : 0;
+  width     : 100%;
+  height    : 3px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 0 0 4px 4px;
+}
+.alert { position: relative; overflow: hidden; }
+</style>
+
 </body>
 </html>
