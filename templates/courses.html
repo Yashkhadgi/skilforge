@@ -17,10 +17,9 @@
         </p>
       </div>
 
-      <!-- Search bar — now submits to backend via GET -->
+      <!-- Search bar -->
       <form method="GET" action="/courses" id="search-form"
             style="position:relative;display:flex;align-items:center;gap:8px;">
-        <!-- Preserve active category when searching -->
         {% if active_category != 'All' %}
         <input type="hidden" name="category" value="{{ active_category }}">
         {% endif %}
@@ -39,7 +38,6 @@
                         outline:none;width:220px;transition:all 0.2s var(--ease);"
                  onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-soft)'"
                  onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
-          <!-- Clear button — shown only when there is a search query -->
           {% if search_query %}
           <a href="/courses?category={{ active_category }}"
              title="Clear search"
@@ -66,7 +64,7 @@
     </div>
   </div>
 
-  <!-- ── CATEGORY TABS — preserve search query when switching categories ── -->
+  <!-- ── CATEGORY TABS ── -->
   <div class="cat-tabs reveal reveal-delay-1">
     {% for cat in categories %}
     <a href="/courses?category={{ cat }}{% if search_query %}&q={{ search_query }}{% endif %}"
@@ -95,7 +93,11 @@
   <!-- ── COURSES GRID ── -->
   <div class="courses-grid" id="courses-grid">
     {% for course in courses %}
-    <a href="/course/{{ course['id'] }}" class="course-card"
+
+    {% set is_enrolled = course['id'] in enrolled_ids %}
+    {% set progress    = enrolled_progress.get(course['id'], 0) %}
+
+    <a href="/course/{{ course['id'] }}" class="course-card {% if is_enrolled %}course-card-enrolled{% endif %}"
        data-title="{{ course['title']|lower }}"
        data-instructor="{{ course['instructor']|lower }}"
        data-category="{{ course['category']|lower }}">
@@ -108,6 +110,20 @@
           {% elif course['category'] == 'AI' %}🤖
           {% else %}📚{% endif %}
         </span>
+
+        <!-- FIX #4: Enrolled overlay on thumbnail -->
+        {% if is_enrolled %}
+        <div class="enrolled-thumb-overlay">
+          {% if progress >= 100 %}
+            <i class="bi bi-trophy-fill" style="font-size:1.4rem;color:#f59e0b;"></i>
+            <span style="font-size:0.7rem;font-weight:700;margin-top:4px;">Completed!</span>
+          {% else %}
+            <i class="bi bi-play-circle-fill" style="font-size:1.4rem;"></i>
+            <span style="font-size:0.7rem;font-weight:700;margin-top:4px;">Continue</span>
+          {% endif %}
+        </div>
+        {% endif %}
+
         <div class="thumb-shine"></div>
       </div>
 
@@ -120,9 +136,10 @@
                          border:1px solid {{ course['color'] }}33;">
               {{ course['category'] }}
             </span>
-            {% if course['id'] in enrolled_ids %}
+            {% if is_enrolled %}
             <span class="badge badge-enrolled-pill">
-              <i class="bi bi-check-lg" style="font-size:0.7rem;"></i> Enrolled
+              <i class="bi bi-check-lg" style="font-size:0.7rem;"></i>
+              {% if progress >= 100 %}Done{% else %}Enrolled{% endif %}
             </span>
             {% endif %}
           </div>
@@ -132,13 +149,40 @@
             {{ course['instructor'] }}
           </div>
         </div>
+
+        <!-- FIX #4: Show progress bar + Continue button for enrolled, stats for unenrolled -->
+        {% if is_enrolled %}
+        <div style="margin-top:10px;">
+          <div style="display:flex;justify-content:space-between;
+                      font-size:0.72rem;color:var(--text-3);margin-bottom:5px;">
+            <span>Your progress</span>
+            <span style="color:{{ course['color'] }};font-weight:600;">{{ progress }}%</span>
+          </div>
+          <div style="height:4px;background:var(--border);border-radius:99px;overflow:hidden;">
+            <div style="height:100%;width:{{ progress }}%;
+                        background:{{ course['color'] }};border-radius:99px;
+                        transition:width 0.6s ease;"></div>
+          </div>
+          <div style="margin-top:10px;padding:7px 12px;border-radius:8px;
+                      background:{{ course['color'] }}18;border:1px solid {{ course['color'] }}33;
+                      font-size:0.75rem;font-weight:600;color:{{ course['color'] }};
+                      display:flex;align-items:center;justify-content:center;gap:5px;">
+            {% if progress >= 100 %}
+              <i class="bi bi-trophy-fill"></i> View Certificate
+            {% else %}
+              <i class="bi bi-play-fill"></i> Continue Learning →
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
         <div class="course-stats">
           <span><i class="bi bi-star-fill" style="color:#f59e0b;"></i> {{ course['rating'] }}</span>
           <span><i class="bi bi-people"></i> {{ "{:,}".format(course['students']) }}</span>
           <span><i class="bi bi-clock"></i> {{ course['duration'] }}</span>
         </div>
-      </div>
+        {% endif %}
 
+      </div>
     </a>
     {% endfor %}
   </div>
@@ -173,15 +217,36 @@
   transition: transform 0.5s var(--ease);
 }
 .course-card:hover .thumb-shine { transform: translateX(100%); }
+
+/* FIX #4: Enrolled card has a subtle left border accent */
+.course-card-enrolled {
+  border-left: 3px solid var(--accent) !important;
+}
+
+/* FIX #4: Play/trophy overlay on enrolled thumbnails */
+.enrolled-thumb-overlay {
+  position       : absolute;
+  inset          : 0;
+  background     : rgba(0, 0, 0, 0.45);
+  display        : flex;
+  flex-direction : column;
+  align-items    : center;
+  justify-content: center;
+  color          : #fff;
+  opacity        : 0;
+  transition     : opacity 0.25s ease;
+  border-radius  : inherit;
+}
+.course-card:hover .enrolled-thumb-overlay { opacity: 1; }
 </style>
 
 <script>
-// Live client-side filter (instant feedback while typing, before form submits)
+// Live client-side filter
 const searchInput = document.getElementById('course-search');
 const cards       = document.querySelectorAll('#courses-grid .course-card');
 const countEl     = document.getElementById('results-count');
 
-searchInput.addEventListener('input', function() {
+searchInput.addEventListener('input', function () {
   const q = this.value.toLowerCase().trim();
   let visible = 0;
 
@@ -198,11 +263,8 @@ searchInput.addEventListener('input', function() {
   countEl.textContent = `${visible} course${visible !== 1 ? 's' : ''} found`;
 });
 
-// Submit form on Enter key (already works natively, but also on small delay for UX)
-searchInput.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') {
-    document.getElementById('search-form').submit();
-  }
+searchInput.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') document.getElementById('search-form').submit();
 });
 </script>
 
