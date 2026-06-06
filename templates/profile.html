@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="sf-page">
+
+  <!-- ── HEADER ── -->
+  <div class="reveal" style="margin-bottom:28px;">
+    <div class="hero-badge" style="margin-bottom:12px;display:inline-flex;">
+      <i class="bi bi-person-fill"></i> My Profile
+    </div>
+
+    <!-- Profile card -->
+    <div class="sf-card" style="padding:28px 32px;display:flex;align-items:center;
+                                 gap:24px;flex-wrap:wrap;">
+
+      <!-- Big avatar -->
+      <div style="width:72px;height:72px;border-radius:50%;flex-shrink:0;
+                  background:linear-gradient(135deg,var(--accent),var(--blue));
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:1.8rem;font-weight:800;color:#fff;
+                  box-shadow:0 4px 16px rgba(124,58,237,0.3);">
+        {{ user['username'][0]|upper }}
+      </div>
+
+      <!-- Info -->
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
+          <h1 style="font-family:'Inter Tight',sans-serif;font-size:1.5rem;
+                     font-weight:900;letter-spacing:-0.03em;margin:0;">
+            {{ user['username'] }}
+          </h1>
+          {% if user['is_admin'] %}
+          <span class="role-badge role-admin">
+            <i class="bi bi-shield-fill"></i> Admin
+          </span>
+          {% else %}
+          <span class="role-badge role-student">
+            <i class="bi bi-person-fill"></i> Student
+          </span>
+          {% endif %}
+        </div>
+        <div style="color:var(--text-3);font-size:0.85rem;display:flex;
+                    align-items:center;gap:6px;">
+          <i class="bi bi-envelope"></i>
+          {{ user['email'] }}
+        </div>
+      </div>
+
+      <!-- Quick action -->
+      <a href="/my-learning"
+         style="padding:10px 20px;background:var(--accent);color:#fff;
+                border-radius:10px;text-decoration:none;font-size:0.83rem;
+                font-weight:600;display:flex;align-items:center;gap:7px;
+                transition:opacity 0.2s;white-space:nowrap;"
+         onmouseover="this.style.opacity='0.85'"
+         onmouseout="this.style.opacity='1'">
+        <i class="bi bi-play-fill"></i> Go to My Learning
+      </a>
+    </div>
+  </div>
+
+  <!-- ── STATS ── -->
+  <div class="stats-grid reveal reveal-delay-1" style="margin-bottom:28px;">
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--accent);"
+           data-count="{{ total }}">0</div>
+      <div class="stat-label">Courses Enrolled</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--success);"
+           data-count="{{ completed }}">0</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--warning);"
+           data-count="{{ in_progress }}">0</div>
+      <div class="stat-label">In Progress</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--blue);"
+           data-count="{{ avg_progress }}">0</div>
+      <div class="stat-label">Avg Progress %</div>
+    </div>
+  </div>
+
+  <!-- ── OVERALL PROGRESS BAR ── -->
+  {% if total > 0 %}
+  <div class="sf-card reveal reveal-delay-1" style="padding:22px 28px;margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;
+                margin-bottom:10px;">
+      <span style="font-size:0.85rem;font-weight:600;">Overall Learning Progress</span>
+      <span style="font-size:0.85rem;color:var(--accent);font-weight:700;">
+        {{ avg_progress }}%
+      </span>
+    </div>
+    <div style="height:8px;background:var(--border);border-radius:99px;overflow:hidden;">
+      <div style="height:100%;width:{{ avg_progress }}%;
+                  background:linear-gradient(90deg,var(--accent),var(--blue));
+                  border-radius:99px;transition:width 0.8s ease;"
+           data-width="{{ avg_progress }}"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;
+                font-size:0.72rem;color:var(--text-3);margin-top:8px;">
+      <span>{{ completed }} of {{ total }} courses completed</span>
+      <span>{{ total - completed }} remaining</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── ENROLLED COURSES LIST ── -->
+  <div class="reveal reveal-delay-2">
+    <div style="display:flex;align-items:center;justify-content:space-between;
+                margin-bottom:16px;">
+      <h2 style="font-family:'Inter Tight',sans-serif;font-size:1.1rem;
+                 font-weight:800;letter-spacing:-0.03em;margin:0;">
+        <i class="bi bi-journal-bookmark-fill me-2" style="color:var(--accent);"></i>
+        Enrolled Courses
+      </h2>
+      <a href="/courses" style="font-size:0.8rem;color:var(--accent);text-decoration:none;">
+        Browse more →
+      </a>
+    </div>
+
+    {% if enrolled %}
+    <div class="sf-card" style="overflow:hidden;">
+      {% for course in enrolled %}
+      <a href="/course/{{ course['id'] }}"
+         style="display:flex;align-items:center;gap:16px;padding:16px 20px;
+                text-decoration:none;color:inherit;
+                border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %};
+                transition:background 0.2s;"
+         onmouseover="this.style.background='var(--hover)'"
+         onmouseout="this.style.background='transparent'">
+
+        <!-- Colour dot / emoji -->
+        <div style="width:44px;height:44px;border-radius:12px;flex-shrink:0;
+                    background:{{ course['color'] }}22;
+                    display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+          {% if course['category'] == 'Python' %}🐍
+          {% elif course['category'] == 'Web' %}🌐
+          {% elif course['category'] == 'AI' %}🤖
+          {% else %}📚{% endif %}
+        </div>
+
+        <!-- Title + instructor -->
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:0.88rem;white-space:nowrap;
+                      overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;">
+            {{ course['title'] }}
+          </div>
+          <div style="font-size:0.75rem;color:var(--text-3);">
+            {{ course['instructor'] }} &nbsp;·&nbsp; {{ course['category'] }}
+          </div>
+          <!-- Mini progress bar -->
+          <div style="height:3px;background:var(--border);border-radius:99px;
+                      overflow:hidden;margin-top:7px;max-width:200px;">
+            <div style="height:100%;width:{{ course['progress'] }}%;
+                        background:{{ course['color'] }};border-radius:99px;"></div>
+          </div>
+        </div>
+
+        <!-- Progress % + status -->
+        <div style="text-align:right;flex-shrink:0;">
+          {% if course['progress'] >= 100 %}
+            <div style="font-size:0.78rem;font-weight:700;color:var(--success);
+                        display:flex;align-items:center;gap:4px;justify-content:flex-end;">
+              <i class="bi bi-trophy-fill" style="color:#f59e0b;"></i> Completed
+            </div>
+          {% elif course['progress'] > 0 %}
+            <div style="font-size:0.82rem;font-weight:700;color:{{ course['color'] }};">
+              {{ course['progress'] }}%
+            </div>
+            <div style="font-size:0.7rem;color:var(--text-3);">In progress</div>
+          {% else %}
+            <div style="font-size:0.78rem;color:var(--text-3);">Not started</div>
+          {% endif %}
+          <div style="font-size:0.68rem;color:var(--text-3);margin-top:4px;">
+            {{ course['enrolled_at'][:10] }}
+          </div>
+        </div>
+
+      </a>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <!-- Empty state -->
+    <div class="sf-card" style="padding:60px 20px;text-align:center;">
+      <div style="font-size:3rem;margin-bottom:16px;">📚</div>
+      <h3 style="font-family:'Inter Tight',sans-serif;font-weight:700;
+                 margin-bottom:8px;">No courses yet</h3>
+      <p style="color:var(--text-2);font-size:0.88rem;margin-bottom:20px;">
+        Start learning today — all courses are free.
+      </p>
+      <a href="/courses"
+         style="display:inline-flex;align-items:center;gap:6px;
+                padding:10px 22px;background:var(--accent);color:#fff;
+                border-radius:10px;text-decoration:none;font-size:0.85rem;font-weight:600;">
+        <i class="bi bi-grid-fill"></i> Browse Courses
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── CHANGE PASSWORD LINK (placeholder for enhancement #9) ── -->
+  <div class="sf-card reveal" style="padding:18px 24px;margin-top:20px;
+       display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div style="font-weight:600;font-size:0.88rem;margin-bottom:2px;">Account Settings</div>
+      <div style="font-size:0.78rem;color:var(--text-3);">Manage your password and preferences.</div>
+    </div>
+    <a href="/change-password"
+       style="padding:8px 18px;border:1px solid var(--border);border-radius:9px;
+              color:var(--text-2);text-decoration:none;font-size:0.82rem;
+              transition:all 0.2s;"
+       onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+       onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'">
+      <i class="bi bi-key-fill me-1"></i> Change Password
+    </a>
+  </div>
+
+</div>
+
+{% endblock %}

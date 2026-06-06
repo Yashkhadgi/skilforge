@@ -322,7 +322,7 @@ def courses():
         all_courses = conn.execute(
             "SELECT * FROM courses WHERE category = ?", (category,)
         ).fetchall()
-    else:  
+    else:
         all_courses = conn.execute(
             """SELECT * FROM courses
                WHERE category = ?
@@ -331,18 +331,22 @@ def courses():
             (category, f'%{q.lower()}%', f'%{q.lower()}%')
         ).fetchall()
 
-    enrolled_ids = [row['course_id'] for row in conn.execute(
-        "SELECT course_id FROM enrollments WHERE user_id = ?",
+    enrollments = conn.execute(
+        "SELECT course_id, progress FROM enrollments WHERE user_id = ?",
         (session['user_id'],)
-    ).fetchall()]
-
+    ).fetchall()
+    
+    enrolled_ids      = [row['course_id'] for row in enrollments]
+    enrolled_progress = {row['course_id']: row['progress'] for row in enrollments}
+    
     conn.close()
-
+    
     categories = ['All', 'Python', 'Web', 'AI']
-
+    
     return render_template('courses.html',
         courses=all_courses,
         enrolled_ids=enrolled_ids,
+        enrolled_progress=enrolled_progress,
         categories=categories,
         active_category=category,
         search_query=q
@@ -463,6 +467,47 @@ def update_progress(enrollment_id):
 
     flash("Progress updated!", "success")
     return redirect('/my-learning')
+
+
+# -------------------------------------------------------------------
+# USER PROFILE
+# -------------------------------------------------------------------
+
+@app.route('/profile')
+@login_required
+def profile():
+    conn = get_db()
+    
+    # Full user record
+    user = conn.execute(
+        "SELECT id, username, email, is_admin FROM users WHERE id = ?",
+        (session['user_id'],)
+    ).fetchone()
+    
+    # All enrollments with course details
+    enrolled = conn.execute("""
+        SELECT c.*, e.progress, e.enrolled_at, e.id as enrollment_id
+        FROM enrollments e
+        JOIN courses c ON c.id = e.course_id
+        WHERE e.user_id = ?
+        ORDER BY e.enrolled_at DESC
+    """, (session['user_id'],)).fetchall()
+    
+    conn.close()
+    
+    total     = len(enrolled)
+    completed = sum(1 for c in enrolled if c['progress'] >= 100)
+    in_prog   = sum(1 for c in enrolled if 0 < c['progress'] < 100)
+    avg       = round(sum(c['progress'] for c in enrolled) / total) if total else 0
+    
+    return render_template('profile.html',
+        user=user,
+        enrolled=enrolled,
+        total=total,
+        completed=completed,
+        in_progress=in_prog,
+        avg_progress=avg
+    )
 
 
 # -------------------------------------------------------------------
