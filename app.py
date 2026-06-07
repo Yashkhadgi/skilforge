@@ -7,6 +7,7 @@ import sqlite3
 import os
 import re
 import secrets
+import math
 
 load_dotenv()
 app = Flask(__name__)
@@ -22,18 +23,21 @@ if not _secret:
     _secret = "fallback-dev-key-do-not-use-in-production"
 app.secret_key = _secret
 
+PER_PAGE = 6
 
 # -------------------------------------------------------------------
 # DATABASE
 # -------------------------------------------------------------------
 
 def get_db():
+    """Establish and return a database connection with Row factory."""
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def init_db():
+    """Initialize the database schema and seed initial data if empty."""
     conn = get_db()
     try:
         conn.executescript("""
@@ -125,11 +129,13 @@ with app.app_context():
 # -------------------------------------------------------------------
 
 def generate_csrf_token():
+    """Generate and return a CSRF token for the session."""
     if 'csrf_token' not in session:
         session['csrf_token'] = secrets.token_hex(32)
     return session['csrf_token']
 
 def validate_csrf():
+    """Validate the incoming CSRF token against the session."""
     token = request.form.get('csrf_token')
     if not token or token != session.get('csrf_token'):
         flash("Invalid request. Please try again.", "danger")
@@ -140,6 +146,7 @@ app.jinja_env.globals['csrf_token'] = generate_csrf_token
 
 
 def login_required(f):
+    """Decorator to require login for specific routes."""
     @wraps(f)
     def decorated(*args, **kwargs):
         if 'user_id' not in session:
@@ -149,6 +156,7 @@ def login_required(f):
 
 
 def admin_required(f):
+    """Decorator to require admin privileges for specific routes."""
     @wraps(f)
     def decorated(*args, **kwargs):
         if 'user_id' not in session:
@@ -307,6 +315,11 @@ def courses():
     category = request.args.get('category', 'All')
     q        = request.args.get('q', '').strip()
     
+    try:
+        page = max(1, int(request.args.get('page', 1) or 1))
+    except ValueError:
+        page = 1
+        
     conn     = get_db()
 
     if category == 'All' and not q:
@@ -336,20 +349,31 @@ def courses():
         (session['user_id'],)
     ).fetchall()
     
+    conn.close()
+    
     enrolled_ids      = [row['course_id'] for row in enrollments]
     enrolled_progress = {row['course_id']: row['progress'] for row in enrollments}
     
-    conn.close()
+    # Pagination
+    total_courses = len(all_courses)
+    total_pages   = max(1, math.ceil(total_courses / PER_PAGE))
+    page          = min(page, total_pages)          # clamp to valid range
+    start         = (page - 1) * PER_PAGE
+    courses_page  = all_courses[start : start + PER_PAGE]
     
     categories = ['All', 'Python', 'Web', 'AI']
     
     return render_template('courses.html',
-        courses=all_courses,
+        courses=courses_page,
+        total_courses=total_courses,
         enrolled_ids=enrolled_ids,
         enrolled_progress=enrolled_progress,
         categories=categories,
         active_category=category,
-        search_query=q
+        search_query=q,
+        page=page,
+        total_pages=total_pages,
+        per_page=PER_PAGE
     )
 
 
@@ -509,6 +533,54 @@ def profile():
 
 
 # -------------------------------------------------------------------
+# CHANGE PASSWORD
+# -------------------------------------------------------------------
+
+@app.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        if not validate_csrf():
+            return redirect('/change-password')
+
+        current_pw  = request.form['current_password']
+        new_pw      = request.form['new_password'].strip()
+        confirm_pw  = request.form['confirm_password'].strip()
+
+        # Basic validation
+        if not new_pw or len(new_pw) < 6:
+            flash("New password must be at least 6 characters.", "danger")
+            return render_template('change_password.html')
+
+        if new_pw != confirm_pw:
+            flash("New passwords do not match.", "danger")
+            return render_template('change_password.html')
+
+        conn = get_db()
+        user = conn.execute(
+            "SELECT password FROM users WHERE id = ?", (session['user_id'],)
+        ).fetchone()
+
+        if not check_password_hash(user['password'], current_pw):
+            conn.close()
+            flash("Current password is incorrect.", "danger")
+            return render_template('change_password.html')
+
+        new_hash = generate_password_hash(new_pw, method='pbkdf2:sha256')
+        conn.execute(
+            "UPDATE users SET password = ? WHERE id = ?",
+            (new_hash, session['user_id'])
+        )
+        conn.commit()
+        conn.close()
+
+        flash("Password changed successfully!", "success")
+        return redirect('/profile')
+
+    return render_template('change_password.html')
+
+
+# -------------------------------------------------------------------
 # USERS PAGE — Admin only
 # -------------------------------------------------------------------
 
@@ -530,7 +602,6 @@ def admin_promote_user(user_id):
     if not validate_csrf():
         return redirect('/users')
 
-    # Prevent self-demotion
     if user_id == session['user_id']:
         flash("You cannot change your own admin status.", "warning")
         return redirect('/users')
@@ -545,7 +616,6 @@ def admin_promote_user(user_id):
         flash("User not found.", "danger")
         return redirect('/users')
 
-    # If demoting an admin, make sure at least one admin remains
     if user['is_admin'] == 1:
         admin_count = conn.execute(
             "SELECT COUNT(*) FROM users WHERE is_admin = 1"
@@ -574,7 +644,6 @@ def admin_delete_user(user_id):
     if not validate_csrf():
         return redirect('/users')
 
-    # Prevent self-deletion
     if user_id == session['user_id']:
         flash("You cannot delete your own account.", "warning")
         return redirect('/users')
@@ -589,7 +658,6 @@ def admin_delete_user(user_id):
         flash("User not found.", "danger")
         return redirect('/users')
 
-    # Prevent deleting the last admin
     if user['is_admin'] == 1:
         admin_count = conn.execute(
             "SELECT COUNT(*) FROM users WHERE is_admin = 1"
@@ -600,7 +668,6 @@ def admin_delete_user(user_id):
             flash("Cannot delete — at least one admin must remain.", "warning")
             return redirect('/users')
 
-    # Delete enrollments first, then the user
     conn.execute("DELETE FROM enrollments WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()

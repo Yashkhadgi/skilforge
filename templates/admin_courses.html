@@ -51,9 +51,9 @@
   </div>
 
   <!-- ── TABLE CARD ── -->
-  <div class="sf-card reveal reveal-delay-2" style="overflow:hidden;">
+  <div class="sf-card reveal reveal-delay-2" style="overflow:hidden;" id="courses-card">
 
-    <!-- Table header with search + filter -->
+    <!-- Table header with search + category filters -->
     <div class="sf-table-header" style="flex-wrap:wrap;gap:10px;">
       <span>All Courses</span>
 
@@ -90,14 +90,16 @@
                  onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
         </div>
 
-        <!-- Result count -->
+        <!-- Live result count -->
         <span id="course-count"
               style="color:var(--text-3);font-size:0.8rem;white-space:nowrap;">
           {{ courses|length }} total
         </span>
+
       </div>
     </div>
 
+    <!-- Table -->
     <div style="overflow-x:auto;">
       <table class="sf-table" id="courses-table">
         <thead>
@@ -132,19 +134,13 @@
                   {% else %}📚{% endif %}
                 </div>
                 <div>
-                  <div style="font-weight:600;font-size:0.87rem;">
-                    {{ course['title'] }}
-                  </div>
-                  <div style="font-size:0.7rem;color:var(--text-3);">
-                    {{ course['duration'] }}
-                  </div>
+                  <div style="font-weight:600;font-size:0.87rem;">{{ course['title'] }}</div>
+                  <div style="font-size:0.7rem;color:var(--text-3);">{{ course['duration'] }}</div>
                 </div>
               </div>
             </td>
 
-            <td style="color:var(--text-2);font-size:0.84rem;">
-              {{ course['instructor'] }}
-            </td>
+            <td style="color:var(--text-2);font-size:0.84rem;">{{ course['instructor'] }}</td>
 
             <td>
               <span class="badge"
@@ -191,7 +187,7 @@
       </table>
     </div>
 
-    <!-- Empty state -->
+    <!-- Empty state (shown by JS when nothing matches) -->
     <div id="no-courses"
          style="display:none;text-align:center;padding:60px 20px;">
       <div style="font-size:2.5rem;margin-bottom:12px;">🔍</div>
@@ -208,49 +204,112 @@
     </div>
 
   </div>
+
+  <!-- Pagination injected here by JS -->
+  <div id="admin-pagination"
+       style="display:flex;align-items:center;justify-content:center;
+              gap:6px;margin-top:20px;flex-wrap:wrap;">
+  </div>
+
 </div>
 
 <script>
-let activeCat = 'all';
+let activeCat   = 'all';
+let currentPage = 1;
+const PER_PAGE  = 8;
 
 const searchInput = document.getElementById('course-search');
-const rows        = document.querySelectorAll('#courses-table tbody tr');
+const allRows     = Array.from(document.querySelectorAll('#courses-table tbody tr'));
 const countEl     = document.getElementById('course-count');
 const noCoursesEl = document.getElementById('no-courses');
 const catBtns     = document.querySelectorAll('#cat-filters button');
+const paginationEl= document.getElementById('admin-pagination');
 
-function applyFilters() {
+function getFilteredRows() {
   const q = searchInput.value.toLowerCase().trim();
-  let visible = 0;
-
-  rows.forEach(row => {
+  return allRows.filter(row => {
     const matchSearch = !q
       || row.dataset.title.includes(q)
       || row.dataset.instructor.includes(q);
-
     const matchCat = activeCat === 'all'
       || row.dataset.category === activeCat;
+    return matchSearch && matchCat;
+  });
+}
 
-    const show = matchSearch && matchCat;
-    row.style.display = show ? '' : 'none';
-    if (show) visible++;
+function renderPage(filtered) {
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  currentPage      = Math.min(currentPage, totalPages);
+  const start      = (currentPage - 1) * PER_PAGE;
+  const pageSet    = new Set(filtered.slice(start, start + PER_PAGE));
+
+  allRows.forEach(row => {
+    row.style.display = pageSet.has(row) ? '' : 'none';
   });
 
-  countEl.textContent = `${visible} course${visible !== 1 ? 's' : ''}`;
-  noCoursesEl.style.display = visible === 0 ? 'block' : 'none';
+  countEl.textContent           = `${filtered.length} course${filtered.length !== 1 ? 's' : ''}`;
+  noCoursesEl.style.display     = filtered.length === 0 ? 'block' : 'none';
+
+  renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+  if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
+
+  const btn = (label, page, active, disabled) => {
+    const disabledStyle = disabled ? 'opacity:0.35;cursor:not-allowed;' : 'cursor:pointer;';
+    const activeStyle   = active
+      ? 'background:var(--accent);color:#fff;border-color:var(--accent);'
+      : 'background:transparent;color:var(--text-2);border-color:var(--border);';
+    const hoverAttrs    = (!active && !disabled)
+      ? `onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+         onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'"`
+      : '';
+    const clickAttr     = (!disabled && !active) ? `onclick="goPage(${page})"` : '';
+    return `<button ${clickAttr} ${hoverAttrs} ${disabled ? 'disabled' : ''}
+      style="padding:7px 12px;border-radius:8px;font-size:0.8rem;font-weight:600;
+             border:1px solid;font-family:'Inter',sans-serif;transition:all 0.2s;
+             min-width:34px;text-align:center;${activeStyle}${disabledStyle}">
+      ${label}
+    </button>`;
+  };
+
+  let html = btn('<i class="bi bi-chevron-left"></i>', currentPage - 1, false, currentPage === 1);
+
+  for (let p = 1; p <= totalPages; p++) {
+    if (p === currentPage) {
+      html += btn(p, p, true, false);
+    } else if (p === 1 || p === totalPages || (p >= currentPage - 2 && p <= currentPage + 2)) {
+      html += btn(p, p, false, false);
+    } else if (p === currentPage - 3 || p === currentPage + 3) {
+      html += `<span style="color:var(--text-3);font-size:0.82rem;padding:0 2px;">…</span>`;
+    }
+  }
+
+  html += btn('<i class="bi bi-chevron-right"></i>', currentPage + 1, false, currentPage === totalPages);
+
+  paginationEl.innerHTML = html;
+}
+
+function goPage(p) {
+  currentPage = p;
+  renderPage(getFilteredRows());
+  document.getElementById('courses-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function applyFilters() {
+  currentPage = 1;
+  renderPage(getFilteredRows());
 }
 
 function setCat(cat) {
   activeCat = cat.toLowerCase();
-
-  // Update pill styles
   catBtns.forEach(btn => {
-    const isActive = btn.dataset.cat.toLowerCase() === activeCat;
-    btn.style.background = isActive ? 'var(--accent)' : 'transparent';
-    btn.style.color      = isActive ? '#fff'          : 'var(--text-3)';
-    btn.style.borderColor= isActive ? 'var(--accent)' : 'var(--border)';
+    const isActive        = btn.dataset.cat.toLowerCase() === activeCat;
+    btn.style.background  = isActive ? 'var(--accent)' : 'transparent';
+    btn.style.color       = isActive ? '#fff'          : 'var(--text-3)';
+    btn.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
   });
-
   applyFilters();
 }
 
@@ -260,6 +319,9 @@ function resetFilters() {
 }
 
 searchInput.addEventListener('input', applyFilters);
+
+// Initial render
+renderPage(getFilteredRows());
 </script>
 
 {% endblock %}

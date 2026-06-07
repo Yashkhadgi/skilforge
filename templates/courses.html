@@ -23,6 +23,8 @@
         {% if active_category != 'All' %}
         <input type="hidden" name="category" value="{{ active_category }}">
         {% endif %}
+        <!-- Always reset to page 1 on new search -->
+        <input type="hidden" name="page" value="1">
 
         <div style="position:relative;">
           <i class="bi bi-search"
@@ -54,8 +56,7 @@
         <button type="submit"
                 style="padding:9px 14px;background:var(--accent);color:#fff;
                        border:none;border-radius:10px;font-size:0.83rem;
-                       font-family:'Inter',sans-serif;cursor:pointer;
-                       transition:opacity 0.2s;"
+                       font-family:'Inter',sans-serif;cursor:pointer;transition:opacity 0.2s;"
                 onmouseover="this.style.opacity='0.85'"
                 onmouseout="this.style.opacity='1'">
           Search
@@ -67,7 +68,7 @@
   <!-- ── CATEGORY TABS ── -->
   <div class="cat-tabs reveal reveal-delay-1">
     {% for cat in categories %}
-    <a href="/courses?category={{ cat }}{% if search_query %}&q={{ search_query }}{% endif %}"
+    <a href="/courses?category={{ cat }}&page=1{% if search_query %}&q={{ search_query }}{% endif %}"
        class="cat-tab {% if cat == active_category %}active{% endif %}">
       {% if cat == 'All' %}<i class="bi bi-grid" style="font-size:0.75rem;"></i>{% endif %}
       {% if cat == 'Python' %}🐍{% endif %}
@@ -79,25 +80,33 @@
   </div>
 
   <!-- ── RESULTS COUNT ── -->
-  <div id="results-count"
-       style="font-size:0.78rem;color:var(--text-3);margin-bottom:18px;margin-top:-8px;">
-    {% if search_query %}
-      {{ courses|length }} result{{ 's' if courses|length != 1 else '' }} for
-      <strong style="color:var(--text);">"{{ search_query }}"</strong>
-      {% if active_category != 'All' %}in <strong style="color:var(--text);">{{ active_category }}</strong>{% endif %}
-    {% else %}
-      {{ courses|length }} course{{ 's' if courses|length != 1 else '' }} found
+  <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:18px;margin-top:-8px;
+              display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+    <span>
+      {% if search_query %}
+        {{ total_courses }} result{{ 's' if total_courses != 1 else '' }} for
+        <strong style="color:var(--text);">"{{ search_query }}"</strong>
+        {% if active_category != 'All' %}in <strong style="color:var(--text);">{{ active_category }}</strong>{% endif %}
+      {% else %}
+        {{ total_courses }} course{{ 's' if total_courses != 1 else '' }} found
+      {% endif %}
+    </span>
+    {% if total_pages > 1 %}
+    <span style="color:var(--text-3);">
+      Page {{ page }} of {{ total_pages }}
+    </span>
     {% endif %}
   </div>
 
   <!-- ── COURSES GRID ── -->
+  {% if courses %}
   <div class="courses-grid" id="courses-grid">
     {% for course in courses %}
-
     {% set is_enrolled = course['id'] in enrolled_ids %}
     {% set progress    = enrolled_progress.get(course['id'], 0) %}
 
-    <a href="/course/{{ course['id'] }}" class="course-card {% if is_enrolled %}course-card-enrolled{% endif %}"
+    <a href="/course/{{ course['id'] }}"
+       class="course-card {% if is_enrolled %}course-card-enrolled{% endif %}"
        data-title="{{ course['title']|lower }}"
        data-instructor="{{ course['instructor']|lower }}"
        data-category="{{ course['category']|lower }}">
@@ -110,8 +119,6 @@
           {% elif course['category'] == 'AI' %}🤖
           {% else %}📚{% endif %}
         </span>
-
-        <!-- FIX #4: Enrolled overlay on thumbnail -->
         {% if is_enrolled %}
         <div class="enrolled-thumb-overlay">
           {% if progress >= 100 %}
@@ -123,7 +130,6 @@
           {% endif %}
         </div>
         {% endif %}
-
         <div class="thumb-shine"></div>
       </div>
 
@@ -150,7 +156,6 @@
           </div>
         </div>
 
-        <!-- FIX #4: Show progress bar + Continue button for enrolled, stats for unenrolled -->
         {% if is_enrolled %}
         <div style="margin-top:10px;">
           <div style="display:flex;justify-content:space-between;
@@ -160,8 +165,7 @@
           </div>
           <div style="height:4px;background:var(--border);border-radius:99px;overflow:hidden;">
             <div style="height:100%;width:{{ progress }}%;
-                        background:{{ course['color'] }};border-radius:99px;
-                        transition:width 0.6s ease;"></div>
+                        background:{{ course['color'] }};border-radius:99px;"></div>
           </div>
           <div style="margin-top:10px;padding:7px 12px;border-radius:8px;
                       background:{{ course['color'] }}18;border:1px solid {{ course['color'] }}33;
@@ -187,8 +191,74 @@
     {% endfor %}
   </div>
 
-  <!-- ── EMPTY STATE ── -->
-  {% if courses|length == 0 %}
+  <!-- ── PAGINATION ── -->
+  {% if total_pages > 1 %}
+  {% set base_url = '/courses?category=' ~ active_category ~ ('&q=' ~ search_query if search_query else '') %}
+  <div style="display:flex;align-items:center;justify-content:center;
+              gap:6px;margin-top:36px;flex-wrap:wrap;">
+
+    <!-- Previous -->
+    {% if page > 1 %}
+    <a href="{{ base_url }}&page={{ page - 1 }}"
+       style="padding:8px 14px;border:1px solid var(--border);border-radius:9px;
+              color:var(--text-2);text-decoration:none;font-size:0.82rem;
+              display:flex;align-items:center;gap:5px;transition:all 0.2s;"
+       onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+       onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'">
+      <i class="bi bi-chevron-left"></i> Prev
+    </a>
+    {% else %}
+    <span style="padding:8px 14px;border:1px solid var(--border);border-radius:9px;
+                 color:var(--text-3);font-size:0.82rem;opacity:0.4;
+                 display:flex;align-items:center;gap:5px;cursor:not-allowed;">
+      <i class="bi bi-chevron-left"></i> Prev
+    </span>
+    {% endif %}
+
+    <!-- Page numbers -->
+    {% for p in range(1, total_pages + 1) %}
+      {% if p == page %}
+      <span style="padding:8px 13px;border-radius:9px;font-size:0.82rem;font-weight:700;
+                   background:var(--accent);color:#fff;min-width:36px;text-align:center;">
+        {{ p }}
+      </span>
+      {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+      <a href="{{ base_url }}&page={{ p }}"
+         style="padding:8px 13px;border:1px solid var(--border);border-radius:9px;
+                color:var(--text-2);text-decoration:none;font-size:0.82rem;
+                min-width:36px;text-align:center;transition:all 0.2s;"
+         onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+         onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'">
+        {{ p }}
+      </a>
+      {% elif p == page - 3 or p == page + 3 %}
+      <span style="color:var(--text-3);font-size:0.82rem;padding:0 2px;">…</span>
+      {% endif %}
+    {% endfor %}
+
+    <!-- Next -->
+    {% if page < total_pages %}
+    <a href="{{ base_url }}&page={{ page + 1 }}"
+       style="padding:8px 14px;border:1px solid var(--border);border-radius:9px;
+              color:var(--text-2);text-decoration:none;font-size:0.82rem;
+              display:flex;align-items:center;gap:5px;transition:all 0.2s;"
+       onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+       onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'">
+      Next <i class="bi bi-chevron-right"></i>
+    </a>
+    {% else %}
+    <span style="padding:8px 14px;border:1px solid var(--border);border-radius:9px;
+                 color:var(--text-3);font-size:0.82rem;opacity:0.4;
+                 display:flex;align-items:center;gap:5px;cursor:not-allowed;">
+      Next <i class="bi bi-chevron-right"></i>
+    </span>
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+  {% else %}
+  <!-- Empty state -->
   <div style="text-align:center;padding:80px 0;">
     <div style="font-size:3rem;margin-bottom:16px;">🔍</div>
     <h3 style="font-family:'Inter Tight',sans-serif;font-weight:700;
@@ -210,62 +280,23 @@
 
 <style>
 .thumb-shine {
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.06) 50%, transparent 60%);
   transform: translateX(-100%);
   transition: transform 0.5s var(--ease);
 }
 .course-card:hover .thumb-shine { transform: translateX(100%); }
-
-/* FIX #4: Enrolled card has a subtle left border accent */
-.course-card-enrolled {
-  border-left: 3px solid var(--accent) !important;
-}
-
-/* FIX #4: Play/trophy overlay on enrolled thumbnails */
+.course-card-enrolled { border-left: 3px solid var(--accent) !important; }
 .enrolled-thumb-overlay {
-  position       : absolute;
-  inset          : 0;
-  background     : rgba(0, 0, 0, 0.45);
-  display        : flex;
-  flex-direction : column;
-  align-items    : center;
-  justify-content: center;
-  color          : #fff;
-  opacity        : 0;
-  transition     : opacity 0.25s ease;
-  border-radius  : inherit;
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: #fff; opacity: 0;
+  transition: opacity 0.25s ease;
+  border-radius: inherit;
 }
 .course-card:hover .enrolled-thumb-overlay { opacity: 1; }
 </style>
-
-<script>
-// Live client-side filter
-const searchInput = document.getElementById('course-search');
-const cards       = document.querySelectorAll('#courses-grid .course-card');
-const countEl     = document.getElementById('results-count');
-
-searchInput.addEventListener('input', function () {
-  const q = this.value.toLowerCase().trim();
-  let visible = 0;
-
-  cards.forEach(card => {
-    const match = !q
-      || card.dataset.title.includes(q)
-      || card.dataset.instructor.includes(q)
-      || card.dataset.category.includes(q);
-
-    card.style.display = match ? '' : 'none';
-    if (match) visible++;
-  });
-
-  countEl.textContent = `${visible} course${visible !== 1 ? 's' : ''} found`;
-});
-
-searchInput.addEventListener('keydown', function (e) {
-  if (e.key === 'Enter') document.getElementById('search-form').submit();
-});
-</script>
 
 {% endblock %}
