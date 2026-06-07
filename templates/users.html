@@ -3,76 +3,222 @@
 
 <div class="sf-page">
 
-    <div class="page-header">
-        <h1>All Users</h1>
-        <p>Every registered account on SkillForge.</p>
+  <!-- ── HEADER ── -->
+  <div class="page-header reveal">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;
+                flex-wrap:wrap;gap:12px;">
+      <div>
+        <div class="hero-badge" style="margin-bottom:10px;display:inline-flex;">
+          <i class="bi bi-shield-fill"></i> Admin Panel
+        </div>
+        <h1 style="font-family:'Inter Tight',sans-serif;font-size:1.9rem;font-weight:900;
+                   letter-spacing:-0.04em;line-height:1.1;margin-bottom:6px;">User Management</h1>
+        <p style="color:var(--text-2);font-size:0.88rem;">
+          Promote, demote, or remove registered accounts.
+        </p>
+      </div>
+
+      <!-- Live search -->
+      <div style="position:relative;">
+        <i class="bi bi-search"
+           style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
+                  color:var(--text-3);font-size:0.82rem;pointer-events:none;"></i>
+        <input type="text" id="user-search" placeholder="Search users..."
+               autocomplete="off"
+               style="padding:9px 14px 9px 34px;background:var(--card);
+                      border:1px solid var(--border);border-radius:10px;
+                      color:var(--text);font-size:0.83rem;font-family:'Inter',sans-serif;
+                      outline:none;width:220px;transition:all 0.2s var(--ease);"
+               onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-soft)'"
+               onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATS ── -->
+  <div class="stats-grid reveal reveal-delay-1" style="margin-bottom:28px;">
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--accent);"
+           data-count="{{ users|length }}">0</div>
+      <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--warning);"
+           data-count="{{ users|selectattr('is_admin','equalto',1)|list|length }}">0</div>
+      <div class="stat-label">Admins</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--success);"
+           data-count="{{ users|selectattr('is_admin','equalto',0)|list|length }}">0</div>
+      <div class="stat-label">Students</div>
+    </div>
+  </div>
+
+  <!-- ── TABLE ── -->
+  <div class="sf-card reveal reveal-delay-2" style="overflow:hidden;">
+
+    <div class="sf-table-header">
+      <span>Registered Users</span>
+      <span id="user-count" style="color:var(--text-2);font-size:0.82rem;">
+        {{ users|length }} total
+      </span>
     </div>
 
-    <div class="stats-grid" style="margin-bottom: 32px;">
-        <div class="stat-card">
-            <div class="stat-num" style="color:var(--accent);"
-                 data-count="{{ users|length }}">0</div>
-            <div class="stat-label">Total Users</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-num" style="color:var(--warning);"
-                 data-count="{{ users|selectattr('is_admin','equalto',1)|list|length }}">0</div>
-            <div class="stat-label">Admins</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-num" style="color:var(--success);"
-                 data-count="{{ users|selectattr('is_admin','equalto',0)|list|length }}">0</div>
-            <div class="stat-label">Students</div>
-        </div>
+    <div style="overflow-x:auto;">
+      <table class="sf-table" id="users-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr data-username="{{ user['username']|lower }}"
+              data-email="{{ user['email']|lower }}">
+
+            <td style="color:var(--text-3);font-size:0.78rem;">{{ user['id'] }}</td>
+
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="sf-avatar"
+                     style="{% if user['id'] == session['user_id'] %}
+                              background:linear-gradient(135deg,var(--accent),var(--blue));
+                            {% endif %}">
+                  {{ user['username'][0]|upper }}
+                </div>
+                <div>
+                  <div style="font-weight:600;font-size:0.88rem;">
+                    {{ user['username'] }}
+                    {% if user['id'] == session['user_id'] %}
+                    <span style="font-size:0.68rem;color:var(--text-3);
+                                 font-weight:400;margin-left:4px;">(you)</span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <td style="color:var(--text-2);font-size:0.84rem;">{{ user['email'] }}</td>
+
+            <td>
+              {% if user['is_admin'] == 1 %}
+              <span class="role-badge role-admin">
+                <i class="bi bi-shield-fill"></i> Admin
+              </span>
+              {% else %}
+              <span class="role-badge role-student">
+                <i class="bi bi-person-fill"></i> Student
+              </span>
+              {% endif %}
+            </td>
+
+            <!-- Actions column -->
+            <td style="text-align:right;">
+              {% if user['id'] != session['user_id'] %}
+              <div style="display:inline-flex;align-items:center;gap:6px;">
+
+                <!-- Promote / Demote toggle -->
+                <form method="POST"
+                      action="/admin/users/promote/{{ user['id'] }}"
+                      style="margin:0;"
+                      onsubmit="return confirm(
+                        '{% if user['is_admin'] == 1 %}Demote {{ user['username'] }} to Student?{% else %}Promote {{ user['username'] }} to Admin?{% endif %}'
+                      )">
+                  <button type="submit"
+                          title="{% if user['is_admin'] == 1 %}Demote to Student{% else %}Promote to Admin{% endif %}"
+                          style="padding:5px 11px;border-radius:7px;font-size:0.75rem;
+                                 font-weight:600;cursor:pointer;border:1px solid;
+                                 transition:all 0.2s;font-family:'Inter',sans-serif;
+                                 {% if user['is_admin'] == 1 %}
+                                   background:var(--warning-soft,rgba(245,158,11,0.1));
+                                   color:#d97706;border-color:rgba(217,119,6,0.3);
+                                 {% else %}
+                                   background:rgba(124,58,237,0.08);
+                                   color:var(--accent);border-color:rgba(124,58,237,0.2);
+                                 {% endif %}"
+                          onmouseover="this.style.opacity='0.75'"
+                          onmouseout="this.style.opacity='1'">
+                    {% if user['is_admin'] == 1 %}
+                      <i class="bi bi-arrow-down-circle"></i> Demote
+                    {% else %}
+                      <i class="bi bi-arrow-up-circle"></i> Promote
+                    {% endif %}
+                  </button>
+                </form>
+
+                <!-- Delete -->
+                <form method="POST"
+                      action="/admin/users/delete/{{ user['id'] }}"
+                      style="margin:0;"
+                      onsubmit="return confirm(
+                        'Delete {{ user['username'] }}? This will also remove all their enrollments.'
+                      )">
+                  <button type="submit"
+                          title="Delete user"
+                          style="padding:5px 10px;border-radius:7px;font-size:0.75rem;
+                                 font-weight:600;cursor:pointer;
+                                 background:rgba(239,68,68,0.08);
+                                 color:var(--danger,#ef4444);
+                                 border:1px solid rgba(239,68,68,0.2);
+                                 transition:all 0.2s;font-family:'Inter',sans-serif;"
+                          onmouseover="this.style.opacity='0.75'"
+                          onmouseout="this.style.opacity='1'">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </form>
+
+              </div>
+              {% else %}
+              <!-- No actions on your own row -->
+              <span style="font-size:0.72rem;color:var(--text-3);font-style:italic;">
+                —
+              </span>
+              {% endif %}
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
-    <div class="sf-card" style="overflow: hidden;">
-
-        <div class="sf-table-header">
-            <span>Registered Users</span>
-            <span style="color: var(--text-2); font-size: 0.82rem;">{{ users|length }} total</span>
-        </div>
-
-        <div style="overflow-x: auto;">
-            <table class="sf-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td style="color: var(--text-2);">{{ user['id'] }}</td>
-                        <td>
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div class="sf-avatar">{{ user['username'][0]|upper }}</div>
-                                <span style="font-weight:500;">{{ user['username'] }}</span>
-                            </div>
-                        </td>
-                        <td style="color: var(--text-2);">{{ user['email'] }}</td>
-                        <td>
-                            {% if user['is_admin'] == 1 %}
-                                <span class="role-badge role-admin">
-                                    <i class="bi bi-shield-fill"></i> Admin
-                                </span>
-                            {% else %}
-                                <span class="role-badge role-student">
-                                    <i class="bi bi-person-fill"></i> Student
-                                </span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
+    <!-- Empty state shown by JS when search has no results -->
+    <div id="no-users"
+         style="display:none;text-align:center;padding:48px 20px;">
+      <div style="font-size:2.5rem;margin-bottom:12px;">🔍</div>
+      <div style="font-weight:600;margin-bottom:4px;">No users match your search</div>
+      <div style="font-size:0.82rem;color:var(--text-3);">Try a different name or email.</div>
     </div>
 
+  </div>
 </div>
+
+<script>
+// Live user search
+const searchInput = document.getElementById('user-search');
+const rows        = document.querySelectorAll('#users-table tbody tr');
+const countEl     = document.getElementById('user-count');
+const noUsers     = document.getElementById('no-users');
+
+searchInput.addEventListener('input', function () {
+  const q = this.value.toLowerCase().trim();
+  let visible = 0;
+
+  rows.forEach(row => {
+    const match = !q
+      || row.dataset.username.includes(q)
+      || row.dataset.email.includes(q);
+    row.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+
+  countEl.textContent = `${visible} user${visible !== 1 ? 's' : ''}`;
+  noUsers.style.display = visible === 0 ? 'block' : 'none';
+});
+</script>
 
 {% endblock %}

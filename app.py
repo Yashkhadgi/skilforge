@@ -478,13 +478,11 @@ def update_progress(enrollment_id):
 def profile():
     conn = get_db()
     
-    # Full user record
     user = conn.execute(
         "SELECT id, username, email, is_admin FROM users WHERE id = ?",
         (session['user_id'],)
     ).fetchone()
     
-    # All enrollments with course details
     enrolled = conn.execute("""
         SELECT c.*, e.progress, e.enrolled_at, e.id as enrollment_id
         FROM enrollments e
@@ -524,6 +522,92 @@ def users():
     conn.close()
 
     return render_template('users.html', users=all_users)
+
+
+@app.route('/admin/users/promote/<int:user_id>', methods=['POST'])
+@admin_required
+def admin_promote_user(user_id):
+    if not validate_csrf():
+        return redirect('/users')
+
+    # Prevent self-demotion
+    if user_id == session['user_id']:
+        flash("You cannot change your own admin status.", "warning")
+        return redirect('/users')
+
+    conn = get_db()
+    user = conn.execute(
+        "SELECT id, username, is_admin FROM users WHERE id = ?", (user_id,)
+    ).fetchone()
+
+    if not user:
+        conn.close()
+        flash("User not found.", "danger")
+        return redirect('/users')
+
+    # If demoting an admin, make sure at least one admin remains
+    if user['is_admin'] == 1:
+        admin_count = conn.execute(
+            "SELECT COUNT(*) FROM users WHERE is_admin = 1"
+        ).fetchone()[0]
+
+        if admin_count <= 1:
+            conn.close()
+            flash("Cannot demote — at least one admin must remain.", "warning")
+            return redirect('/users')
+
+    new_role = 0 if user['is_admin'] == 1 else 1
+    conn.execute(
+        "UPDATE users SET is_admin = ? WHERE id = ?", (new_role, user_id)
+    )
+    conn.commit()
+    conn.close()
+
+    action = "demoted to Student" if new_role == 0 else "promoted to Admin"
+    flash(f'"{user["username"]}" has been {action}.', "success")
+    return redirect('/users')
+
+
+@app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
+@admin_required
+def admin_delete_user(user_id):
+    if not validate_csrf():
+        return redirect('/users')
+
+    # Prevent self-deletion
+    if user_id == session['user_id']:
+        flash("You cannot delete your own account.", "warning")
+        return redirect('/users')
+
+    conn = get_db()
+    user = conn.execute(
+        "SELECT id, username, is_admin FROM users WHERE id = ?", (user_id,)
+    ).fetchone()
+
+    if not user:
+        conn.close()
+        flash("User not found.", "danger")
+        return redirect('/users')
+
+    # Prevent deleting the last admin
+    if user['is_admin'] == 1:
+        admin_count = conn.execute(
+            "SELECT COUNT(*) FROM users WHERE is_admin = 1"
+        ).fetchone()[0]
+
+        if admin_count <= 1:
+            conn.close()
+            flash("Cannot delete — at least one admin must remain.", "warning")
+            return redirect('/users')
+
+    # Delete enrollments first, then the user
+    conn.execute("DELETE FROM enrollments WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+
+    flash(f'User "{user["username"]}" and their enrollments have been deleted.', "success")
+    return redirect('/users')
 
 
 # -------------------------------------------------------------------
