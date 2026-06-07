@@ -3,114 +3,263 @@
 
 <div class="sf-page">
 
-    <div class="page-header" style="display:flex; align-items:center; justify-content:space-between;">
-        <div>
-            <h1><i class="bi bi-shield-fill" style="color:var(--accent);"></i> Course Management</h1>
-            <p>Add, edit or delete courses from SkillForge.</p>
+  <!-- ── HEADER ── -->
+  <div class="page-header reveal"
+       style="display:flex;align-items:flex-start;justify-content:space-between;
+              flex-wrap:wrap;gap:12px;">
+    <div>
+      <div class="hero-badge" style="margin-bottom:10px;display:inline-flex;">
+        <i class="bi bi-shield-fill"></i> Admin Panel
+      </div>
+      <h1 style="font-family:'Inter Tight',sans-serif;font-size:1.9rem;font-weight:900;
+                 letter-spacing:-0.04em;line-height:1.1;margin-bottom:6px;">
+        Course Management
+      </h1>
+      <p style="color:var(--text-2);font-size:0.88rem;">
+        Add, edit, or delete courses from SkillForge.
+      </p>
+    </div>
+    <a href="/admin/courses/add" class="btn-primary-sf"
+       style="width:auto;padding:10px 20px;text-decoration:none;
+              display:inline-flex;align-items:center;gap:6px;">
+      <i class="bi bi-plus-lg"></i> Add Course
+    </a>
+  </div>
+
+  <!-- ── STATS ── -->
+  <div class="stats-grid reveal reveal-delay-1" style="margin-bottom:28px;">
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--accent);"
+           data-count="{{ courses|length }}">0</div>
+      <div class="stat-label">Total Courses</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--success);"
+           data-count="{{ courses|selectattr('level','equalto','Beginner')|list|length }}">0</div>
+      <div class="stat-label">Beginner</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--warning);"
+           data-count="{{ courses|selectattr('level','equalto','Intermediate')|list|length }}">0</div>
+      <div class="stat-label">Intermediate</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--blue);"
+           data-count="{{ courses|selectattr('level','equalto','Advanced')|list|length }}">0</div>
+      <div class="stat-label">Advanced</div>
+    </div>
+  </div>
+
+  <!-- ── TABLE CARD ── -->
+  <div class="sf-card reveal reveal-delay-2" style="overflow:hidden;">
+
+    <!-- Table header with search + filter -->
+    <div class="sf-table-header" style="flex-wrap:wrap;gap:10px;">
+      <span>All Courses</span>
+
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+
+        <!-- Category filter pills -->
+        <div style="display:flex;gap:4px;" id="cat-filters">
+          {% for cat in ['All','Python','Web','AI'] %}
+          <button onclick="setCat('{{ cat }}')"
+                  data-cat="{{ cat }}"
+                  style="padding:4px 10px;border-radius:20px;font-size:0.72rem;
+                         font-weight:600;cursor:pointer;border:1px solid var(--border);
+                         background:{% if loop.first %}var(--accent){% else %}transparent{% endif %};
+                         color:{% if loop.first %}#fff{% else %}var(--text-3){% endif %};
+                         font-family:'Inter',sans-serif;transition:all 0.2s;">
+            {{ cat }}
+          </button>
+          {% endfor %}
         </div>
-        <a href="/admin/courses/add" class="btn-primary-sf" style="width:auto; padding: 10px 20px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
-            <i class="bi bi-plus-lg"></i> Add Course
-        </a>
+
+        <!-- Search input -->
+        <div style="position:relative;">
+          <i class="bi bi-search"
+             style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
+                    color:var(--text-3);font-size:0.78rem;pointer-events:none;"></i>
+          <input type="text" id="course-search"
+                 placeholder="Search title or instructor..."
+                 autocomplete="off"
+                 style="padding:7px 12px 7px 30px;background:var(--bg);
+                        border:1px solid var(--border);border-radius:8px;
+                        color:var(--text);font-size:0.8rem;font-family:'Inter',sans-serif;
+                        outline:none;width:210px;transition:all 0.2s var(--ease);"
+                 onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-soft)'"
+                 onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+        </div>
+
+        <!-- Result count -->
+        <span id="course-count"
+              style="color:var(--text-3);font-size:0.8rem;white-space:nowrap;">
+          {{ courses|length }} total
+        </span>
+      </div>
     </div>
 
-    <div class="stats-grid" style="margin-bottom: 32px;">
-        <div class="stat-card">
-            <div class="stat-num" style="color:var(--accent);"
-                 data-count="{{ courses|length }}">0</div>
-            <div class="stat-label">Total Courses</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-num" style="color:var(--success);"
-                 data-count="{{ courses|selectattr('level','equalto','Beginner')|list|length }}">0</div>
-            <div class="stat-label">Beginner</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-num" style="color:var(--warning);"
-                 data-count="{{ courses|selectattr('level','equalto','Intermediate')|list|length }}">0</div>
-            <div class="stat-label">Intermediate</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-num" style="color:var(--danger);"
-                 data-count="{{ courses|selectattr('level','equalto','Advanced')|list|length }}">0</div>
-            <div class="stat-label">Advanced</div>
-        </div>
+    <div style="overflow-x:auto;">
+      <table class="sf-table" id="courses-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>Instructor</th>
+            <th>Category</th>
+            <th>Level</th>
+            <th>Rating</th>
+            <th>Students</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for course in courses %}
+          <tr data-title="{{ course['title']|lower }}"
+              data-instructor="{{ course['instructor']|lower }}"
+              data-category="{{ course['category']|lower }}">
+
+            <td style="color:var(--text-3);font-size:0.78rem;">{{ course['id'] }}</td>
+
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:28px;height:28px;border-radius:8px;flex-shrink:0;
+                            background:{{ course['color'] }}22;
+                            display:flex;align-items:center;justify-content:center;
+                            font-size:0.85rem;">
+                  {% if course['category'] == 'Python' %}🐍
+                  {% elif course['category'] == 'Web' %}🌐
+                  {% elif course['category'] == 'AI' %}🤖
+                  {% else %}📚{% endif %}
+                </div>
+                <div>
+                  <div style="font-weight:600;font-size:0.87rem;">
+                    {{ course['title'] }}
+                  </div>
+                  <div style="font-size:0.7rem;color:var(--text-3);">
+                    {{ course['duration'] }}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <td style="color:var(--text-2);font-size:0.84rem;">
+              {{ course['instructor'] }}
+            </td>
+
+            <td>
+              <span class="badge"
+                    style="background:{{ course['color'] }}22;
+                           color:{{ course['color'] }};
+                           border:1px solid {{ course['color'] }}33;">
+                {{ course['category'] }}
+              </span>
+            </td>
+
+            <td>
+              <span class="badge badge-level">{{ course['level'] }}</span>
+            </td>
+
+            <td style="color:var(--warning);font-size:0.84rem;">
+              <i class="bi bi-star-fill" style="font-size:0.72rem;"></i>
+              {{ course['rating'] }}
+            </td>
+
+            <td style="color:var(--text-2);font-size:0.84rem;">
+              {{ "{:,}".format(course['students']) }}
+            </td>
+
+            <td style="text-align:right;">
+              <div style="display:inline-flex;gap:6px;align-items:center;">
+                <a href="/admin/courses/edit/{{ course['id'] }}"
+                   class="action-btn action-edit">
+                  <i class="bi bi-pencil-fill"></i> Edit
+                </a>
+                <form method="POST"
+                      action="/admin/courses/delete/{{ course['id'] }}"
+                      style="display:inline;margin:0;"
+                      onsubmit="return confirm('Delete \'{{ course['title'] }}\'? This cannot be undone.')">
+                  <button type="submit" class="action-btn action-delete">
+                    <i class="bi bi-trash-fill"></i> Delete
+                  </button>
+                </form>
+              </div>
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
-    <div class="sf-card" style="overflow:hidden;">
-
-        <div class="sf-table-header">
-            <span>All Courses</span>
-            <span style="color:var(--text-2); font-size:0.82rem;">{{ courses|length }} total</span>
-        </div>
-
-        <div style="overflow-x:auto;">
-            <table class="sf-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Title</th>
-                        <th>Instructor</th>
-                        <th>Category</th>
-                        <th>Level</th>
-                        <th>Rating</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for course in courses %}
-                    <tr>
-                        <td style="color:var(--text-2);">{{ course['id'] }}</td>
-
-                        <td>
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div style="width:10px; height:10px; border-radius:50%; background:{{ course['color'] }}; flex-shrink:0;"></div>
-                                <span style="font-weight:500;">{{ course['title'] }}</span>
-                            </div>
-                        </td>
-
-                        <td style="color:var(--text-2);">{{ course['instructor'] }}</td>
-
-                        <td>
-                            <span class="badge badge-level">{{ course['category'] }}</span>
-                        </td>
-
-                        <td>
-                            <span class="badge badge-level">{{ course['level'] }}</span>
-                        </td>
-
-                        <td style="color:var(--warning);">
-                            <i class="bi bi-star-fill" style="font-size:0.75rem;"></i>
-                            {{ course['rating'] }}
-                        </td>
-
-                        <td>
-                            <div style="display:flex; gap:8px; align-items:center;">
-
-                                <a href="/admin/courses/edit/{{ course['id'] }}"
-                                   class="action-btn action-edit">
-                                    <i class="bi bi-pencil-fill"></i> Edit
-                                </a>
-
-                                <form method="POST"
-                                      action="/admin/courses/delete/{{ course['id'] }}"
-                                      style="display:inline; margin:0;"
-                                      onsubmit="return confirm('Delete {{ course['title'] }}? This cannot be undone.')">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="action-btn action-delete">
-                                        <i class="bi bi-trash-fill"></i> Delete
-                                    </button>
-                                </form>
-
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
+    <!-- Empty state -->
+    <div id="no-courses"
+         style="display:none;text-align:center;padding:60px 20px;">
+      <div style="font-size:2.5rem;margin-bottom:12px;">🔍</div>
+      <div style="font-weight:600;margin-bottom:6px;">No courses match your search</div>
+      <div style="font-size:0.82rem;color:var(--text-3);margin-bottom:16px;">
+        Try a different title, instructor, or category.
+      </div>
+      <button onclick="resetFilters()"
+              style="padding:8px 18px;background:var(--accent);color:#fff;
+                     border:none;border-radius:9px;font-size:0.82rem;
+                     font-family:'Inter',sans-serif;cursor:pointer;">
+        Clear filters
+      </button>
     </div>
 
+  </div>
 </div>
+
+<script>
+let activeCat = 'all';
+
+const searchInput = document.getElementById('course-search');
+const rows        = document.querySelectorAll('#courses-table tbody tr');
+const countEl     = document.getElementById('course-count');
+const noCoursesEl = document.getElementById('no-courses');
+const catBtns     = document.querySelectorAll('#cat-filters button');
+
+function applyFilters() {
+  const q = searchInput.value.toLowerCase().trim();
+  let visible = 0;
+
+  rows.forEach(row => {
+    const matchSearch = !q
+      || row.dataset.title.includes(q)
+      || row.dataset.instructor.includes(q);
+
+    const matchCat = activeCat === 'all'
+      || row.dataset.category === activeCat;
+
+    const show = matchSearch && matchCat;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  countEl.textContent = `${visible} course${visible !== 1 ? 's' : ''}`;
+  noCoursesEl.style.display = visible === 0 ? 'block' : 'none';
+}
+
+function setCat(cat) {
+  activeCat = cat.toLowerCase();
+
+  // Update pill styles
+  catBtns.forEach(btn => {
+    const isActive = btn.dataset.cat.toLowerCase() === activeCat;
+    btn.style.background = isActive ? 'var(--accent)' : 'transparent';
+    btn.style.color      = isActive ? '#fff'          : 'var(--text-3)';
+    btn.style.borderColor= isActive ? 'var(--accent)' : 'var(--border)';
+  });
+
+  applyFilters();
+}
+
+function resetFilters() {
+  searchInput.value = '';
+  setCat('All');
+}
+
+searchInput.addEventListener('input', applyFilters);
+</script>
 
 {% endblock %}
