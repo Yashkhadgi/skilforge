@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 from functools import wraps
 from datetime import datetime
@@ -8,6 +9,7 @@ import os
 import re
 import secrets
 import math
+import time
 
 load_dotenv()
 app = Flask(__name__)
@@ -25,6 +27,13 @@ app.secret_key = _secret
 
 PER_PAGE = 6
 
+UPLOAD_FOLDER      = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 # -------------------------------------------------------------------
 # DATABASE
 # -------------------------------------------------------------------
@@ -39,85 +48,85 @@ def get_db():
 def init_db():
     """Initialize the database schema and seed initial data if empty."""
     conn = get_db()
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS users (
+            id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            email    TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            is_admin INTEGER DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS courses (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            title       TEXT NOT NULL,
+            instructor  TEXT NOT NULL,
+            category    TEXT NOT NULL,
+            level       TEXT NOT NULL,
+            duration    TEXT NOT NULL,
+            rating      REAL NOT NULL,
+            students    INTEGER NOT NULL,
+            description TEXT NOT NULL,
+            color       TEXT NOT NULL,
+            image_url   TEXT DEFAULT ''
+        );
+
+        CREATE TABLE IF NOT EXISTS enrollments (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id     INTEGER NOT NULL,
+            course_id   INTEGER NOT NULL,
+            progress    INTEGER DEFAULT 0,
+            enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id)   REFERENCES users(id),
+            FOREIGN KEY (course_id) REFERENCES courses(id)
+        );
+    """)
+    conn.commit()
+
+    # Migration: add image_url to existing databases that don't have it yet
     try:
-        conn.executescript("""
+        conn.execute("ALTER TABLE courses ADD COLUMN image_url TEXT DEFAULT ''")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # Column already exists — safe to ignore
 
-            CREATE TABLE IF NOT EXISTS users (
-                id       INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                email    TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                is_admin INTEGER DEFAULT 0
-            );
+    # Create uploads folder if it doesn't exist
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-            CREATE TABLE IF NOT EXISTS courses (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                title       TEXT NOT NULL,
-                instructor  TEXT NOT NULL,
-                category    TEXT NOT NULL,
-                level       TEXT NOT NULL,
-                duration    TEXT NOT NULL,
-                rating      REAL NOT NULL,
-                students    INTEGER NOT NULL,
-                description TEXT NOT NULL,
-                color       TEXT NOT NULL
-            );
+    # ------- Seed admin user -------
+    admin_exists = conn.execute(
+        "SELECT id FROM users WHERE username = 'admin'"
+    ).fetchone()
 
-            CREATE TABLE IF NOT EXISTS enrollments (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id     INTEGER NOT NULL,
-                course_id   INTEGER NOT NULL,
-                progress    INTEGER DEFAULT 0,
-                enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id)   REFERENCES users(id),
-                FOREIGN KEY (course_id) REFERENCES courses(id)
-            );
-
-        """)
+    if not admin_exists:
+        admin_pw = os.environ.get("ADMIN_PASSWORD", "admin123")
+        hashed   = generate_password_hash(admin_pw, method='pbkdf2:sha256')
+        conn.execute(
+            "INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)",
+            ("admin", "admin@skillforge.com", hashed, 1)
+        )
         conn.commit()
 
-        # ------- Seed admin user -------
-        admin_exists = conn.execute(
-            "SELECT id FROM users WHERE username = 'admin'"
-        ).fetchone()
+    # ------- Seed courses -------
+    count = conn.execute("SELECT COUNT(*) FROM courses").fetchone()[0]
+    if count == 0:
+        courses = [
+            ("Python Fundamentals",        "Arjun Mehta",   "Python", "Beginner",     "14 hrs", 4.8, 12400, "Master Python from scratch. Variables, loops, functions, OOP and more.",        "#4f8ef7", ""),
+            ("Flask Web Development",      "Priya Sharma",  "Web",    "Intermediate", "18 hrs", 4.7,  8900, "Build real web apps with Flask. Routing, templates, databases, auth.",          "#7c3aed", ""),
+            ("Machine Learning Basics",    "Rahul Verma",   "AI",     "Intermediate", "22 hrs", 4.9,  6700, "Learn ML algorithms, data preprocessing, model training with scikit-learn.",   "#059669", ""),
+            ("Web Development Bootcamp",   "Sneha Iyer",    "Web",    "Beginner",     "30 hrs", 4.6, 15200, "HTML, CSS, JavaScript — build modern websites from scratch.",                  "#db2777", ""),
+            ("AI Introduction",            "Vikram Nair",   "AI",     "Beginner",     "10 hrs", 4.5,  9300, "Understand AI concepts, use cases, and how modern AI systems work.",           "#d97706", ""),
+            ("Data Structures & Algo",     "Ankit Gupta",   "Python", "Advanced",     "25 hrs", 4.9,  7800, "Master DSA with Python. Arrays, trees, graphs, dynamic programming.",          "#0891b2", ""),
+            ("React JS Complete Guide",    "Neha Kulkarni", "Web",    "Intermediate", "20 hrs", 4.7, 11000, "Build dynamic UIs with React. Hooks, state management, REST APIs.",            "#ea580c", ""),
+            ("Deep Learning with PyTorch", "Siddharth Rao", "AI",     "Advanced",     "28 hrs", 4.8,  4200, "Neural networks, CNNs, RNNs — build and train deep learning models.",          "#16a34a", ""),
+        ]
+        conn.executemany(
+            "INSERT INTO courses (title,instructor,category,level,duration,rating,students,description,color,image_url) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            courses
+        )
+        conn.commit()
 
-        if not admin_exists:
-            admin_pw = os.environ.get("ADMIN_PASSWORD")
-            if not admin_pw:
-                import warnings
-                warnings.warn(
-                    "ADMIN_PASSWORD is not set. Defaulting to 'admin123'. "
-                    "Change this immediately in production.",
-                    stacklevel=2
-                )
-                admin_pw = "admin123"
-            hashed = generate_password_hash(admin_pw, method='pbkdf2:sha256')
-            conn.execute(
-                "INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)",
-                ("admin", "admin@skillforge.com", hashed, 1)
-            )
-            conn.commit()
-
-        # ------- Seed courses -------
-        count = conn.execute("SELECT COUNT(*) FROM courses").fetchone()[0]
-        if count == 0:
-            courses = [
-                ("Python Fundamentals",        "Arjun Mehta",   "Python", "Beginner",     "14 hrs", 4.8, 12400, "Master Python from scratch. Variables, loops, functions, OOP and more.",        "#4f8ef7"),
-                ("Flask Web Development",      "Priya Sharma",  "Web",    "Intermediate", "18 hrs", 4.7,  8900, "Build real web apps with Flask. Routing, templates, databases, auth.",          "#7c3aed"),
-                ("Machine Learning Basics",    "Rahul Verma",   "AI",     "Intermediate", "22 hrs", 4.9,  6700, "Learn ML algorithms, data preprocessing, model training with scikit-learn.",   "#059669"),
-                ("Web Development Bootcamp",   "Sneha Iyer",    "Web",    "Beginner",     "30 hrs", 4.6, 15200, "HTML, CSS, JavaScript — build modern websites from scratch.",                  "#db2777"),
-                ("AI Introduction",            "Vikram Nair",   "AI",     "Beginner",     "10 hrs", 4.5,  9300, "Understand AI concepts, use cases, and how modern AI systems work.",           "#d97706"),
-                ("Data Structures & Algo",     "Ankit Gupta",   "Python", "Advanced",     "25 hrs", 4.9,  7800, "Master DSA with Python. Arrays, trees, graphs, dynamic programming.",          "#0891b2"),
-                ("React JS Complete Guide",    "Neha Kulkarni", "Web",    "Intermediate", "20 hrs", 4.7, 11000, "Build dynamic UIs with React. Hooks, state management, REST APIs.",            "#ea580c"),
-                ("Deep Learning with PyTorch", "Siddharth Rao", "AI",     "Advanced",     "28 hrs", 4.8,  4200, "Neural networks, CNNs, RNNs — build and train deep learning models.",          "#16a34a"),
-            ]
-            conn.executemany(
-                "INSERT INTO courses (title,instructor,category,level,duration,rating,students,description,color) VALUES (?,?,?,?,?,?,?,?,?)",
-                courses
-            )
-            conn.commit()
-    finally:
-        conn.close()
+    conn.close()
 
 
 with app.app_context():
@@ -705,9 +714,14 @@ def admin_add_course():
         duration    = request.form['duration'].strip()
         description = request.form['description'].strip()
         color       = request.form['color']
+        image_url   = request.form.get('image_url', '').strip()
 
-        if not re.match(r'^#[0-9A-Fa-f]{6}$', color):
-            color = '#4f8ef7'
+        # File upload takes priority over URL
+        file = request.files.get('image_file')
+        if file and file.filename and allowed_file(file.filename):
+            filename  = f"{int(time.time())}_{secure_filename(file.filename)}"
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            image_url = f'/static/uploads/{filename}'
 
         if not title or not instructor or not duration or not description:
             flash("All text fields are required and cannot be blank.", "danger")
@@ -731,9 +745,9 @@ def admin_add_course():
         conn = get_db()
         conn.execute(
             """INSERT INTO courses
-               (title, instructor, category, level, duration, rating, students, description, color)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (title, instructor, category, level, duration, rating, students, description, color)
+               (title,instructor,category,level,duration,rating,students,description,color,image_url)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            (title, instructor, category, level, duration, rating, students, description, color, image_url)
         )
         conn.commit()
         conn.close()
@@ -769,9 +783,18 @@ def admin_edit_course(course_id):
         duration    = request.form['duration'].strip()
         description = request.form['description'].strip()
         color       = request.form['color']
+        image_url   = request.form.get('image_url', '').strip()
 
-        if not re.match(r'^#[0-9A-Fa-f]{6}$', color):
-            color = '#4f8ef7'
+        # File upload takes priority over URL
+        file = request.files.get('image_file')
+        if file and file.filename and allowed_file(file.filename):
+            filename  = f"{int(time.time())}_{secure_filename(file.filename)}"
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            image_url = f'/static/uploads/{filename}'
+
+        # If neither provided, keep the existing image
+        if not image_url:
+            image_url = course['image_url'] or ''
 
         if not title or not instructor or not duration or not description:
             flash("All text fields are required and cannot be blank.", "danger")
@@ -798,10 +821,11 @@ def admin_edit_course(course_id):
 
         conn.execute(
             """UPDATE courses SET
-               title=?, instructor=?, category=?, level=?,
-               duration=?, rating=?, students=?, description=?, color=?
+               title=?,instructor=?,category=?,level=?,duration=?,
+               rating=?,students=?,description=?,color=?,image_url=?
                WHERE id=?""",
-            (title, instructor, category, level, duration, rating, students, description, color, course_id)
+            (title, instructor, category, level, duration,
+             rating, students, description, color, image_url, course_id)
         )
         conn.commit()
         conn.close()

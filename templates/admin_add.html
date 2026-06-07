@@ -37,27 +37,26 @@
     <div class="sf-table-header">
       <span>Course Details</span>
       <span style="font-size:0.76rem;color:var(--text-3);font-weight:400;">
-        All fields required
+        All fields required unless marked optional
       </span>
     </div>
 
     <div style="padding:28px 32px;">
-      <form method="POST" action="/admin/courses/add" id="add-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <!-- enctype required for file upload -->
+      <form method="POST" action="/admin/courses/add"
+            id="add-form" enctype="multipart/form-data">
 
         <!-- Row 1: Title + Instructor -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;">
           <div class="admin-field">
             <label>Course Title</label>
             <input type="text" name="title"
-                   placeholder="e.g. Python Fundamentals" required
-                   maxlength="100">
+                   placeholder="e.g. Python Fundamentals" required maxlength="100">
           </div>
           <div class="admin-field">
             <label>Instructor Name</label>
             <input type="text" name="instructor"
-                   placeholder="e.g. Arjun Mehta" required
-                   maxlength="60">
+                   placeholder="e.g. Arjun Mehta" required maxlength="60">
           </div>
         </div>
 
@@ -91,14 +90,12 @@
           <div class="admin-field">
             <label>Rating (1.0 – 5.0)</label>
             <input type="number" name="rating"
-                   placeholder="e.g. 4.8"
-                   min="1" max="5" step="0.1" required>
+                   placeholder="e.g. 4.8" min="1" max="5" step="0.1" required>
           </div>
           <div class="admin-field">
             <label>Students Enrolled</label>
             <input type="number" name="students"
-                   placeholder="e.g. 1200"
-                   min="0" required>
+                   placeholder="e.g. 1200" min="0" required>
           </div>
         </div>
 
@@ -107,13 +104,80 @@
           <label>Description</label>
           <textarea name="description" rows="3"
                     placeholder="A short, compelling course description..."
-                    maxlength="300" required></textarea>
+                    maxlength="300"></textarea>
           <div style="font-size:0.7rem;color:var(--text-3);margin-top:4px;">
             Max 300 characters
           </div>
         </div>
 
-        <!-- Row 5: Color picker -->
+        <!-- Row 5: Thumbnail (NEW) -->
+        <div class="admin-field" style="margin-bottom:18px;">
+          <label>
+            Course Thumbnail
+            <span style="color:var(--text-3);font-weight:400;font-size:0.76rem;">
+              (optional)
+            </span>
+          </label>
+
+          <!-- Preview box -->
+          <div id="img-preview-box"
+               style="width:100%;height:140px;border-radius:12px;overflow:hidden;
+                      border:2px dashed var(--border);background:var(--bg);
+                      display:flex;align-items:center;justify-content:center;
+                      margin-bottom:12px;position:relative;transition:border-color 0.2s;">
+            <div id="img-placeholder"
+                 style="text-align:center;color:var(--text-3);">
+              <i class="bi bi-image" style="font-size:2rem;display:block;margin-bottom:6px;"></i>
+              <span style="font-size:0.76rem;">Preview will appear here</span>
+            </div>
+            <img id="img-preview" src="" alt="Preview"
+                 style="display:none;position:absolute;inset:0;
+                        width:100%;height:100%;object-fit:cover;">
+          </div>
+
+          <!-- URL input -->
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <div style="position:relative;flex:1;">
+              <i class="bi bi-link-45deg"
+                 style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
+                        color:var(--text-3);font-size:0.9rem;pointer-events:none;"></i>
+              <input type="text" name="image_url" id="image-url-input"
+                     placeholder="Paste image URL (https://...)"
+                     style="padding-left:32px;width:100%;"
+                     oninput="previewFromUrl(this.value)">
+            </div>
+            <button type="button" onclick="clearImage()"
+                    style="padding:9px 14px;border:1px solid var(--border);
+                           border-radius:9px;background:transparent;
+                           color:var(--text-3);cursor:pointer;font-size:0.78rem;
+                           font-family:'Inter',sans-serif;white-space:nowrap;
+                           transition:all 0.2s;"
+                    onmouseover="this.style.borderColor='var(--danger)';this.style.color='var(--danger)'"
+                    onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-3)'">
+              <i class="bi bi-x"></i> Clear
+            </button>
+          </div>
+
+          <!-- File upload -->
+          <div style="position:relative;">
+            <input type="file" name="image_file" id="image-file-input"
+                   accept="image/*" style="display:none;"
+                   onchange="previewFromFile(this)">
+            <button type="button" onclick="document.getElementById('image-file-input').click()"
+                    style="width:100%;padding:9px;border:1px dashed var(--border);
+                           border-radius:9px;background:transparent;color:var(--text-3);
+                           cursor:pointer;font-size:0.8rem;font-family:'Inter',sans-serif;
+                           transition:all 0.2s;display:flex;align-items:center;
+                           justify-content:center;gap:6px;"
+                    onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+                    onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-3)'">
+              <i class="bi bi-upload"></i>
+              <span id="file-label">Or upload from your computer (JPG, PNG, GIF, WEBP)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 6: Color picker -->
         <div class="admin-field" style="margin-bottom:28px;">
           <label>Card Accent Color</label>
           <div style="display:flex;align-items:center;gap:14px;">
@@ -124,6 +188,7 @@
               {% for c in ['#4f8ef7','#7c3aed','#059669','#db2777','#d97706','#0891b2','#ea580c','#16a34a'] %}
               <div onclick="document.getElementById('color-pick').value='{{ c }}';
                             document.getElementById('color-preview').style.background='{{ c }}22';
+                            document.getElementById('color-preview').style.border='1px solid {{ c }}44';
                             this.parentElement.querySelectorAll('.preset-dot').forEach(d=>d.style.outline='none');
                             this.style.outline='2px solid {{ c }}';"
                    class="preset-dot"
@@ -136,20 +201,17 @@
               {% endfor %}
             </div>
           </div>
-          <!-- Color preview -->
           <div id="color-preview"
                style="margin-top:12px;padding:12px 16px;border-radius:10px;
                       background:#4f8ef722;border:1px solid #4f8ef733;
-                      font-size:0.78rem;color:var(--text-2);
-                      transition:background 0.3s;">
+                      font-size:0.78rem;color:var(--text-2);transition:background 0.3s;">
             <i class="bi bi-eye"></i>
             This color will be used as the course card accent
           </div>
         </div>
 
         <!-- Buttons -->
-        <div style="display:flex;gap:10px;padding-top:4px;
-                    border-top:1px solid var(--border);">
+        <div style="display:flex;gap:10px;padding-top:4px;border-top:1px solid var(--border);">
           <button type="submit" class="btn-primary-sf"
                   style="width:auto;padding:11px 28px;" id="submit-btn">
             <i class="bi bi-check-lg"></i> Publish Course
@@ -161,13 +223,11 @@
 
       </form>
     </div>
-
   </div>
-
 </div>
 
 <script>
-// Color picker live preview
+// Color picker
 const pick    = document.getElementById('color-pick');
 const preview = document.getElementById('color-preview');
 pick.addEventListener('input', function() {
@@ -175,11 +235,61 @@ pick.addEventListener('input', function() {
   preview.style.border     = '1px solid ' + this.value + '44';
 });
 
+// Image preview from URL
+function previewFromUrl(url) {
+  if (!url) { resetPreview(); return; }
+  const img = document.getElementById('img-preview');
+  img.src = url;
+  img.onload = () => showPreview();
+  img.onerror = () => resetPreview();
+  // Clear any file selection since URL takes over visually
+  document.getElementById('image-file-input').value = '';
+  document.getElementById('file-label').textContent =
+    'Or upload from your computer (JPG, PNG, GIF, WEBP)';
+}
+
+// Image preview from file input
+function previewFromFile(input) {
+  if (!input.files || !input.files[0]) return;
+  const file   = input.files[0];
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById('img-preview').src = e.target.result;
+    showPreview();
+    // Clear URL input since file takes priority
+    document.getElementById('image-url-input').value = '';
+    document.getElementById('file-label').textContent = `📎 ${file.name}`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function showPreview() {
+  document.getElementById('img-placeholder').style.display = 'none';
+  document.getElementById('img-preview').style.display     = 'block';
+  document.getElementById('img-preview-box').style.borderStyle = 'solid';
+  document.getElementById('img-preview-box').style.borderColor = 'var(--accent)';
+}
+
+function resetPreview() {
+  document.getElementById('img-placeholder').style.display = 'block';
+  document.getElementById('img-preview').style.display     = 'none';
+  document.getElementById('img-preview-box').style.borderStyle = 'dashed';
+  document.getElementById('img-preview-box').style.borderColor = 'var(--border)';
+}
+
+function clearImage() {
+  document.getElementById('image-url-input').value  = '';
+  document.getElementById('image-file-input').value = '';
+  document.getElementById('file-label').textContent =
+    'Or upload from your computer (JPG, PNG, GIF, WEBP)';
+  resetPreview();
+}
+
 // Submit loading state
 document.getElementById('add-form').addEventListener('submit', function() {
   const btn = document.getElementById('submit-btn');
-  btn.innerHTML      = '<i class="bi bi-hourglass-split"></i> Publishing...';
-  btn.style.opacity  = '0.7';
+  btn.innerHTML       = '<i class="bi bi-hourglass-split"></i> Publishing...';
+  btn.style.opacity   = '0.7';
   btn.style.pointerEvents = 'none';
 });
 </script>
