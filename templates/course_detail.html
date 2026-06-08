@@ -7,8 +7,7 @@
   <div class="reveal" style="margin-bottom:20px;">
     <a href="/courses"
        style="font-size:0.8rem;color:var(--text-3);text-decoration:none;
-              display:inline-flex;align-items:center;gap:5px;
-              transition:color 0.2s;"
+              display:inline-flex;align-items:center;gap:5px;transition:color 0.2s;"
        onmouseover="this.style.color='var(--text-2)'"
        onmouseout="this.style.color='var(--text-3)'">
       <i class="bi bi-arrow-left"></i> Back to Courses
@@ -38,28 +37,19 @@
                  letter-spacing:-0.04em;line-height:1.15;margin-bottom:12px;">
         {{ course['title'] }}
       </h1>
-
       <p style="color:var(--text-2);font-size:0.9rem;line-height:1.7;margin-bottom:20px;">
         {{ course['description'] }}
       </p>
 
       <div class="detail-meta">
-        <span>
-          <i class="bi bi-person-circle" style="color:var(--accent);"></i>
-          {{ course['instructor'] }}
-        </span>
+        <span><i class="bi bi-person-circle" style="color:var(--accent);"></i> {{ course['instructor'] }}</span>
         <span>
           <i class="bi bi-star-fill" style="color:#f59e0b;"></i>
-          {{ course['rating'] }} rating
+          {% if live_avg %}{{ live_avg }} ({{ review_count }} review{{ 's' if review_count != 1 else '' }})
+          {% else %}{{ course['rating'] }} rating{% endif %}
         </span>
-        <span>
-          <i class="bi bi-people" style="color:var(--blue);"></i>
-          {{ "{:,}".format(course['students']) }} students
-        </span>
-        <span>
-          <i class="bi bi-clock" style="color:var(--success);"></i>
-          {{ course['duration'] }}
-        </span>
+        <span><i class="bi bi-people" style="color:var(--blue);"></i> {{ "{:,}".format(course['students']) }} students</span>
+        <span><i class="bi bi-clock" style="color:var(--success);"></i> {{ course['duration'] }}</span>
       </div>
 
       <!-- What you learn -->
@@ -71,7 +61,7 @@
           What You'll Learn
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          {% set outcomes = [
+          {% for item in [
             'Core concepts and real-world applications',
             'Hands-on projects and exercises',
             'Industry best practices',
@@ -79,9 +69,7 @@
             'Code review and debugging skills',
             'Modern tooling and workflows'
           ] %}
-          {% for item in outcomes %}
-          <div style="display:flex;align-items:flex-start;gap:8px;font-size:0.82rem;
-                      color:var(--text-2);">
+          <div style="display:flex;align-items:flex-start;gap:8px;font-size:0.82rem;color:var(--text-2);">
             <i class="bi bi-check2-circle"
                style="color:var(--success);flex-shrink:0;margin-top:2px;font-size:0.85rem;"></i>
             {{ item }}
@@ -91,33 +79,36 @@
       </div>
     </div>
 
-    <!-- RIGHT: Enroll Box -->
+    <!-- RIGHT: Enroll box -->
     <div>
       <div class="enroll-box" style="position:sticky;top:76px;">
 
-        <!-- Course preview thumbnail -->
+        <!-- Thumbnail -->
         <div style="height:130px;border-radius:12px;margin-bottom:18px;overflow:hidden;
                     background:linear-gradient(135deg,{{ course['color'] }}22,{{ course['color'] }}55);
                     display:flex;align-items:center;justify-content:center;
                     font-size:3.5rem;position:relative;">
-          {% if course['category'] == 'Python' %}🐍
-          {% elif course['category'] == 'Web' %}🌐
-          {% elif course['category'] == 'AI' %}🤖
-          {% else %}📚{% endif %}
+          {% if course['image_url'] %}
+          <img src="{{ course['image_url'] }}" alt="{{ course['title'] }}"
+               style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"
+               onerror="this.style.display='none'">
+          {% endif %}
+          <span style="position:relative;z-index:1;{% if course['image_url'] %}display:none;{% endif %}">
+            {% if course['category']=='Python' %}🐍{% elif course['category']=='Web' %}🌐{% elif course['category']=='AI' %}🤖{% else %}📚{% endif %}
+          </span>
           <div style="position:absolute;inset:0;
-                      background:radial-gradient(circle at 50% 50%,
-                        {{ course['color'] }}33 0%, transparent 70%);"></div>
+                      background:radial-gradient(circle at 50% 50%,{{ course['color'] }}33 0%,transparent 70%);
+                      pointer-events:none;z-index:2;"></div>
         </div>
 
         <div class="price">Free</div>
-        <div class="free-tag">
-          <i class="bi bi-infinity"></i> Full lifetime access
-        </div>
+        <div class="free-tag"><i class="bi bi-infinity"></i> Full lifetime access</div>
 
         {% if enrollment %}
           <a href="/my-learning" class="btn-enrolled-big">
             <i class="bi bi-check-circle-fill"></i> Already Enrolled
           </a>
+          <!-- Progress -->
           <div class="progress-wrap mt-3">
             <div class="progress-label">
               <span>Your Progress</span>
@@ -129,8 +120,19 @@
                    data-width="{{ enrollment['progress'] }}"></div>
             </div>
           </div>
+          {% if enrollment['progress'] >= 100 %}
+          <a href="/certificate/{{ enrollment['id'] }}"
+             style="display:flex;align-items:center;justify-content:center;gap:7px;
+                    margin-top:12px;padding:10px;border-radius:10px;
+                    background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);
+                    color:#d97706;text-decoration:none;font-size:0.82rem;font-weight:600;
+                    transition:all 0.2s;"
+             onmouseover="this.style.background='rgba(245,158,11,0.2)'"
+             onmouseout="this.style.background='rgba(245,158,11,0.1)'">
+            <i class="bi bi-trophy-fill"></i> Get Certificate
+          </a>
+          {% endif %}
         {% else %}
-          <!-- FIX #1: Changed from <a href> GET to a POST form -->
           <form method="POST" action="/enroll/{{ course['id'] }}" id="enroll-form" style="margin:0;">
             <button type="submit" class="btn-enroll-big" id="enroll-btn"
                     style="width:100%;border:none;cursor:pointer;">
@@ -145,13 +147,12 @@
                       text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;">
             This course includes
           </div>
-          {% set includes = [
-            ('bi-play-circle', 'Self-paced video content'),
-            ('bi-code-slash',  'Coding exercises'),
-            ('bi-trophy-fill', 'Final project'),
-            ('bi-infinity',    'Lifetime access'),
+          {% for icon, label in [
+            ('bi-play-circle','Self-paced video content'),
+            ('bi-code-slash', 'Coding exercises'),
+            ('bi-trophy-fill','Final project'),
+            ('bi-infinity',   'Lifetime access')
           ] %}
-          {% for icon, label in includes %}
           <div style="display:flex;align-items:center;gap:9px;font-size:0.8rem;
                       color:var(--text-2);margin-bottom:9px;">
             <i class="bi {{ icon }}" style="color:var(--text-3);width:14px;text-align:center;"></i>
@@ -162,27 +163,16 @@
 
       </div>
     </div>
-
   </div>
 
   <!-- ── CURRICULUM ── -->
   <div class="curriculum-section reveal" style="margin-top:8px;">
     <h3 style="display:flex;align-items:center;justify-content:space-between;">
-      <span>
-        <i class="bi bi-journal-text me-2" style="color:var(--accent);"></i>
-        Course Curriculum
-      </span>
-      <span style="font-size:0.76rem;color:var(--text-3);font-weight:400;">
-        {{ curriculum|length }} modules
-      </span>
+      <span><i class="bi bi-journal-text me-2" style="color:var(--accent);"></i>Course Curriculum</span>
+      <span style="font-size:0.76rem;color:var(--text-3);font-weight:400;">{{ curriculum|length }} modules</span>
     </h3>
-
     {% for item in curriculum %}
-    <div class="curriculum-item" style="cursor:pointer;"
-         onmouseover="this.querySelector('.mod-arrow').style.opacity='1';
-                      this.querySelector('.mod-arrow').style.transform='translateX(0)'"
-         onmouseout="this.querySelector('.mod-arrow').style.opacity='0';
-                     this.querySelector('.mod-arrow').style.transform='translateX(-4px)'">
+    <div class="curriculum-item">
       <div class="mod-name">
         <div style="width:28px;height:28px;border-radius:8px;
                     background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.15);
@@ -192,17 +182,12 @@
         </div>
         {{ item['module'] }}
       </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div class="mod-count">{{ item['lessons'] }} lessons</div>
-        <i class="bi bi-chevron-right mod-arrow"
-           style="font-size:0.72rem;color:var(--text-3);opacity:0;
-                  transform:translateX(-4px);transition:all 0.2s var(--ease);"></i>
-      </div>
+      <div class="mod-count">{{ item['lessons'] }} lessons</div>
     </div>
     {% endfor %}
   </div>
 
-  <!-- ── INSTRUCTOR CARD ── -->
+  <!-- ── INSTRUCTOR ── -->
   <div class="sf-card reveal" style="padding:22px;margin-top:16px;
        display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
     <div style="width:52px;height:52px;border-radius:50%;flex-shrink:0;
@@ -213,19 +198,11 @@
     </div>
     <div style="flex:1;min-width:0;">
       <div style="font-family:'Inter Tight',sans-serif;font-weight:700;
-                  letter-spacing:-0.02em;margin-bottom:2px;">
-        {{ course['instructor'] }}
-      </div>
+                  letter-spacing:-0.02em;margin-bottom:2px;">{{ course['instructor'] }}</div>
       <div style="font-size:0.78rem;color:var(--text-3);">
         Course Instructor &nbsp;·&nbsp;
-        <span style="color:var(--warning);">
-          <i class="bi bi-star-fill" style="font-size:0.68rem;"></i>
-          {{ course['rating'] }} rating
-        </span>
-        &nbsp;·&nbsp;
-        <span style="color:var(--text-3);">
-          {{ "{:,}".format(course['students']) }} students
-        </span>
+        <span style="color:var(--warning);"><i class="bi bi-star-fill" style="font-size:0.68rem;"></i> {{ course['rating'] }}</span>
+        &nbsp;·&nbsp; {{ "{:,}".format(course['students']) }} students
       </div>
     </div>
     <div class="hero-badge" style="font-size:0.72rem;">
@@ -233,17 +210,230 @@
     </div>
   </div>
 
+  <!-- ── REVIEWS (#11) ── -->
+  <div id="reviews" class="reveal" style="margin-top:24px;">
+
+    <!-- Rating summary header -->
+    <div class="sf-card" style="overflow:hidden;margin-bottom:16px;">
+      <div class="sf-table-header">
+        <span><i class="bi bi-star-fill me-2" style="color:#f59e0b;"></i>Student Reviews</span>
+        <span style="color:var(--text-3);font-size:0.8rem;">{{ review_count }} review{{ 's' if review_count != 1 else '' }}</span>
+      </div>
+      <div style="padding:20px 24px;">
+
+        {% if review_count > 0 %}
+        <!-- Summary row -->
+        <div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap;margin-bottom:20px;">
+          <!-- Big number -->
+          <div style="text-align:center;flex-shrink:0;">
+            <div style="font-size:3rem;font-weight:900;font-family:'Inter Tight',sans-serif;
+                        letter-spacing:-0.05em;color:var(--text);line-height:1;">
+              {{ live_avg }}
+            </div>
+            <div style="display:flex;gap:3px;justify-content:center;margin:6px 0 4px;">
+              {% for i in range(1,6) %}
+              <i class="bi bi-star{% if live_avg >= i %}-fill{% elif live_avg >= i - 0.5 %}-half{% endif %}"
+                 style="color:#f59e0b;font-size:0.9rem;"></i>
+              {% endfor %}
+            </div>
+            <div style="font-size:0.72rem;color:var(--text-3);">out of 5</div>
+          </div>
+
+          <!-- Distribution bars -->
+          <div style="flex:1;min-width:200px;">
+            {% for stars in [5,4,3,2,1] %}
+            {% set count = distribution.get(stars, 0) %}
+            {% set pct   = (count / review_count * 100)|int %}
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+              <span style="font-size:0.75rem;color:var(--text-3);width:12px;text-align:right;">{{ stars }}</span>
+              <i class="bi bi-star-fill" style="color:#f59e0b;font-size:0.68rem;flex-shrink:0;"></i>
+              <div style="flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+                <div style="height:100%;width:{{ pct }}%;background:#f59e0b;border-radius:99px;"></div>
+              </div>
+              <span style="font-size:0.72rem;color:var(--text-3);width:20px;">{{ count }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <div style="text-align:center;padding:20px 0;color:var(--text-3);font-size:0.88rem;">
+          No reviews yet. Be the first to review this course!
+        </div>
+        {% endif %}
+
+        <!-- Write / Edit review form (enrolled users only) -->
+        {% if enrollment %}
+        <div style="padding-top:20px;border-top:1px solid var(--border);">
+          <div style="font-size:0.88rem;font-weight:700;margin-bottom:14px;">
+            {% if user_review %}Edit Your Review{% else %}Write a Review{% endif %}
+          </div>
+
+          <form method="POST" action="/review/{{ course['id'] }}">
+            <!-- Star picker -->
+            <div style="margin-bottom:14px;">
+              <div style="font-size:0.78rem;color:var(--text-3);margin-bottom:8px;">Your rating</div>
+              <div id="star-picker" style="display:flex;gap:6px;">
+                {% for i in [1,2,3,4,5] %}
+                <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}"
+                       style="display:none;"
+                       {% if user_review and user_review['rating'] == i %}checked{% endif %}>
+                <label for="star{{ i }}"
+                       data-val="{{ i }}"
+                       style="cursor:pointer;font-size:1.8rem;
+                              color:{% if user_review and user_review['rating'] >= i %}#f59e0b{% else %}var(--border){% endif %};
+                              transition:color 0.1s;user-select:none;">★</label>
+                {% endfor %}
+              </div>
+              <div id="star-label" style="font-size:0.75rem;color:var(--text-3);
+                                          margin-top:5px;min-height:16px;">
+                {% if user_review %}
+                  {% set labels = {1:'Poor',2:'Fair',3:'Good',4:'Very Good',5:'Excellent'} %}
+                  {{ labels[user_review['rating']] }}
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Comment -->
+            <div class="admin-field" style="margin-bottom:14px;">
+              <label style="font-size:0.78rem;">
+                Comment
+                <span style="color:var(--text-3);font-weight:400;">(optional, max 500 chars)</span>
+              </label>
+              <textarea name="comment" rows="3" maxlength="500"
+                        placeholder="Share your experience with this course...">{{ user_review['comment'] if user_review else '' }}</textarea>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:10px;">
+              <button type="submit" class="btn-primary-sf"
+                      style="width:auto;padding:9px 22px;">
+                <i class="bi bi-send-fill"></i>
+                {% if user_review %}Update Review{% else %}Submit Review{% endif %}
+              </button>
+              {% if user_review %}
+              </form>
+              <!-- Delete review form -->
+              <form method="POST" action="/review/{{ course['id'] }}/delete" style="margin:0;">
+                <button type="submit" class="sf-btn-ghost"
+                        style="padding:9px 16px;color:var(--danger);border-color:rgba(239,68,68,0.2);"
+                        onclick="return confirm('Remove your review?')"
+                        onmouseover="this.style.background='var(--danger-soft)'"
+                        onmouseout="this.style.background='transparent'">
+                  <i class="bi bi-trash"></i> Remove
+                </button>
+              </form>
+              {% else %}
+              </form>
+              {% endif %}
+            </div>
+
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <!-- Individual reviews list -->
+    {% if reviews %}
+    <div class="sf-card" style="overflow:hidden;">
+      {% for review in reviews %}
+      <div style="padding:18px 24px;
+                  border-bottom:{% if not loop.last %}1px solid var(--border){% else %}none{% endif %};">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <!-- Avatar -->
+          <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;
+                      background:linear-gradient(135deg,var(--accent),var(--blue));
+                      display:flex;align-items:center;justify-content:center;
+                      font-size:0.85rem;font-weight:700;color:#fff;">
+            {{ review['username'][0]|upper }}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <!-- Header row -->
+            <div style="display:flex;align-items:center;justify-content:space-between;
+                        flex-wrap:wrap;gap:6px;margin-bottom:5px;">
+              <div>
+                <span style="font-weight:600;font-size:0.88rem;">{{ review['username'] }}</span>
+                {% if review['user_id'] == session['user_id'] %}
+                <span style="font-size:0.68rem;color:var(--text-3);margin-left:5px;">(you)</span>
+                {% endif %}
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <!-- Stars -->
+                <div style="display:flex;gap:2px;">
+                  {% for i in range(1,6) %}
+                  <i class="bi bi-star{% if review['rating'] >= i %}-fill{% endif %}"
+                     style="color:#f59e0b;font-size:0.72rem;"></i>
+                  {% endfor %}
+                </div>
+                <span style="font-size:0.72rem;color:var(--text-3);">
+                  {{ review['created_at'][:10] }}
+                </span>
+              </div>
+            </div>
+            <!-- Comment -->
+            {% if review['comment'] %}
+            <p style="font-size:0.84rem;color:var(--text-2);margin:0;line-height:1.6;">
+              {{ review['comment'] }}
+            </p>
+            {% else %}
+            <p style="font-size:0.8rem;color:var(--text-3);font-style:italic;margin:0;">
+              No comment left.
+            </p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+  <!-- end #reviews -->
+
 </div>
 
 <script>
-// FIX #1: Loading state now listens to form submit, not anchor click
+// Enroll button loading state
 const enrollForm = document.getElementById('enroll-form');
 if (enrollForm) {
-  enrollForm.addEventListener('submit', function() {
+  enrollForm.addEventListener('submit', function () {
     const btn = document.getElementById('enroll-btn');
-    btn.innerHTML      = '<i class="bi bi-hourglass-split"></i> Enrolling...';
-    btn.style.opacity  = '0.7';
+    btn.innerHTML       = '<i class="bi bi-hourglass-split"></i> Enrolling...';
+    btn.style.opacity   = '0.7';
     btn.style.pointerEvents = 'none';
+  });
+}
+
+// Star picker interaction
+const picker     = document.getElementById('star-picker');
+const starLabel  = document.getElementById('star-label');
+const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+
+if (picker) {
+  const labels = picker.querySelectorAll('label');
+  const inputs = picker.querySelectorAll('input');
+
+  function setStars(n, permanent) {
+    labels.forEach((l, i) => {
+      l.style.color = i < n ? '#f59e0b' : 'var(--border)';
+    });
+    if (starLabel) starLabel.textContent = n ? ratingLabels[n] : '';
+  }
+
+  // Init from checked state
+  const checked = picker.querySelector('input:checked');
+  if (checked) setStars(parseInt(checked.value));
+
+  labels.forEach((label, idx) => {
+    label.addEventListener('mouseenter', () => setStars(idx + 1));
+    label.addEventListener('click', () => {
+      inputs[idx].checked = true;
+      setStars(idx + 1);
+    });
+  });
+
+  picker.addEventListener('mouseleave', () => {
+    const c = picker.querySelector('input:checked');
+    setStars(c ? parseInt(c.value) : 0);
   });
 }
 </script>

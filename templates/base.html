@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="SkillForge — Learn Python, Web Development, AI and more for free.">
+  <!-- #15 CSRF token available to all pages -->
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>SkillForge</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path d='M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z' stroke='%23ffffff' stroke-width='1.5' fill='none'/></svg>">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -27,32 +29,18 @@
     </a>
 
     <div class="sf-nav-links">
-      <a href="/dashboard"
-         class="sf-nav-link {% if request.path == '/dashboard' %}active{% endif %}">
-        Dashboard
-      </a>
-      <a href="/courses"
-         class="sf-nav-link {% if request.path == '/courses' %}active{% endif %}">
-        Courses
-      </a>
-      <a href="/my-learning"
-         class="sf-nav-link {% if request.path == '/my-learning' %}active{% endif %}">
-        My Learning
-      </a>
+      <a href="/dashboard"   class="sf-nav-link {% if request.path=='/dashboard'   %}active{% endif %}">Dashboard</a>
+      <a href="/courses"     class="sf-nav-link {% if request.path=='/courses'     %}active{% endif %}">Courses</a>
+      <a href="/my-learning" class="sf-nav-link {% if request.path=='/my-learning' %}active{% endif %}">My Learning</a>
       {% if session.get('is_admin') == 1 %}
-      <a href="/users"
-         class="sf-nav-link {% if request.path == '/users' %}active{% endif %}">
-        Users
-      </a>
-      <a href="/admin/courses"
-         class="sf-nav-link admin-link {% if '/admin' in request.path %}active{% endif %}">
+      <a href="/users"         class="sf-nav-link {% if request.path=='/users'         %}active{% endif %}">Users</a>
+      <a href="/admin/courses" class="sf-nav-link admin-link {% if '/admin' in request.path %}active{% endif %}">
         <i class="bi bi-shield-fill" style="font-size:0.72rem;"></i> Admin
       </a>
       {% endif %}
     </div>
 
     <div class="sf-nav-right">
-      <!-- Avatar now links to profile page -->
       <a href="/profile" style="text-decoration:none;" title="View profile">
         <div class="sf-avatar" style="cursor:pointer;transition:opacity 0.2s;"
              onmouseover="this.style.opacity='0.8'"
@@ -70,21 +58,12 @@
 <div class="container mt-3" id="flash-container">
   {% for category, message in get_flashed_messages(with_categories=true) %}
   <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-
-    {% if category == 'success' %}
-      <i class="bi bi-check-circle-fill me-2"></i>
-    {% elif category == 'danger' %}
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
-    {% elif category == 'warning' %}
-      <i class="bi bi-exclamation-circle-fill me-2"></i>
-    {% else %}
-      <i class="bi bi-info-circle-fill me-2"></i>
-    {% endif %}
-
+    {% if category == 'success' %}<i class="bi bi-check-circle-fill me-2"></i>
+    {% elif category == 'danger' %}<i class="bi bi-exclamation-triangle-fill me-2"></i>
+    {% elif category == 'warning' %}<i class="bi bi-exclamation-circle-fill me-2"></i>
+    {% else %}<i class="bi bi-info-circle-fill me-2"></i>{% endif %}
     {{ message }}
-
     <div class="flash-timer-bar"></div>
-
     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
   </div>
   {% endfor %}
@@ -96,42 +75,50 @@
 <script src="{{ url_for('static', filename='main.js') }}"></script>
 
 <script>
+// ── #15 CSRF: auto-inject token into every POST form ──────────────
+(function () {
+  const token = document.querySelector('meta[name="csrf-token"]');
+  if (!token) return;
+  document.querySelectorAll('form').forEach(function (form) {
+    if (form.method.toLowerCase() !== 'post') return;
+    // Skip if token already present
+    if (form.querySelector('input[name="csrf_token"]')) return;
+    const input  = document.createElement('input');
+    input.type   = 'hidden';
+    input.name   = 'csrf_token';
+    input.value  = token.content;
+    form.appendChild(input);
+  });
+})();
+
+// ── Flash auto-dismiss ────────────────────────────────────────────
 (function () {
   const DISMISS_AFTER = 4000;
-  const FADE_DURATION  = 500;
-
+  const FADE_DURATION = 500;
   document.querySelectorAll('#flash-container .alert').forEach(function (alert) {
     const bar = alert.querySelector('.flash-timer-bar');
     if (bar) {
       bar.style.transition = `width ${DISMISS_AFTER}ms linear`;
       requestAnimationFrame(function () {
-        requestAnimationFrame(function () {
-          bar.style.width = '0%';
-        });
+        requestAnimationFrame(function () { bar.style.width = '0%'; });
       });
     }
-
     const timer = setTimeout(function () {
       alert.style.transition = `opacity ${FADE_DURATION}ms ease`;
       alert.style.opacity    = '0';
       setTimeout(function () { alert.remove(); }, FADE_DURATION);
     }, DISMISS_AFTER);
-
-    alert.querySelector('.btn-close').addEventListener('click', function () {
-      clearTimeout(timer);
-    });
+    const closeBtn = alert.querySelector('.btn-close');
+    if (closeBtn) closeBtn.addEventListener('click', function () { clearTimeout(timer); });
   });
 })();
 </script>
 
 <style>
 .flash-timer-bar {
-  position    : absolute;
-  bottom      : 0;
-  left        : 0;
-  width       : 100%;
-  height      : 3px;
-  background  : rgba(255, 255, 255, 0.4);
+  position: absolute; bottom: 0; left: 0;
+  width: 100%; height: 3px;
+  background: rgba(255,255,255,0.4);
   border-radius: 0 0 4px 4px;
 }
 .alert { position: relative; overflow: hidden; }

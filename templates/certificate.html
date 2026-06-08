@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="sf-page">
+
+  <!-- Actions bar (hidden on print) -->
+  <div class="no-print reveal"
+       style="display:flex;align-items:center;justify-content:space-between;
+              flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+    <a href="/my-learning"
+       style="font-size:0.8rem;color:var(--text-3);text-decoration:none;
+              display:inline-flex;align-items:center;gap:5px;transition:color 0.2s;"
+       onmouseover="this.style.color='var(--text-2)'"
+       onmouseout="this.style.color='var(--text-3)'">
+      <i class="bi bi-arrow-left"></i> Back to My Learning
+    </a>
+    <button onclick="window.print()"
+            style="padding:9px 20px;background:var(--accent);color:#fff;border:none;
+                   border-radius:10px;font-size:0.83rem;font-family:'Inter',sans-serif;
+                   cursor:pointer;display:flex;align-items:center;gap:6px;
+                   transition:opacity 0.2s;"
+            onmouseover="this.style.opacity='0.85'"
+            onmouseout="this.style.opacity='1'">
+      <i class="bi bi-printer-fill"></i> Print / Save as PDF
+    </button>
+  </div>
+
+  <!-- Certificate -->
+  <div class="certificate-wrapper reveal">
+    <div class="certificate-card">
+
+      <!-- Top decorative bar -->
+      <div style="height:8px;background:linear-gradient(90deg,var(--accent),var(--blue),#059669);
+                  border-radius:4px 4px 0 0;margin:-40px -40px 36px;"></div>
+
+      <!-- Logo -->
+      <div style="display:flex;align-items:center;justify-content:center;
+                  gap:10px;margin-bottom:28px;">
+        <svg width="22" height="22" viewBox="0 0 18 18" fill="none">
+          <path d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
+                stroke="var(--accent)" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span style="font-family:'Inter Tight',sans-serif;font-size:1.1rem;
+                     font-weight:800;letter-spacing:-0.03em;color:var(--text);">
+          SkillForge
+        </span>
+      </div>
+
+      <!-- Title -->
+      <div style="text-align:center;margin-bottom:32px;">
+        <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.18em;
+                    text-transform:uppercase;color:var(--text-3);margin-bottom:12px;">
+          Certificate of Completion
+        </div>
+        <div style="width:60px;height:2px;background:linear-gradient(90deg,var(--accent),var(--blue));
+                    margin:0 auto;border-radius:2px;"></div>
+      </div>
+
+      <!-- This is to certify -->
+      <div style="text-align:center;margin-bottom:8px;
+                  font-size:0.9rem;color:var(--text-2);">
+        This is to certify that
+      </div>
+
+      <!-- Student name -->
+      <div style="text-align:center;margin-bottom:16px;">
+        <span style="font-family:'Inter Tight',sans-serif;font-size:2.2rem;
+                     font-weight:900;letter-spacing:-0.04em;
+                     background:linear-gradient(135deg,var(--accent),var(--blue));
+                     -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                     background-clip:text;">
+          {{ e['username'] }}
+        </span>
+      </div>
+
+      <div style="text-align:center;font-size:0.9rem;color:var(--text-2);margin-bottom:16px;">
+        has successfully completed the course
+      </div>
+
+      <!-- Course name -->
+      <div style="text-align:center;margin-bottom:12px;">
+        <div style="font-family:'Inter Tight',sans-serif;font-size:1.5rem;
+                    font-weight:800;letter-spacing:-0.03em;color:var(--text);
+                    padding:16px 24px;border-radius:12px;
+                    background:linear-gradient(135deg,{{ e['color'] }}11,{{ e['color'] }}22);
+                    border:1px solid {{ e['color'] }}33;display:inline-block;">
+          {{ e['course_title'] }}
+        </div>
+      </div>
+
+      <!-- Course meta -->
+      <div style="text-align:center;margin-bottom:36px;">
+        <span style="font-size:0.82rem;color:var(--text-3);">
+          Instructed by <strong style="color:var(--text-2);">{{ e['instructor'] }}</strong>
+          &nbsp;·&nbsp;
+          <span class="badge" style="background:{{ e['color'] }}22;color:{{ e['color'] }};
+                border:1px solid {{ e['color'] }}33;">{{ e['category'] }}</span>
+          &nbsp;·&nbsp; {{ e['duration'] }}
+        </span>
+      </div>
+
+      <!-- Divider -->
+      <div style="height:1px;background:var(--border);margin:0 0 28px;"></div>
+
+      <!-- Footer row: date + seal -->
+      <div style="display:flex;align-items:center;justify-content:space-between;
+                  flex-wrap:wrap;gap:16px;">
+        <div>
+          <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;
+                      color:var(--text-3);margin-bottom:4px;">Date Completed</div>
+          <div style="font-size:0.9rem;font-weight:600;color:var(--text);">
+            {{ e['enrolled_at'][:10] }}
+          </div>
+        </div>
+
+        <!-- Seal -->
+        <div style="width:72px;height:72px;border-radius:50%;
+                    background:linear-gradient(135deg,var(--accent),var(--blue));
+                    display:flex;align-items:center;justify-content:center;
+                    box-shadow:0 4px 16px rgba(124,58,237,0.3);">
+          <i class="bi bi-trophy-fill" style="color:#fff;font-size:1.6rem;"></i>
+        </div>
+
+        <div style="text-align:right;">
+          <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;
+                      color:var(--text-3);margin-bottom:4px;">Issued by</div>
+          <div style="font-size:0.9rem;font-weight:600;color:var(--text);">SkillForge</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Share row (no-print) -->
+  <div class="no-print" style="text-align:center;margin-top:20px;">
+    <p style="font-size:0.82rem;color:var(--text-3);">
+      <i class="bi bi-info-circle"></i>
+      Use your browser's Print dialog and choose "Save as PDF" to keep a copy.
+    </p>
+  </div>
+
+</div>
+
+<style>
+.certificate-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 0 0 24px;
+}
+.certificate-card {
+  background    : var(--card);
+  border        : 1px solid var(--border);
+  border-radius : 20px;
+  padding       : 40px;
+  max-width     : 680px;
+  width         : 100%;
+  box-shadow    : 0 8px 40px rgba(0,0,0,0.12);
+  position      : relative;
+  overflow      : hidden;
+}
+/* Print styles */
+@media print {
+  .no-print  { display: none !important; }
+  body       { background: #fff !important; }
+  .sf-nav    { display: none !important; }
+  #flash-container { display: none !important; }
+  .sf-page   { padding: 0 !important; }
+  .certificate-card {
+    box-shadow : none !important;
+    border     : 1px solid #ddd !important;
+    max-width  : 100% !important;
+  }
+}
+</style>
+
+{% endblock %}
