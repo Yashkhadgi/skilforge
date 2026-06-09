@@ -6,7 +6,7 @@ from flask_mail import Mail, Message
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
-from datetime import timedelta
+from datetime import timedelta, datetime
 from functools import wraps
 import sqlite3
 import os
@@ -14,6 +14,10 @@ import re
 import secrets
 import math
 import time
+
+# Task-4: modular auth helpers and REST API blueprint
+from decorators import is_admin, login_required, admin_required
+from api_routes import api_bp
 
 # -------------------------------------------------------------------
 # CONFIGURATION & SETUP
@@ -123,6 +127,8 @@ def init_db():
     # Migrations for existing databases
     for migration in [
         "ALTER TABLE courses ADD COLUMN image_url TEXT DEFAULT ''",
+        # Task-4: add role column for RBAC (DEFAULT keeps existing users as 'user')
+        "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'",
     ]:
         try:
             conn.execute(migration)
@@ -130,14 +136,18 @@ def init_db():
         except sqlite3.OperationalError:
             pass  # Column already exists — safe to ignore
 
+    # Task-4: backfill role for any existing admin accounts
+    conn.execute("UPDATE users SET role='admin' WHERE is_admin=1 AND role='user'")
+    conn.commit()
+
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
     # Seed admin if not exists
     if not conn.execute("SELECT id FROM users WHERE username='admin'").fetchone():
         admin_pw = os.environ.get("ADMIN_PASSWORD", "admin123")
         conn.execute(
-            "INSERT INTO users (username,email,password,is_admin) VALUES (?,?,?,?)",
-            ("admin","admin@skillforge.com", generate_password_hash(admin_pw, method='pbkdf2:sha256'), 1)
+            "INSERT INTO users (username,email,password,is_admin,role) VALUES (?,?,?,?,?)",
+            ("admin","admin@skillforge.com", generate_password_hash(admin_pw, method='pbkdf2:sha256'), 1, 'admin')
         )
         conn.commit()
 
@@ -163,6 +173,10 @@ def init_db():
 with app.app_context():
     init_db()
 
+# Task-4: register REST API blueprint (CSRF exempt — APIs use JSON, not forms)
+csrf.exempt(api_bp)
+app.register_blueprint(api_bp)
+
 
 # -------------------------------------------------------------------
 # HELPERS
@@ -172,31 +186,16 @@ def validate_csrf():
     """Stub to prevent legacy routes from breaking. Global CSRF Protect is active."""
     return True
 
-def login_required(f=None):
-    """Decorator or inline check to require login for specific routes."""
-    if f is None:
-        if 'user_id' not in session:
-            return redirect(f'/login?next={request.path}')
-        return None
-        
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(f'/login?next={request.path}')
-        return f(*args, **kwargs)
-    return decorated
+# NOTE: login_required, admin_required, and is_admin() are imported
+# from decorators.py (Task-4 modularisation). The inline login_required
+# call pattern (guard = login_required(); if guard: return guard) is kept
+# below for routes that still use it.
 
-def admin_required(f):
-    """Decorator to require admin privileges for specific routes."""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect('/login')
-        if not session.get('is_admin'):
-            flash("Access denied. Admins only.", "danger")
-            return redirect('/dashboard')
-        return f(*args, **kwargs)
-    return decorated
+def _login_guard():
+    """Inline auth check used by routes that don't use the decorator form."""
+    if 'user_id' not in session:
+        return redirect(f'/login?next={request.path}')
+    return None
 
 
 # -------------------------------------------------------------------
@@ -226,8 +225,9 @@ def register():
         conn = get_db()
         try:
             conn.execute(
-                "INSERT INTO users (username,email,password,is_admin) VALUES (?,?,?,?)",
-                (username, email, hashed_pw, 0)
+                # Explicitly set role='user' to keep is_admin and role in sync
+                "INSERT INTO users (username,email,password,is_admin,role) VALUES (?,?,?,?,?)",
+                (username, email, hashed_pw, 0, 'user')
             )
             conn.commit()
             
@@ -273,6 +273,8 @@ def login():
             session['user_id']  = user['id']
             session['username'] = user['username']
             session['is_admin'] = user['is_admin']
+            # Task-4: store role string in session for RBAC helpers
+            session['role']     = user['role'] if user['role'] else ('admin' if user['is_admin'] else 'user')
             
             next_url = request.args.get('next')
             if next_url and next_url.startswith('/') and not next_url.startswith('//'):
@@ -349,7 +351,7 @@ def dashboard():
 @app.route('/courses')
 def courses():
     """List available courses with pagination, category filtering, and search."""
-    guard = login_required()
+    guard = _login_guard()
     if guard: return guard
     
     category = request.args.get('category', 'All')
@@ -414,7 +416,7 @@ def courses():
 @app.route('/course/<int:course_id>')
 def course_detail(course_id):
     """View details for a specific course including reviews and curriculum."""
-    guard = login_required()
+    guard = _login_guard()
     if guard: return guard
     
     conn   = get_db()
@@ -573,7 +575,8 @@ def profile():
     conn = get_db()
     
     user = conn.execute(
-        "SELECT id, username, email, is_admin FROM users WHERE id = ?",
+        # Include role for profile display
+        "SELECT id, username, email, is_admin, role FROM users WHERE id = ?",
         (session['user_id'],)
     ).fetchone()
     
@@ -657,7 +660,8 @@ def users():
     """Admin view of all registered users."""
     conn = get_db()
     all_users = conn.execute(
-        "SELECT id, username, email, is_admin FROM users ORDER BY id ASC"
+        # Include role so templates can show accurate role badge
+        "SELECT id, username, email, is_admin, role FROM users ORDER BY id ASC"
     ).fetchall()
     conn.close()
 
@@ -695,14 +699,17 @@ def admin_promote_user(user_id):
             flash("Cannot demote — at least one admin must remain.", "warning")
             return redirect('/users')
 
-    new_role = 0 if user['is_admin'] == 1 else 1
+    new_is_admin = 0 if user['is_admin'] == 1 else 1
+    new_role_val  = 'user' if new_is_admin == 0 else 'admin'
+    # Bug fix: sync BOTH is_admin AND role to prevent RBAC desync
     conn.execute(
-        "UPDATE users SET is_admin = ? WHERE id = ?", (new_role, user_id)
+        "UPDATE users SET is_admin = ?, role = ? WHERE id = ?",
+        (new_is_admin, new_role_val, user_id)
     )
     conn.commit()
     conn.close()
 
-    action = "demoted to Student" if new_role == 0 else "promoted to Admin"
+    action = "demoted to Student" if new_is_admin == 0 else "promoted to Admin"
     flash(f'"{user["username"]}" has been {action}.', "success")
     return redirect('/users')
 
@@ -932,7 +939,7 @@ def admin_delete_course(course_id):
 @app.route('/review/<int:course_id>', methods=['POST'])
 def submit_review(course_id):
     """Submit a rating and comment for a course."""
-    guard = login_required()
+    guard = _login_guard()
     if guard: return guard
     
     conn = get_db()
@@ -975,7 +982,7 @@ def submit_review(course_id):
 @app.route('/review/<int:course_id>/delete', methods=['POST'])
 def delete_review(course_id):
     """Remove a previously submitted review."""
-    guard = login_required()
+    guard = _login_guard()
     if guard: return guard
     
     conn = get_db()
@@ -997,7 +1004,7 @@ def delete_review(course_id):
 @app.route('/certificate/<int:enrollment_id>')
 def certificate(enrollment_id):
     """View certificate if course is completed 100%."""
-    guard = login_required()
+    guard = _login_guard()
     if guard: return guard
     
     conn = get_db()
@@ -1022,41 +1029,39 @@ def certificate(enrollment_id):
 
 
 # -------------------------------------------------------------------
-# REST API (#14)
+# ADMIN DASHBOARD  (Task-4)
 # -------------------------------------------------------------------
 
-@app.route('/api/courses')
-@csrf.exempt
-def api_courses():
-    """Retrieve JSON dump of all courses."""
-    conn    = get_db()
-    courses = conn.execute("SELECT * FROM courses").fetchall()
+@app.route('/admin')
+@admin_required
+def admin_dashboard():
+    """Admin home panel with summary stats and quick links."""
+    conn = get_db()
+    total_users   = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+    total_courses = conn.execute("SELECT COUNT(*) FROM courses").fetchone()[0]
+    total_enroll  = conn.execute("SELECT COUNT(*) FROM enrollments").fetchone()[0]
+    admin_count   = conn.execute("SELECT COUNT(*) FROM users WHERE is_admin=1").fetchone()[0]
+    recent_users  = conn.execute(
+        "SELECT id, username, email, role FROM users ORDER BY id DESC LIMIT 5"
+    ).fetchall()
+    recent_courses = conn.execute(
+        "SELECT id, title, instructor, category, level FROM courses ORDER BY id DESC LIMIT 5"
+    ).fetchall()
     conn.close()
-    return jsonify([dict(c) for c in courses])
+    return render_template('admin_dashboard.html',
+        total_users=total_users,
+        total_courses=total_courses,
+        total_enroll=total_enroll,
+        admin_count=admin_count,
+        recent_users=recent_users,
+        recent_courses=recent_courses
+    )
 
 
-@app.route('/api/courses/<int:course_id>')
-@csrf.exempt
-def api_course_detail(course_id):
-    """Retrieve detailed JSON dump for a specific course including reviews data."""
-    conn   = get_db()
-    course = conn.execute("SELECT * FROM courses WHERE id=?", (course_id,)).fetchone()
-    
-    if not course:
-        conn.close()
-        return jsonify({"error": "Course not found"}), 404
-        
-    avg = conn.execute(
-        "SELECT AVG(rating), COUNT(*) FROM reviews WHERE course_id=?", 
-        (course_id,)
-    ).fetchone()
-    conn.close()
-    
-    data = dict(course)
-    data['live_rating']  = round(avg[0], 2) if avg[0] else None
-    data['review_count'] = avg[1]
-    
-    return jsonify(data)
+# -------------------------------------------------------------------
+# NOTE: REST API routes are handled by the 'api' Blueprint
+# registered at the top of this file (api_routes.py).
+# -------------------------------------------------------------------
 
 
 # -------------------------------------------------------------------
@@ -1069,10 +1074,20 @@ def rate_limit_handler(e):
     flash("Too many login attempts. Please wait a minute and try again.", "danger")
     return redirect('/login')
 
+@app.errorhandler(403)
+def forbidden(e):
+    """Render custom 403 Forbidden page."""
+    return render_template('403.html'), 403
+
 @app.errorhandler(404)
 def page_not_found(e):
     """Render custom 404 page for missing endpoints."""
     return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    """Render custom 500 Internal Server Error page."""
+    return render_template('500.html'), 500
 
 
 # -------------------------------------------------------------------

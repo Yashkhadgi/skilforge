@@ -33,8 +33,8 @@
       <a href="/courses"     class="sf-nav-link {% if request.path=='/courses'     %}active{% endif %}">Courses</a>
       <a href="/my-learning" class="sf-nav-link {% if request.path=='/my-learning' %}active{% endif %}">My Learning</a>
       {% if session.get('is_admin') == 1 %}
-      <a href="/users"         class="sf-nav-link {% if request.path=='/users'         %}active{% endif %}">Users</a>
-      <a href="/admin/courses" class="sf-nav-link admin-link {% if '/admin' in request.path %}active{% endif %}">
+      <!-- Task-4: Admin nav points to the new /admin dashboard hub -->
+      <a href="/admin" class="sf-nav-link admin-link {% if '/admin' in request.path or request.path=='/users' %}active{% endif %}">
         <i class="bi bi-shield-fill" style="font-size:0.72rem;"></i> Admin
       </a>
       {% endif %}

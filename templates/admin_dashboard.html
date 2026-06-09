@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="sf-page">
+
+  <!-- ── HEADER ── -->
+  <div class="page-header reveal">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;
+                flex-wrap:wrap;gap:16px;">
+      <div>
+        <div class="hero-badge" style="margin-bottom:10px;display:inline-flex;">
+          <i class="bi bi-shield-fill"></i>&nbsp;Admin Panel
+        </div>
+        <h1 style="font-family:'Inter Tight',sans-serif;font-size:1.9rem;font-weight:900;
+                   letter-spacing:-0.04em;line-height:1.1;margin-bottom:6px;">
+          Admin Dashboard
+        </h1>
+        <p style="color:var(--text-2);font-size:0.88rem;">
+          Manage users, courses, and platform activity from one place.
+        </p>
+      </div>
+
+      <!-- Quick action buttons -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <a href="/admin/courses/add" class="btn-primary-sf"
+           style="width:auto;display:inline-flex;align-items:center;gap:6px;
+                  padding:10px 20px;text-decoration:none;font-size:0.85rem;">
+          <i class="bi bi-plus-circle-fill"></i> Add Course
+        </a>
+        <a href="/users"
+           style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;
+                  border-radius:10px;border:1px solid var(--border);background:var(--card);
+                  color:var(--text-2);font-size:0.85rem;font-weight:500;text-decoration:none;
+                  transition:all 0.2s var(--ease);"
+           onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text)'"
+           onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'">
+          <i class="bi bi-people-fill"></i> Users
+        </a>
+        <a href="/admin/courses"
+           style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;
+                  border-radius:10px;border:1px solid var(--border);background:var(--card);
+                  color:var(--text-2);font-size:0.85rem;font-weight:500;text-decoration:none;
+                  transition:all 0.2s var(--ease);"
+           onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text)'"
+           onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'">
+          <i class="bi bi-journal-richtext"></i> Courses
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATS ── -->
+  <div class="stats-grid reveal reveal-delay-1" style="margin-bottom:28px;">
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--accent);"
+           data-count="{{ total_users }}">0</div>
+      <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:#d97706;"
+           data-count="{{ admin_count }}">0</div>
+      <div class="stat-label">Admins</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--success);"
+           data-count="{{ total_courses }}">0</div>
+      <div class="stat-label">Courses</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:#0891b2;"
+           data-count="{{ total_enroll }}">0</div>
+      <div class="stat-label">Enrollments</div>
+    </div>
+  </div>
+
+  <!-- ── API QUICK REFERENCE ── -->
+  <div class="sf-card reveal reveal-delay-1" style="margin-bottom:24px;">
+    <div class="sf-table-header">
+      <span><i class="bi bi-code-slash" style="margin-right:6px;color:var(--accent);"></i>REST API Quick Reference</span>
+      <span style="font-size:0.78rem;color:var(--text-3);">JSON responses · Admin auth required for write ops</span>
+    </div>
+    <div style="padding:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+
+      {% set endpoints = [
+        ('GET',    '/api/courses',        'List all courses',          '#059669'),
+        ('GET',    '/api/courses/&lt;id&gt;',   'Get course by ID',          '#059669'),
+        ('POST',   '/api/courses',        'Create course (admin)',      '#7c3aed'),
+        ('PUT',    '/api/courses/&lt;id&gt;',   'Update course (admin)',      '#d97706'),
+        ('DELETE', '/api/courses/&lt;id&gt;',   'Delete course (admin)',      '#ef4444'),
+        ('GET',    '/api/users',          'List all users (admin)',     '#059669'),
+        ('GET',    '/api/users/&lt;id&gt;',     'Get user by ID (admin)',     '#059669'),
+      ] %}
+
+      {% for method, url, desc, color in endpoints %}
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;
+                  background:var(--bg);border-radius:10px;border:1px solid var(--border);">
+        <span style="min-width:52px;text-align:center;padding:3px 7px;border-radius:6px;
+                     font-size:0.68rem;font-weight:800;letter-spacing:0.06em;
+                     background:{{ color }}22;color:{{ color }};font-family:'Inter',monospace;">
+          {{ method }}
+        </span>
+        <div>
+          <div style="font-family:monospace;font-size:0.8rem;color:var(--text);margin-bottom:2px;">
+            {{ url }}
+          </div>
+          <div style="font-size:0.74rem;color:var(--text-3);">{{ desc }}</div>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+
+  <!-- ── RECENT ACTIVITY (two columns) ── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;" class="reveal reveal-delay-2">
+
+    <!-- Recent Users -->
+    <div class="sf-card">
+      <div class="sf-table-header">
+        <span><i class="bi bi-people-fill" style="margin-right:6px;color:var(--accent);"></i>Recent Users</span>
+        <a href="/users" style="font-size:0.78rem;color:var(--accent);text-decoration:none;">View all →</a>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="sf-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in recent_users %}
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="sf-avatar" style="width:28px;height:28px;font-size:0.7rem;">
+                    {{ u['username'][0]|upper }}
+                  </div>
+                  <span style="font-size:0.84rem;font-weight:600;">{{ u['username'] }}</span>
+                </div>
+              </td>
+              <td style="font-size:0.8rem;color:var(--text-2);">{{ u['email'] }}</td>
+              <td>
+                {% if u['role'] == 'admin' %}
+                <span class="role-badge role-admin" style="font-size:0.68rem;">
+                  <i class="bi bi-shield-fill"></i> Admin
+                </span>
+                {% else %}
+                <span class="role-badge role-student" style="font-size:0.68rem;">
+                  <i class="bi bi-person-fill"></i> User
+                </span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Courses -->
+    <div class="sf-card">
+      <div class="sf-table-header">
+        <span><i class="bi bi-journal-richtext" style="margin-right:6px;color:var(--accent);"></i>Recent Courses</span>
+        <a href="/admin/courses" style="font-size:0.78rem;color:var(--accent);text-decoration:none;">Manage →</a>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="sf-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in recent_courses %}
+            <tr>
+              <td style="font-size:0.84rem;font-weight:600;max-width:160px;
+                         white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {{ c['title'] }}
+              </td>
+              <td>
+                <span style="font-size:0.72rem;padding:2px 8px;border-radius:6px;
+                             background:var(--accent-soft);color:var(--accent);font-weight:600;">
+                  {{ c['category'] }}
+                </span>
+              </td>
+              <td style="font-size:0.78rem;color:var(--text-2);">{{ c['level'] }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+</div><!-- /sf-page -->
+
+{% endblock %}
