@@ -1,283 +1,287 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Create your free SkillForge account">
   <title>Register — SkillForge</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path d='M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z' stroke='%23ffffff' stroke-width='1.5' fill='none'/></svg>">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path d='M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z' stroke='%23ffffff' stroke-width='1.5' fill='none'/></svg>">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
-<div class="auth-wrap">
+  <div class="auth-wrap">
 
-  <!-- ── LEFT: FORM ── -->
-  <div class="auth-left">
+    <!-- ── LEFT: FORM ── -->
+    <div class="auth-left">
 
-    <a href="/" class="sf-logo" style="margin-bottom:52px;text-decoration:none;">
-      <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-        <path d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z"
-          stroke="#ffffff" stroke-width="1.5"
-          stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
-      SkillForge
-    </a>
+      <a href="/" class="sf-logo" style="margin-bottom:52px;text-decoration:none;">
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+          <path d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"
+            stroke-linejoin="round" fill="none" />
+        </svg>
+        SkillForge
+      </a>
 
-    <div class="auth-card">
+      <div class="auth-card">
 
-      {% for category, message in get_flashed_messages(with_categories=true) %}
-      <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
-      </div>
-      {% endfor %}
-
-      <p class="auth-title">Create account</p>
-      <p class="auth-sub">Free forever. No credit card needed.</p>
-
-      <form method="POST" action="/register" autocomplete="off">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-        <div class="form-group">
-          <label class="form-label">Username</label>
-          <input type="text" name="username" class="form-control-sf"
-                 placeholder="choose_a_username" required autofocus
-                 pattern="[a-zA-Z0-9_]{3,20}"
-                 title="3–20 characters: letters, numbers, underscores">
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
         </div>
+        {% endfor %}
 
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" name="email" class="form-control-sf"
-                 placeholder="you@example.com" required>
-        </div>
+        <p class="auth-title">Create account</p>
+        <p class="auth-sub">Free forever. No credit card needed.</p>
 
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <div style="position:relative;">
-            <input type="password" name="password" id="pw-input"
-                   class="form-control-sf"
-                   placeholder="min. 8 characters" required minlength="8"
-                   style="padding-right:42px;"
-                   oninput="checkStrength(this.value); checkConfirm();">
-            <button type="button" id="pw-toggle"
-                    style="position:absolute;right:12px;top:50%;
+        <form method="POST" action="/register" autocomplete="off">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-control-sf" placeholder="choose_a_username" required
+              autofocus pattern="[a-zA-Z0-9_]{3,20}" title="3–20 characters: letters, numbers, underscores">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control-sf" placeholder="you@example.com" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <!-- Password rules hint -->
+            <div style="background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);
+                      border-radius:8px;padding:10px 12px;margin-bottom:10px;
+                      font-size:0.75rem;color:rgba(255,255,255,0.45);line-height:1.8;">
+              <i class="bi bi-shield-lock" style="color:#7c3aed;margin-right:5px;"></i>
+              Min. 8 chars &nbsp;·&nbsp; 1 uppercase (A-Z) &nbsp;·&nbsp; 1 lowercase (a-z)
+              &nbsp;·&nbsp; 1 number &nbsp;·&nbsp; 1 special char (!@#$%^&*)
+            </div>
+            <div style="position:relative;">
+              <input type="password" name="password" id="pw-input" class="form-control-sf"
+                placeholder="min. 8 characters" required minlength="8" style="padding-right:42px;"
+                oninput="checkStrength(this.value); checkConfirm();">
+              <button type="button" id="pw-toggle" style="position:absolute;right:12px;top:50%;
                            transform:translateY(-50%);background:none;
                            border:none;color:rgba(255,255,255,0.25);
                            cursor:pointer;font-size:0.88rem;padding:0;
-                           transition:color 0.2s;"
-                    onmouseover="this.style.color='rgba(255,255,255,0.6)'"
-                    onmouseout="this.style.color='rgba(255,255,255,0.25)'">
-              <i class="bi bi-eye" id="pw-icon"></i>
-            </button>
-          </div>
-          <div style="margin-top:8px;">
-            <div style="height:2px;background:rgba(255,255,255,0.06);
+                           transition:color 0.2s;" onmouseover="this.style.color='rgba(255,255,255,0.6)'"
+                onmouseout="this.style.color='rgba(255,255,255,0.25)'">
+                <i class="bi bi-eye" id="pw-icon"></i>
+              </button>
+            </div>
+            <div style="margin-top:8px;">
+              <div style="height:2px;background:rgba(255,255,255,0.06);
                         border-radius:99px;overflow:hidden;">
-              <div id="strength-bar"
-                   style="height:100%;width:0%;border-radius:99px;
+                <div id="strength-bar" style="height:100%;width:0%;border-radius:99px;
                           transition:width 0.3s var(--ease),background 0.3s;">
+                </div>
+              </div>
+              <div id="strength-label" style="font-size:0.7rem;color:rgba(255,255,255,0.25);
+                        margin-top:5px;height:14px;transition:color 0.3s;">
               </div>
             </div>
-            <div id="strength-label"
-                 style="font-size:0.7rem;color:rgba(255,255,255,0.25);
-                        margin-top:5px;height:14px;transition:color 0.3s;">
+          </div>
+
+          <div class="form-group" style="margin-top:14px;">
+            <label class="form-label">Confirm Password</label>
+            <input type="password" name="confirm_password" id="confirm-pw-input" class="form-control-sf"
+              placeholder="repeat your password" required minlength="8" oninput="checkConfirm()">
+            <div id="confirm-label" style="font-size:0.7rem;margin-top:5px;height:14px;color:rgba(255,255,255,0.25);">
             </div>
           </div>
+
+          <button type="submit" class="btn-primary-sf" style="margin-top:10px;" id="register-btn">
+            Create free account
+          </button>
+
+        </form>
+
+        <div class="auth-divider">or</div>
+
+        <div class="auth-link">
+          Already have an account? <a href="/login">Sign in</a>
         </div>
 
-        <div class="form-group" style="margin-top:14px;">
-          <label class="form-label">Confirm Password</label>
-          <input type="password" name="confirm_password" id="confirm-pw-input"
-                 class="form-control-sf"
-                 placeholder="repeat your password" required minlength="8"
-                 oninput="checkConfirm()">
-          <div id="confirm-label"
-               style="font-size:0.7rem;margin-top:5px;height:14px;color:rgba(255,255,255,0.25);"></div>
-        </div>
-
-        <button type="submit" class="btn-primary-sf" style="margin-top:10px;" id="register-btn">
-          Create free account
-        </button>
-
-      </form>
-
-      <div class="auth-divider">or</div>
-
-      <div class="auth-link">
-        Already have an account? <a href="/login">Sign in</a>
       </div>
-
     </div>
-  </div>
 
-  <!-- ── RIGHT: VISUAL PANEL ── -->
-  <div class="auth-right" style="background:#0a0a0a;">
+    <!-- ── RIGHT: VISUAL PANEL ── -->
+    <div class="auth-right" style="background:#0a0a0a;">
 
-    <div style="position:relative;z-index:1;width:100%;max-width:360px;">
+      <div style="position:relative;z-index:1;width:100%;max-width:360px;">
 
-      <div class="hero-badge" style="margin-bottom:28px;">
-        Start in 30 seconds
-      </div>
+        <div class="hero-badge" style="margin-bottom:28px;">
+          Start in 30 seconds
+        </div>
 
-      <h2 style="font-family:'Inter Tight',sans-serif;font-size:1.75rem;
+        <h2 style="font-family:'Inter Tight',sans-serif;font-size:1.75rem;
                  font-weight:800;letter-spacing:-0.04em;line-height:1.15;
                  color:#fff;margin-bottom:10px;">
-        Your learning<br>
-        <span style="color:rgba(255,255,255,0.45);">journey starts here.</span>
-      </h2>
-      <p style="font-size:0.84rem;color:rgba(255,255,255,0.4);
+          Your learning<br>
+          <span style="color:rgba(255,255,255,0.45);">journey starts here.</span>
+        </h2>
+        <p style="font-size:0.84rem;color:rgba(255,255,255,0.4);
                 margin-bottom:32px;line-height:1.65;">
-        Pick a course, track your progress, and build skills that matter.
-      </p>
+          Pick a course, track your progress, and build skills that matter.
+        </p>
 
-      <!-- Animated course previews -->
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:28px;">
+        <!-- Animated course previews -->
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:28px;">
 
-        <div class="glass-card"
-             style="padding:13px 15px;display:flex;align-items:center;gap:12px;
+          <div class="glass-card" style="padding:13px 15px;display:flex;align-items:center;gap:12px;
                     animation:slide-in-card 0.5s var(--ease) 0.1s both;">
-          <div style="width:34px;height:34px;border-radius:9px;
+            <div style="width:34px;height:34px;border-radius:9px;
                       background:rgba(255,255,255,0.06);
                       display:flex;align-items:center;justify-content:center;
                       font-size:0.95rem;flex-shrink:0;">🐍</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:0.8rem;font-weight:500;color:rgba(255,255,255,0.8);
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:0.8rem;font-weight:500;color:rgba(255,255,255,0.8);
                         margin-bottom:5px;">Python Fundamentals</div>
-            <div style="height:2px;background:rgba(255,255,255,0.06);
+              <div style="height:2px;background:rgba(255,255,255,0.06);
                         border-radius:99px;overflow:hidden;">
-              <div style="width:65%;height:100%;background:rgba(255,255,255,0.5);
+                <div style="width:65%;height:100%;background:rgba(255,255,255,0.5);
                           border-radius:99px;"></div>
+              </div>
             </div>
-          </div>
-          <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);
+            <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);
                        font-weight:500;flex-shrink:0;">65%</span>
-        </div>
+          </div>
 
-        <div class="glass-card"
-             style="padding:13px 15px;display:flex;align-items:center;gap:12px;
+          <div class="glass-card" style="padding:13px 15px;display:flex;align-items:center;gap:12px;
                     animation:slide-in-card 0.5s var(--ease) 0.22s both;">
-          <div style="width:34px;height:34px;border-radius:9px;
+            <div style="width:34px;height:34px;border-radius:9px;
                       background:rgba(255,255,255,0.06);
                       display:flex;align-items:center;justify-content:center;
                       font-size:0.95rem;flex-shrink:0;">🌐</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:0.8rem;font-weight:500;color:rgba(255,255,255,0.8);
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:0.8rem;font-weight:500;color:rgba(255,255,255,0.8);
                         margin-bottom:5px;">Flask Web Dev</div>
-            <div style="height:2px;background:rgba(255,255,255,0.06);
+              <div style="height:2px;background:rgba(255,255,255,0.06);
                         border-radius:99px;overflow:hidden;">
-              <div style="width:30%;height:100%;background:rgba(255,255,255,0.5);
+                <div style="width:30%;height:100%;background:rgba(255,255,255,0.5);
                           border-radius:99px;"></div>
+              </div>
             </div>
-          </div>
-          <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);
+            <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);
                        font-weight:500;flex-shrink:0;">30%</span>
-        </div>
+          </div>
 
-        <div class="glass-card"
-             style="padding:13px 15px;display:flex;align-items:center;gap:12px;
+          <div class="glass-card" style="padding:13px 15px;display:flex;align-items:center;gap:12px;
                     animation:slide-in-card 0.5s var(--ease) 0.34s both;">
-          <div style="width:34px;height:34px;border-radius:9px;
+            <div style="width:34px;height:34px;border-radius:9px;
                       background:rgba(255,255,255,0.06);
                       display:flex;align-items:center;justify-content:center;
                       font-size:0.95rem;flex-shrink:0;">🤖</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:0.8rem;font-weight:500;color:rgba(255,255,255,0.8);
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:0.8rem;font-weight:500;color:rgba(255,255,255,0.8);
                         margin-bottom:5px;">Machine Learning</div>
-            <div style="height:2px;background:rgba(255,255,255,0.06);
+              <div style="height:2px;background:rgba(255,255,255,0.06);
                         border-radius:99px;overflow:hidden;">
-              <div style="width:8%;height:100%;background:rgba(255,255,255,0.5);
+                <div style="width:8%;height:100%;background:rgba(255,255,255,0.5);
                           border-radius:99px;"></div>
+              </div>
             </div>
-          </div>
-          <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);
+            <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);
                        font-weight:500;flex-shrink:0;">New</span>
+          </div>
+
         </div>
 
-      </div>
-
-      <!-- Social proof -->
-      <div style="display:flex;align-items:center;gap:10px;
+        <!-- Social proof -->
+        <div style="display:flex;align-items:center;gap:10px;
                   padding-top:20px;border-top:1px solid rgba(255,255,255,0.06);">
-        <div style="display:flex;">
-          {% for i in range(4) %}
-          <div style="width:24px;height:24px;border-radius:50%;
+          <div style="display:flex;">
+            {% for i in range(4) %}
+            <div style="width:24px;height:24px;border-radius:50%;
                       background:rgba(255,255,255,{{ 0.1 + i*0.04 }});
                       border:1.5px solid rgba(0,0,0,0.5);
                       margin-left:{{ '-7px' if i > 0 else '0' }};
                       display:flex;align-items:center;justify-content:center;
                       font-size:0.58rem;font-weight:600;
                       color:rgba(255,255,255,0.6);">
-            {{ ['A','R','S','V'][i] }}
+              {{ ['A','R','S','V'][i] }}
+            </div>
+            {% endfor %}
           </div>
-          {% endfor %}
+          <span style="font-size:0.76rem;color:rgba(255,255,255,0.35);">
+            <strong style="color:rgba(255,255,255,0.6);font-weight:600;">50,000+</strong>
+            learners already joined
+          </span>
         </div>
-        <span style="font-size:0.76rem;color:rgba(255,255,255,0.35);">
-          <strong style="color:rgba(255,255,255,0.6);font-weight:600;">50,000+</strong>
-          learners already joined
-        </span>
-      </div>
 
+      </div>
     </div>
+
   </div>
 
-</div>
+  <style>
+    @keyframes slide-in-card {
+      from {
+        opacity: 0;
+        transform: translateX(16px);
+      }
 
-<style>
-@keyframes slide-in-card {
-  from { opacity:0; transform:translateX(16px); }
-  to   { opacity:1; transform:translateX(0); }
-}
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{{ url_for('static', filename='main.js') }}"></script>
-<script>
-  document.getElementById('pw-toggle').addEventListener('click', function() {
-    const inp  = document.getElementById('pw-input');
-    const icon = document.getElementById('pw-icon');
-    inp.type   = inp.type === 'password' ? 'text' : 'password';
-    icon.className = inp.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
-  });
-
-  function checkConfirm() {
-    const pw  = document.getElementById('pw-input').value;
-    const cpw = document.getElementById('confirm-pw-input').value;
-    const lbl = document.getElementById('confirm-label');
-    if (!cpw) { lbl.textContent = ''; return; }
-    if (pw === cpw) {
-      lbl.textContent = 'Passwords match ✓';
-      lbl.style.color = 'rgba(16,185,129,0.8)';
-    } else {
-      lbl.textContent = 'Passwords do not match';
-      lbl.style.color = 'rgba(255,68,68,0.8)';
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
     }
-  }
+  </style>
 
-  function checkStrength(val) {
-    const bar   = document.getElementById('strength-bar');
-    const label = document.getElementById('strength-label');
-    if (!val) { bar.style.width='0%'; label.textContent=''; return; }
-    let score = 0;
-    if (val.length >= 8)           score++;
-    if (/[A-Z]/.test(val))         score++;
-    if (/[0-9]/.test(val))         score++;
-    if (/[^A-Za-z0-9]/.test(val))  score++;
-    const levels = [
-      { w:'25%', bg:'rgba(255,68,68,0.7)',   text:'Weak'     },
-      { w:'50%', bg:'rgba(245,158,11,0.7)',  text:'Fair'     },
-      { w:'75%', bg:'rgba(0,153,255,0.7)',   text:'Good'     },
-      { w:'100%',bg:'rgba(255,255,255,0.6)', text:'Strong 💪'},
-    ];
-    const lvl = levels[score-1] || levels[0];
-    bar.style.width      = lvl.w;
-    bar.style.background = lvl.bg;
-    label.textContent    = lvl.text;
-    label.style.color    = lvl.bg;
-  }
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='main.js') }}"></script>
+  <script>
+    document.getElementById('pw-toggle').addEventListener('click', function () {
+      const inp = document.getElementById('pw-input');
+      const icon = document.getElementById('pw-icon');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      icon.className = inp.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+    });
+
+    function checkConfirm() {
+      const pw = document.getElementById('pw-input').value;
+      const cpw = document.getElementById('confirm-pw-input').value;
+      const lbl = document.getElementById('confirm-label');
+      if (!cpw) { lbl.textContent = ''; return; }
+      if (pw === cpw) {
+        lbl.textContent = 'Passwords match ✓';
+        lbl.style.color = 'rgba(16,185,129,0.8)';
+      } else {
+        lbl.textContent = 'Passwords do not match';
+        lbl.style.color = 'rgba(255,68,68,0.8)';
+      }
+    }
+
+    function checkStrength(val) {
+      const bar = document.getElementById('strength-bar');
+      const label = document.getElementById('strength-label');
+      if (!val) { bar.style.width = '0%'; label.textContent = ''; return; }
+      let score = 0;
+      if (val.length >= 8) score++;
+      if (/[A-Z]/.test(val)) score++;
+      if (/[0-9]/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      const levels = [
+        { w: '25%', bg: 'rgba(255,68,68,0.7)', text: 'Weak' },
+        { w: '50%', bg: 'rgba(245,158,11,0.7)', text: 'Fair' },
+        { w: '75%', bg: 'rgba(0,153,255,0.7)', text: 'Good' },
+        { w: '100%', bg: 'rgba(255,255,255,0.6)', text: 'Strong 💪' },
+      ];
+      const lvl = levels[score - 1] || levels[0];
+      bar.style.width = lvl.w;
+      bar.style.background = lvl.bg;
+      label.textContent = lvl.text;
+      label.style.color = lvl.bg;
+    }
+  </script>
 </body>
+
 </html>

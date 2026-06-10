@@ -121,6 +121,28 @@ def init_db():
             FOREIGN KEY (user_id)   REFERENCES users(id),
             FOREIGN KEY (course_id) REFERENCES courses(id)
         );
+
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key   TEXT PRIMARY KEY,
+            value TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS password_resets (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            email      TEXT NOT NULL,
+            otp        TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            used       INTEGER DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS audit_log (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id    INTEGER,
+            username   TEXT,
+            action     TEXT NOT NULL,
+            target     TEXT DEFAULT '',
+            timestamp  TEXT NOT NULL
+        );
     """)
     conn.commit()
 
@@ -129,6 +151,8 @@ def init_db():
         "ALTER TABLE courses ADD COLUMN image_url TEXT DEFAULT ''",
         # Task-4: add role column for RBAC (DEFAULT keeps existing users as 'user')
         "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'",
+        # New: created_at for analytics
+        "ALTER TABLE users ADD COLUMN created_at TEXT DEFAULT (datetime('now'))",
     ]:
         try:
             conn.execute(migration)
@@ -182,6 +206,109 @@ app.register_blueprint(api_bp)
 # HELPERS
 # -------------------------------------------------------------------
 
+def validate_email(email):
+    """Return (True, '') or (False, error_message)."""
+    pattern = r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$'
+    if not re.match(pattern, email):
+        return False, "Please enter a valid email address (e.g. you@example.com)."
+    return True, ''
+
+def validate_password(password):
+    """
+    Enforce: min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char.
+    Returns (True, '') or (False, error_message).
+    """
+    errors = []
+    if len(password) < 8:
+        errors.append("at least 8 characters")
+    if not re.search(r'[A-Z]', password):
+        errors.append("one uppercase letter (A-Z)")
+    if not re.search(r'[a-z]', password):
+        errors.append("one lowercase letter (a-z)")
+    if not re.search(r'[0-9]', password):
+        errors.append("one number (0-9)")
+    if not re.search(r'[^a-zA-Z0-9]', password):
+        errors.append("one special character (!@#$% etc.)")
+    if errors:
+        return False, "Password must contain: " + ", ".join(errors) + "."
+    return True, ''
+
+def get_setting(key, default=''):
+    """Fetch a value from the app_settings table."""
+    conn = get_db()
+    row  = conn.execute("SELECT value FROM app_settings WHERE key=?", (key,)).fetchone()
+    conn.close()
+    return row['value'] if row else default
+
+def set_setting(key, value):
+    """Upsert a key/value into app_settings."""
+    conn = get_db()
+    conn.execute("INSERT OR REPLACE INTO app_settings (key,value) VALUES (?,?)", (key, value))
+    conn.commit()
+    conn.close()
+
+def send_otp_email(to_email, otp):
+    """Send OTP email using SMTP credentials stored in app_settings."""
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    smtp_host   = get_setting('smtp_host', 'smtp.gmail.com')
+    smtp_port   = int(get_setting('smtp_port', '587'))
+    smtp_user   = get_setting('smtp_user', '')
+    smtp_pass   = get_setting('smtp_pass', '')
+    sender_name = get_setting('sender_name', 'SkillForge')
+
+    if not smtp_user or not smtp_pass:
+        raise Exception("SMTP not configured. Admin must set credentials in Settings.")
+
+    msg            = MIMEMultipart('alternative')
+    msg['Subject'] = 'SkillForge — Password Reset OTP'
+    msg['From']    = f"{sender_name} <{smtp_user}>"
+    msg['To']      = to_email
+
+    text_body = (f"Your SkillForge OTP is: {otp}\n\n"
+                 "Valid for 10 minutes. Do not share it.")
+    html_body = f"""
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;
+                padding:32px;background:#0f0f12;color:#e2e8f0;border-radius:12px;">
+      <h2 style="color:#7c3aed;margin:0 0 16px;">SkillForge Password Reset</h2>
+      <p style="margin:0 0 24px;color:#94a3b8;">
+        Use the OTP below. It expires in 10&nbsp;minutes.</p>
+      <div style="background:#1a1a24;border-radius:8px;padding:24px;
+                  text-align:center;margin-bottom:24px;">
+        <span style="font-size:2.2rem;font-weight:700;letter-spacing:0.35em;
+                     color:#ffffff;">{otp}</span>
+      </div>
+      <p style="font-size:0.8rem;color:#475569;margin:0;">
+        If you didn't request this, ignore this email.</p>
+    </div>"""
+
+    msg.attach(MIMEText(text_body, 'plain'))
+    msg.attach(MIMEText(html_body, 'html'))
+
+    with smtplib.SMTP(smtp_host, smtp_port) as server:
+        server.starttls()
+        server.login(smtp_user, smtp_pass)
+        server.sendmail(smtp_user, to_email, msg.as_string())
+
+def log_action(action, target=''):
+    """Insert a record into the audit_log table."""
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO audit_log (user_id,username,action,target,timestamp) VALUES (?,?,?,?,?)",
+        (
+            session.get('user_id'),
+            session.get('username', 'system'),
+            action,
+            target,
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        )
+    )
+    conn.commit()
+    conn.close()
+
+
 def validate_csrf():
     """Stub to prevent legacy routes from breaking. Global CSRF Protect is active."""
     return True
@@ -220,7 +347,25 @@ def register():
         username  = request.form['username'].strip()
         email     = request.form['email'].strip()
         password  = request.form['password']
-        
+        confirm   = request.form.get('confirm_password', '')
+
+        # --- Email validation ---
+        ok, err = validate_email(email)
+        if not ok:
+            flash(err, "danger")
+            return render_template('register.html')
+
+        # --- Password validation ---
+        ok, err = validate_password(password)
+        if not ok:
+            flash(err, "danger")
+            return render_template('register.html')
+
+        # --- Confirm match ---
+        if password != confirm:
+            flash("Passwords do not match.", "danger")
+            return render_template('register.html')
+
         hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
         conn = get_db()
         try:
@@ -245,6 +390,7 @@ def register():
                 pass
                 
             flash("Account created! Please login.", "success")
+            log_action("User registered", username)
             return redirect('/login')
         except sqlite3.IntegrityError:
             flash("Username or email already taken.", "danger")
@@ -711,6 +857,7 @@ def admin_promote_user(user_id):
 
     action = "demoted to Student" if new_is_admin == 0 else "promoted to Admin"
     flash(f'"{user["username"]}" has been {action}.', "success")
+    log_action(f"User {action}", user["username"])
     return redirect('/users')
 
 
@@ -751,6 +898,7 @@ def admin_delete_user(user_id):
     conn.close()
 
     flash(f'User "{user["username"]}" and their enrollments have been deleted.', "success")
+    log_action("Deleted user", user["username"])
     return redirect('/users')
 
 
@@ -823,6 +971,7 @@ def admin_add_course():
         conn.close()
 
         flash(f'Course "{title}" added successfully!', "success")
+        log_action("Created course", title)
         return redirect('/admin/courses')
 
     return render_template('admin_add.html')
@@ -902,6 +1051,7 @@ def admin_edit_course(course_id):
         conn.close()
 
         flash(f'Course "{title}" updated successfully!', "success")
+        log_action("Updated course", title)
         return redirect('/admin/courses')
 
     conn.close()
@@ -925,6 +1075,7 @@ def admin_delete_course(course_id):
         conn.execute("DELETE FROM courses WHERE id = ?", (course_id,))
         conn.commit()
         flash(f'Course "{course["title"]}" deleted.', "success")
+        log_action("Deleted course", course["title"])
     else:
         flash("Course not found.", "danger")
 
@@ -1088,6 +1239,292 @@ def page_not_found(e):
 def server_error(e):
     """Render custom 500 Internal Server Error page."""
     return render_template('500.html'), 500
+
+
+# -------------------------------------------------------------------
+# PASSWORD RESET — Forgot / OTP / Reset
+# -------------------------------------------------------------------
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Step 1: User enters email to receive OTP."""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+
+        ok, err = validate_email(email)
+        if not ok:
+            flash(err, "danger")
+            return render_template('forgot_password.html')
+
+        conn = get_db()
+        user = conn.execute("SELECT id FROM users WHERE email=?", (email,)).fetchone()
+
+        if user:
+            otp        = str(secrets.randbelow(900000) + 100000)   # 6-digit
+            expires_at = (datetime.now() + timedelta(minutes=10)).strftime('%Y-%m-%d %H:%M:%S')
+
+            conn.execute("DELETE FROM password_resets WHERE email=?", (email,))
+            conn.execute(
+                "INSERT INTO password_resets (email,otp,expires_at,used) VALUES (?,?,?,0)",
+                (email, generate_password_hash(otp, method='pbkdf2:sha256'), expires_at)
+            )
+            conn.commit()
+
+            try:
+                send_otp_email(email, otp)
+                flash("OTP sent to your email. Check your inbox.", "success")
+            except Exception as ex:
+                conn.execute("DELETE FROM password_resets WHERE email=?", (email,))
+                conn.commit()
+                flash(f"Could not send email: {str(ex)}", "danger")
+                conn.close()
+                return render_template('forgot_password.html')
+        else:
+            # Don't reveal whether email exists
+            flash("If that email is registered, an OTP has been sent.", "info")
+
+        conn.close()
+        session['reset_email'] = email
+        return redirect('/verify-otp')
+
+    return render_template('forgot_password.html')
+
+
+@app.route('/verify-otp', methods=['GET', 'POST'])
+def verify_otp():
+    """Step 2: User enters the 6-digit OTP."""
+    if 'reset_email' not in session:
+        return redirect('/forgot-password')
+
+    if request.method == 'POST':
+        otp_input = request.form.get('otp', '').strip()
+        email     = session['reset_email']
+
+        conn = get_db()
+        record = conn.execute(
+            "SELECT * FROM password_resets WHERE email=? AND used=0 ORDER BY id DESC LIMIT 1",
+            (email,)
+        ).fetchone()
+        conn.close()
+
+        if not record:
+            flash("No pending OTP found. Please request a new one.", "danger")
+            return redirect('/forgot-password')
+
+        if datetime.strptime(record['expires_at'], '%Y-%m-%d %H:%M:%S') < datetime.now():
+            flash("OTP has expired. Please request a new one.", "danger")
+            return redirect('/forgot-password')
+
+        if not check_password_hash(record['otp'], otp_input):
+            flash("Incorrect OTP. Please try again.", "danger")
+            return render_template('verify_otp.html')
+
+        # Mark OTP used
+        conn = get_db()
+        conn.execute("UPDATE password_resets SET used=1 WHERE id=?", (record['id'],))
+        conn.commit()
+        conn.close()
+
+        session['otp_verified'] = True
+        return redirect('/reset-password')
+
+    return render_template('verify_otp.html')
+
+
+@app.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    """Step 3: User sets a new password after OTP verification."""
+    if not session.get('otp_verified') or 'reset_email' not in session:
+        return redirect('/forgot-password')
+
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        confirm  = request.form.get('confirm_password', '')
+
+        ok, err = validate_password(password)
+        if not ok:
+            flash(err, "danger")
+            return render_template('reset_password.html')
+
+        if password != confirm:
+            flash("Passwords do not match.", "danger")
+            return render_template('reset_password.html')
+
+        email = session['reset_email']
+        conn  = get_db()
+        conn.execute(
+            "UPDATE users SET password=? WHERE email=?",
+            (generate_password_hash(password, method='pbkdf2:sha256'), email)
+        )
+        conn.commit()
+        conn.close()
+
+        session.pop('reset_email', None)
+        session.pop('otp_verified', None)
+        log_action("Password reset via OTP", email)
+        flash("Password reset successfully! Please log in.", "success")
+        return redirect('/login')
+
+    return render_template('reset_password.html')
+
+
+# -------------------------------------------------------------------
+# ADMIN — SMTP SETTINGS
+# -------------------------------------------------------------------
+
+@app.route('/admin/settings', methods=['GET', 'POST'])
+@admin_required
+def admin_settings():
+    """Admin page to configure SMTP settings for OTP emails."""
+    if request.method == 'POST':
+        set_setting('smtp_host',    request.form.get('smtp_host', '').strip())
+        set_setting('smtp_port',    request.form.get('smtp_port', '587').strip())
+        set_setting('smtp_user',    request.form.get('smtp_user', '').strip())
+        set_setting('sender_name',  request.form.get('sender_name', 'SkillForge').strip())
+
+        new_pass = request.form.get('smtp_pass', '').strip()
+        if new_pass:
+            set_setting('smtp_pass', new_pass)
+
+        # Test email
+        if request.form.get('action') == 'test':
+            test_to = request.form.get('test_email', '').strip()
+            try:
+                send_otp_email(test_to, '123456')
+                flash(f"Test email sent to {test_to}!", "success")
+            except Exception as ex:
+                flash(f"Test failed: {str(ex)}", "danger")
+        else:
+            log_action("Updated SMTP settings")
+            flash("Settings saved successfully.", "success")
+
+        return redirect('/admin/settings')
+
+    current = {
+        'smtp_host':   get_setting('smtp_host', 'smtp.gmail.com'),
+        'smtp_port':   get_setting('smtp_port', '587'),
+        'smtp_user':   get_setting('smtp_user', ''),
+        'sender_name': get_setting('sender_name', 'SkillForge'),
+    }
+    return render_template('admin_settings.html', settings=current)
+
+
+# -------------------------------------------------------------------
+# ADMIN — AUDIT LOG
+# -------------------------------------------------------------------
+
+@app.route('/admin/audit-log')
+@admin_required
+def admin_audit_log():
+    """View paginated admin audit log."""
+    page = request.args.get('page', 1, type=int)
+    conn = get_db()
+    total = conn.execute("SELECT COUNT(*) FROM audit_log").fetchone()[0]
+    logs  = conn.execute(
+        "SELECT * FROM audit_log ORDER BY id DESC LIMIT ? OFFSET ?",
+        (PER_PAGE, (page - 1) * PER_PAGE)
+    ).fetchall()
+    conn.close()
+    total_pages = math.ceil(total / PER_PAGE)
+    return render_template('admin_audit_log.html',
+                           logs=logs, page=page, total_pages=total_pages)
+
+
+# -------------------------------------------------------------------
+# ADMIN — ANALYTICS
+# -------------------------------------------------------------------
+
+@app.route('/admin/analytics')
+@admin_required
+def admin_analytics():
+    """Admin analytics dashboard with enrollment and rating charts."""
+    conn = get_db()
+
+    top_courses = conn.execute("""
+        SELECT c.title, COUNT(e.id) AS enroll_count
+        FROM courses c LEFT JOIN enrollments e ON c.id=e.course_id
+        GROUP BY c.id ORDER BY enroll_count DESC LIMIT 8
+    """).fetchall()
+
+    avg_ratings = conn.execute("""
+        SELECT c.title, ROUND(AVG(r.rating),1) AS avg_rating
+        FROM courses c LEFT JOIN reviews r ON c.id=r.course_id
+        WHERE r.id IS NOT NULL
+        GROUP BY c.id ORDER BY avg_rating DESC LIMIT 8
+    """).fetchall()
+
+    total_users   = conn.execute("SELECT COUNT(*) FROM users WHERE is_admin=0").fetchone()[0]
+    total_courses = conn.execute("SELECT COUNT(*) FROM courses").fetchone()[0]
+    total_enroll  = conn.execute("SELECT COUNT(*) FROM enrollments").fetchone()[0]
+    avg_progress  = conn.execute("SELECT ROUND(AVG(progress),1) FROM enrollments").fetchone()[0] or 0
+
+    # Users joined per day (last 7 days)
+    user_growth = conn.execute("""
+        SELECT DATE(created_at) AS day, COUNT(*) AS cnt
+        FROM users
+        WHERE created_at >= DATE('now', '-7 days')
+        GROUP BY day ORDER BY day ASC
+    """).fetchall()
+
+    conn.close()
+    return render_template('admin_analytics.html',
+                           top_courses=top_courses,
+                           avg_ratings=avg_ratings,
+                           total_users=total_users,
+                           total_courses=total_courses,
+                           total_enroll=total_enroll,
+                           avg_progress=avg_progress,
+                           user_growth=user_growth)
+
+
+# -------------------------------------------------------------------
+# ADMIN — CSV EXPORT
+# -------------------------------------------------------------------
+
+@app.route('/admin/export/users')
+@admin_required
+def export_users():
+    """Download all users as CSV."""
+    import csv, io
+    conn  = get_db()
+    users = conn.execute("SELECT id,username,email,is_admin,role,created_at FROM users ORDER BY id").fetchall()
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['ID', 'Username', 'Email', 'Is Admin', 'Role', 'Joined'])
+    for u in users:
+        writer.writerow(list(u))
+
+    from flask import Response
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=skillforge_users.csv'}
+    )
+
+
+@app.route('/admin/export/courses')
+@admin_required
+def export_courses():
+    """Download all courses as CSV."""
+    import csv, io
+    conn    = get_db()
+    courses = conn.execute("SELECT id,title,instructor,category,level,duration,rating,students FROM courses ORDER BY id").fetchall()
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['ID', 'Title', 'Instructor', 'Category', 'Level', 'Duration', 'Rating', 'Students'])
+    for c in courses:
+        writer.writerow(list(c))
+
+    from flask import Response
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=skillforge_courses.csv'}
+    )
 
 
 # -------------------------------------------------------------------

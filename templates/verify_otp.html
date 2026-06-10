@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP — SkillForge</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path d='M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z' stroke='%23ffffff' stroke-width='1.5' fill='none'/></svg>">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div class="auth-wrap">
+        <div class="auth-left">
+            <a href="/" class="sf-logo" style="margin-bottom:52px;text-decoration:none;">
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+                    <path d="M10.5 2L4 10h5.5L7.5 16L14 8H8.5L10.5 2Z" stroke="#ffffff" stroke-width="1.5"
+                        stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                </svg>
+                SkillForge
+            </a>
+            <div class="auth-card">
+                {% for category, message in get_flashed_messages(with_categories=true) %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+
+                <p class="auth-title">Enter OTP</p>
+                <p class="auth-sub">Enter the 6-digit code sent to your email. It expires in 10 minutes.</p>
+
+                <form method="POST" action="/verify-otp" autocomplete="off">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="form-group">
+                        <label class="form-label">6-Digit OTP</label>
+                        <input type="text" name="otp" class="form-control-sf" placeholder="000000" required autofocus
+                            maxlength="6" pattern="[0-9]{6}" title="Enter the 6-digit code from your email"
+                            style="letter-spacing:0.3em;font-size:1.4rem;text-align:center;">
+                    </div>
+                    <button type="submit" class="btn-primary-sf" style="margin-top:8px;">
+                        Verify OTP
+                    </button>
+                </form>
+
+                <p style="margin-top:20px;font-size:0.82rem;color:rgba(255,255,255,0.3);text-align:center;">
+                    Didn't receive it?
+                    <a href="/forgot-password" style="color:rgba(255,255,255,0.55);text-decoration:none;">Request
+                        again</a>
+                </p>
+            </div>
+        </div>
+        <div class="auth-right">
+            <div class="auth-right-content">
+                <p class="auth-right-title">Check your inbox</p>
+                <p class="auth-right-sub">A 6-digit code was sent to your email.<br>Valid for 10 minutes only.</p>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

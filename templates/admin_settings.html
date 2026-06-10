@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}SMTP Settings — SkillForge Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+    <div class="d-flex align-items-center mb-4" style="gap:12px;">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(124,58,237,0.15);
+                display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-gear" style="color:#7c3aed;font-size:1.1rem;"></i>
+        </div>
+        <div>
+            <h1 style="font-size:1.3rem;font-weight:700;margin:0;color:#f1f5f9;">SMTP Settings</h1>
+            <p style="margin:0;font-size:0.8rem;color:#64748b;">Configure email for OTP password resets</p>
+        </div>
+    </div>
+
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+
+    <div class="row g-4">
+        <!-- SMTP Config Form -->
+        <div class="col-lg-7">
+            <div style="background:#13131a;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:28px;">
+                <h5 style="color:#e2e8f0;margin-bottom:20px;font-size:1rem;">Email Server Configuration</h5>
+
+                <form method="POST" action="/admin/settings">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="save">
+
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label" style="color:#94a3b8;font-size:0.82rem;">SMTP Host</label>
+                            <input type="text" name="smtp_host" class="form-control-sf" value="{{ settings.smtp_host }}"
+                                placeholder="smtp.gmail.com">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" style="color:#94a3b8;font-size:0.82rem;">Port</label>
+                            <input type="number" name="smtp_port" class="form-control-sf"
+                                value="{{ settings.smtp_port }}" placeholder="587">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" style="color:#94a3b8;font-size:0.82rem;">Sender Name</label>
+                            <input type="text" name="sender_name" class="form-control-sf"
+                                value="{{ settings.sender_name }}" placeholder="SkillForge">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" style="color:#94a3b8;font-size:0.82rem;">SMTP Username
+                                (Email)</label>
+                            <input type="email" name="smtp_user" class="form-control-sf"
+                                value="{{ settings.smtp_user }}" placeholder="your@gmail.com">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" style="color:#94a3b8;font-size:0.82rem;">
+                                SMTP Password <span style="color:#475569;">(leave blank to keep existing)</span>
+                            </label>
+                            <input type="password" name="smtp_pass" class="form-control-sf"
+                                placeholder="App password or SMTP password" autocomplete="new-password">
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:12px;margin-top:24px;">
+                        <button type="submit" class="btn-primary-sf" style="flex:1;">
+                            <i class="bi bi-floppy me-2"></i>Save Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Test Email + Guide -->
+        <div class="col-lg-5">
+            <!-- Test Email -->
+            <div style="background:#13131a;border:1px solid rgba(255,255,255,0.06);
+                  border-radius:14px;padding:24px;margin-bottom:16px;">
+                <h5 style="color:#e2e8f0;margin-bottom:16px;font-size:1rem;">
+                    <i class="bi bi-send me-2" style="color:#7c3aed;"></i>Send Test Email
+                </h5>
+                <form method="POST" action="/admin/settings">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="test">
+                    <!-- Carry over current values so save doesn't wipe them -->
+                    <input type="hidden" name="smtp_host" value="{{ settings.smtp_host }}">
+                    <input type="hidden" name="smtp_port" value="{{ settings.smtp_port }}">
+                    <input type="hidden" name="smtp_user" value="{{ settings.smtp_user }}">
+                    <input type="hidden" name="sender_name" value="{{ settings.sender_name }}">
+                    <div class="mb-3">
+                        <label class="form-label" style="color:#94a3b8;font-size:0.82rem;">Send test OTP to</label>
+                        <input type="email" name="test_email" class="form-control-sf" placeholder="test@example.com"
+                            required>
+                    </div>
+                    <button type="submit" class="btn-primary-sf" style="width:100%;">
+                        <i class="bi bi-envelope me-2"></i>Send Test
+                    </button>
+                </form>
+            </div>
+
+            <!-- Quick Guide -->
+            <div style="background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);
+                  border-radius:14px;padding:20px;">
+                <h6 style="color:#a78bfa;margin-bottom:12px;font-size:0.88rem;">
+                    <i class="bi bi-info-circle me-2"></i>Gmail Setup Guide
+                </h6>
+                <ol style="color:#64748b;font-size:0.78rem;margin:0;padding-left:18px;line-height:2;">
+                    <li>Enable 2-Step Verification on your Google account</li>
+                    <li>Go to Google Account → Security → App Passwords</li>
+                    <li>Generate an app password for "Mail"</li>
+                    <li>Use that 16-character password here</li>
+                    <li>Set Host: <code style="color:#a78bfa;">smtp.gmail.com</code>, Port: <code
+                            style="color:#a78bfa;">587</code></li>
+                </ol>
+                <hr style="border-color:rgba(124,58,237,0.2);margin:14px 0;">
+                <p style="font-size:0.75rem;color:#475569;margin:0;">
+                    <i class="bi bi-shield-check me-1" style="color:#7c3aed;"></i>
+                    Credentials are stored in the local DB (not in code), so they are safe from GitHub.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

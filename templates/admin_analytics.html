@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Analytics — SkillForge Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+    <div class="d-flex align-items-center mb-4" style="gap:12px;">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(124,58,237,0.15);
+                display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-bar-chart-line" style="color:#7c3aed;font-size:1.1rem;"></i>
+        </div>
+        <div>
+            <h1 style="font-size:1.3rem;font-weight:700;margin:0;color:#f1f5f9;">Analytics</h1>
+            <p style="margin:0;font-size:0.8rem;color:#64748b;">Platform overview and enrollment stats</p>
+        </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="row g-3 mb-4">
+        {% for label, value, icon, color in [
+        ('Total Students', total_users, 'bi-people', '#7c3aed'),
+        ('Total Courses', total_courses, 'bi-collection', '#0891b2'),
+        ('Total Enrollments', total_enroll, 'bi-book', '#059669'),
+        ('Avg. Progress', avg_progress ~ '%', 'bi-bar-chart', '#d97706')
+        ] %}
+        <div class="col-6 col-lg-3">
+            <div style="background:#13131a;border:1px solid rgba(255,255,255,0.06);
+                  border-radius:14px;padding:20px;">
+                <i class="bi {{ icon }}" style="color:{{ color }};font-size:1.4rem;"></i>
+                <p style="font-size:1.6rem;font-weight:700;color:#f1f5f9;margin:8px 0 2px;">{{ value }}</p>
+                <p style="font-size:0.78rem;color:#64748b;margin:0;">{{ label }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="row g-4">
+        <!-- Top Enrolled Courses -->
+        <div class="col-lg-6">
+            <div style="background:#13131a;border:1px solid rgba(255,255,255,0.06);
+                  border-radius:14px;padding:24px;">
+                <h5 style="color:#e2e8f0;margin-bottom:20px;font-size:0.95rem;font-weight:600;">
+                    <i class="bi bi-trophy me-2" style="color:#d97706;"></i>Top Enrolled Courses
+                </h5>
+                <canvas id="enrollChart" height="220"></canvas>
+            </div>
+        </div>
+
+        <!-- Avg Ratings -->
+        <div class="col-lg-6">
+            <div style="background:#13131a;border:1px solid rgba(255,255,255,0.06);
+                  border-radius:14px;padding:24px;">
+                <h5 style="color:#e2e8f0;margin-bottom:20px;font-size:0.95rem;font-weight:600;">
+                    <i class="bi bi-star me-2" style="color:#f59e0b;"></i>Average Course Ratings
+                </h5>
+                <canvas id="ratingChart" height="220"></canvas>
+            </div>
+        </div>
+
+        <!-- User Growth -->
+        <div class="col-12">
+            <div style="background:#13131a;border:1px solid rgba(255,255,255,0.06);
+                  border-radius:14px;padding:24px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 style="color:#e2e8f0;margin:0;font-size:0.95rem;font-weight:600;">
+                        <i class="bi bi-person-plus me-2" style="color:#7c3aed;"></i>New Users — Last 7 Days
+                    </h5>
+                    <div style="display:flex;gap:8px;">
+                        <a href="/admin/export/users"
+                            style="font-size:0.78rem;background:rgba(255,255,255,0.05);
+               color:#94a3b8;padding:6px 14px;border-radius:8px;text-decoration:none;border:1px solid rgba(255,255,255,0.08);">
+                            <i class="bi bi-download me-1"></i>Export Users CSV
+                        </a>
+                        <a href="/admin/export/courses"
+                            style="font-size:0.78rem;background:rgba(255,255,255,0.05);
+               color:#94a3b8;padding:6px 14px;border-radius:8px;text-decoration:none;border:1px solid rgba(255,255,255,0.08);">
+                            <i class="bi bi-download me-1"></i>Export Courses CSV
+                        </a>
+                    </div>
+                </div>
+                <canvas id="growthChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    const gridColor = 'rgba(255,255,255,0.05)';
+    const textColor = '#64748b';
+    const defaultOpts = {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { ticks: { color: textColor, font: { size: 11 } }, grid: { color: gridColor } },
+            y: { ticks: { color: textColor, font: { size: 11 } }, grid: { color: gridColor }, beginAtZero: true }
+        }
+    };
+
+    // Enroll chart
+    new Chart(document.getElementById('enrollChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ top_courses | map(attribute = 'title') | list | tojson }},
+        datasets: [{
+            data: {{ top_courses | map(attribute = 'enroll_count') | list | tojson }},
+        backgroundColor: 'rgba(124,58,237,0.7)',
+        borderColor: '#7c3aed',
+        borderWidth: 1, borderRadius: 6
+    }]
+  },
+        options: defaultOpts
+});
+
+    // Rating chart
+    new Chart(document.getElementById('ratingChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ avg_ratings | map(attribute = 'title') | list | tojson }},
+        datasets: [{
+            data: {{ avg_ratings | map(attribute = 'avg_rating') | list | tojson }},
+        backgroundColor: 'rgba(245,158,11,0.7)',
+        borderColor: '#f59e0b',
+        borderWidth: 1, borderRadius: 6
+    }]
+  },
+        options: { ...defaultOpts, scales: { ...defaultOpts.scales, y: { ...defaultOpts.scales.y, max: 5 } } }
+});
+
+    // Growth chart
+    new Chart(document.getElementById('growthChart'), {
+        type: 'line',
+        data: {
+            labels: {{ user_growth | map(attribute = 'day') | list | tojson }},
+        datasets: [{
+            data: {{ user_growth | map(attribute = 'cnt') | list | tojson }},
+        borderColor: '#7c3aed',
+        backgroundColor: 'rgba(124,58,237,0.12)',
+        fill: true, tension: 0.4, pointBackgroundColor: '#7c3aed', pointRadius: 4
+    }]
+  },
+        options: defaultOpts
+});
+</script>
+{% endblock %}
