@@ -137,7 +137,7 @@
               </button>
             </form>
 
-            <a href="/course/{{ course['id'] }}"
+            <a href="{% if course['content_format'] == 'modular' %}/course/{{ course['id'] }}/learn{% else %}/course/{{ course['id'] }}{% endif %}"
                style="padding:6px 14px;border:1px solid var(--border);border-radius:8px;
                       color:var(--text-2);text-decoration:none;font-size:0.78rem;
                       transition:all 0.2s;"
