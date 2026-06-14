@@ -42,6 +42,8 @@ app.permanent_session_lifetime = timedelta(hours=2)
 
 # #15 — CSRF
 app.config['WTF_CSRF_TIME_LIMIT'] = None
+# Bug 1 fix: explicitly allow X-CSRFToken header so AJAX POSTs are accepted
+app.config['WTF_CSRF_HEADERS'] = ['X-CSRFToken']
 
 # #13 — Flask-Mail
 app.config['MAIL_SERVER']         = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
@@ -143,6 +145,38 @@ def init_db():
             target     TEXT DEFAULT '',
             timestamp  TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS course_modules (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            course_id    INTEGER NOT NULL,
+            module_title TEXT NOT NULL,
+            order_index  INTEGER DEFAULT 0,
+            FOREIGN KEY (course_id) REFERENCES courses(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS lessons (
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            module_id        INTEGER NOT NULL,
+            title            TEXT NOT NULL,
+            youtube_video_id TEXT DEFAULT '',
+            notes            TEXT DEFAULT '',
+            has_assignment   INTEGER DEFAULT 0,
+            google_doc_url   TEXT DEFAULT '',
+            google_form_url  TEXT DEFAULT '',
+            order_index      INTEGER DEFAULT 0,
+            FOREIGN KEY (module_id) REFERENCES course_modules(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS lesson_progress (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id      INTEGER NOT NULL,
+            lesson_id    INTEGER NOT NULL,
+            completed    INTEGER DEFAULT 0,
+            completed_at TEXT,
+            UNIQUE(user_id, lesson_id),
+            FOREIGN KEY (user_id)   REFERENCES users(id),
+            FOREIGN KEY (lesson_id) REFERENCES lessons(id)
+        );
     """)
     conn.commit()
 
@@ -153,6 +187,8 @@ def init_db():
         "ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'",
         # New: created_at for analytics
         "ALTER TABLE users ADD COLUMN created_at TEXT DEFAULT (datetime('now'))",
+        # New: content format for modular course builder
+        "ALTER TABLE courses ADD COLUMN content_format TEXT DEFAULT 'standard'",
     ]:
         try:
             conn.execute(migration)
@@ -178,17 +214,17 @@ def init_db():
     # Seed courses
     if conn.execute("SELECT COUNT(*) FROM courses").fetchone()[0] == 0:
         courses = [
-            ("Python Fundamentals",        "Arjun Mehta",   "Python","Beginner",    "14 hrs",4.8,12400,"Master Python from scratch. Variables, loops, functions, OOP and more.","#4f8ef7",""),
-            ("Flask Web Development",      "Priya Sharma",  "Web",  "Intermediate", "18 hrs",4.7, 8900,"Build real web apps with Flask. Routing, templates, databases, auth.",  "#7c3aed",""),
-            ("Machine Learning Basics",    "Rahul Verma",   "AI",   "Intermediate", "22 hrs",4.9, 6700,"Learn ML algorithms, data preprocessing, model training with scikit-learn.","#059669",""),
-            ("Web Development Bootcamp",   "Sneha Iyer",    "Web",  "Beginner",     "30 hrs",4.6,15200,"HTML, CSS, JavaScript — build modern websites from scratch.",            "#db2777",""),
-            ("AI Introduction",            "Vikram Nair",   "AI",   "Beginner",     "10 hrs",4.5, 9300,"Understand AI concepts, use cases, and how modern AI systems work.",    "#d97706",""),
-            ("Data Structures & Algo",     "Ankit Gupta",   "Python","Advanced",    "25 hrs",4.9, 7800,"Master DSA with Python. Arrays, trees, graphs, dynamic programming.",   "#0891b2",""),
-            ("React JS Complete Guide",    "Neha Kulkarni", "Web",  "Intermediate", "20 hrs",4.7,11000,"Build dynamic UIs with React. Hooks, state management, REST APIs.",     "#ea580c",""),
-            ("Deep Learning with PyTorch", "Siddharth Rao", "AI",   "Advanced",     "28 hrs",4.8, 4200,"Neural networks, CNNs, RNNs — build and train deep learning models.",   "#16a34a",""),
+            ("Python Fundamentals",        "Arjun Mehta",   "Python","Beginner",    "14 hrs",4.8,12400,"Master Python from scratch. Variables, loops, functions, OOP and more.","#4f8ef7","","modular"),
+            ("Flask Web Development",      "Priya Sharma",  "Web",  "Intermediate", "18 hrs",4.7, 8900,"Build real web apps with Flask. Routing, templates, databases, auth.",  "#7c3aed","","standard"),
+            ("Machine Learning Basics",    "Rahul Verma",   "AI",   "Intermediate", "22 hrs",4.9, 6700,"Learn ML algorithms, data preprocessing, model training with scikit-learn.","#059669","","standard"),
+            ("Web Development Bootcamp",   "Sneha Iyer",    "Web",  "Beginner",     "30 hrs",4.6,15200,"HTML, CSS, JavaScript — build modern websites from scratch.",            "#db2777","","standard"),
+            ("AI Introduction",            "Vikram Nair",   "AI",   "Beginner",     "10 hrs",4.5, 9300,"Understand AI concepts, use cases, and how modern AI systems work.",    "#d97706","","standard"),
+            ("Data Structures & Algo",     "Ankit Gupta",   "Python","Advanced",    "25 hrs",4.9, 7800,"Master DSA with Python. Arrays, trees, graphs, dynamic programming.",   "#0891b2","","standard"),
+            ("React JS Complete Guide",    "Neha Kulkarni", "Web",  "Intermediate", "20 hrs",4.7,11000,"Build dynamic UIs with React. Hooks, state management, REST APIs.",     "#ea580c","","standard"),
+            ("Deep Learning with PyTorch", "Siddharth Rao", "AI",   "Advanced",     "28 hrs",4.8, 4200,"Neural networks, CNNs, RNNs — build and train deep learning models.",   "#16a34a","","standard"),
         ]
         conn.executemany(
-            "INSERT INTO courses (title,instructor,category,level,duration,rating,students,description,color,image_url) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO courses (title,instructor,category,level,duration,rating,students,description,color,image_url,content_format) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
             courses
         )
         conn.commit()
@@ -212,6 +248,13 @@ def validate_email(email):
     if not re.match(pattern, email):
         return False, "Please enter a valid email address (e.g. you@example.com)."
     return True, ''
+
+def sanitize_youtube_id(raw):
+    """Extract YouTube Video ID from a full URL, or return the raw string if it looks like an ID."""
+    if not raw: return ''
+    match = re.search(r'(?:v=|youtu\.be/|embed/)([a-zA-Z0-9_-]{11})', raw)
+    if match: return match.group(1)
+    return raw.strip()
 
 def validate_password(password):
     """
@@ -304,6 +347,40 @@ def log_action(action, target=''):
             target,
             datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         )
+    )
+    conn.commit()
+    conn.close()
+
+
+def recalc_course_progress(user_id, course_id):
+    """
+    Recalculate and update enrollments.progress for a user+course
+    based on completed lessons in lesson_progress.
+    """
+    conn = get_db()
+
+    total = conn.execute("""
+        SELECT COUNT(*) FROM lessons l
+        JOIN course_modules m ON l.module_id = m.id
+        WHERE m.course_id = ?
+    """, (course_id,)).fetchone()[0]
+
+    if total == 0:
+        conn.close()
+        return
+
+    completed = conn.execute("""
+        SELECT COUNT(DISTINCT lp.lesson_id) FROM lesson_progress lp
+        JOIN lessons l ON lp.lesson_id = l.id
+        JOIN course_modules m ON l.module_id = m.id
+        WHERE m.course_id = ? AND lp.user_id = ? AND lp.completed = 1
+    """, (course_id, user_id)).fetchone()[0]
+
+    progress = round((completed / total) * 100)
+
+    conn.execute(
+        "UPDATE enrollments SET progress=? WHERE user_id=? AND course_id=?",
+        (progress, user_id, course_id)
     )
     conn.commit()
     conn.close()
@@ -425,6 +502,9 @@ def login():
             next_url = request.args.get('next')
             if next_url and next_url.startswith('/') and not next_url.startswith('//'):
                 return redirect(next_url)
+            
+            if user['is_admin']:
+                return redirect('/admin')
             return redirect('/dashboard')
 
         flash("Invalid username or password.", "danger")
@@ -495,11 +575,9 @@ def dashboard():
 # -------------------------------------------------------------------
 
 @app.route('/courses')
+@login_required
 def courses():
     """List available courses with pagination, category filtering, and search."""
-    guard = _login_guard()
-    if guard: return guard
-    
     category = request.args.get('category', 'All')
     q        = request.args.get('q', '').strip()
     
@@ -560,11 +638,9 @@ def courses():
 
 
 @app.route('/course/<int:course_id>')
+@login_required
 def course_detail(course_id):
     """View details for a specific course including reviews and curriculum."""
-    guard = _login_guard()
-    if guard: return guard
-    
     conn   = get_db()
     course = conn.execute("SELECT * FROM courses WHERE id=?", (course_id,)).fetchone()
     
@@ -601,21 +677,43 @@ def course_detail(course_id):
     distribution = {i: 0 for i in range(1, 6)}
     for r in reviews:
         distribution[r['rating']] += 1
-        
+
     conn.close()
 
-    curriculum = [
-        {"module": "Module 1: Getting Started",      "lessons": 3},
-        {"module": "Module 2: Core Concepts",         "lessons": 5},
-        {"module": "Module 3: Hands-on Projects",     "lessons": 4},
-        {"module": "Module 4: Advanced Topics",       "lessons": 6},
-        {"module": "Module 5: Final Project & Quiz",  "lessons": 2},
-    ]
+    # Curriculum: real modules/lessons for modular courses, static for standard
+    real_modules = []
+    if course['content_format'] == 'modular':
+        conn = get_db()
+        modules = conn.execute(
+            "SELECT * FROM course_modules WHERE course_id=? ORDER BY order_index ASC, id ASC",
+            (course_id,)
+        ).fetchall()
+        for m in modules:
+            lessons = conn.execute(
+                "SELECT * FROM lessons WHERE module_id=? ORDER BY order_index ASC, id ASC",
+                (m['id'],)
+            ).fetchall()
+            real_modules.append({'module': m, 'lessons': lessons})
+        conn.close()
+
+        curriculum = [
+            {"module": m['module']['module_title'], "lessons": len(m['lessons'])}
+            for m in real_modules
+        ]
+    else:
+        curriculum = [
+            {"module": "Module 1: Getting Started",      "lessons": 3},
+            {"module": "Module 2: Core Concepts",         "lessons": 5},
+            {"module": "Module 3: Hands-on Projects",     "lessons": 4},
+            {"module": "Module 4: Advanced Topics",       "lessons": 6},
+            {"module": "Module 5: Final Project & Quiz",  "lessons": 2},
+        ]
 
     return render_template('course_detail.html',
         course=course,
         enrollment=enrollment,
         curriculum=curriculum,
+        real_modules=real_modules,
         reviews=reviews,
         user_review=user_review,
         live_avg=live_avg,
@@ -650,6 +748,193 @@ def enroll(course_id):
 
     conn.close()
     return redirect(f'/course/{course_id}')
+
+
+@app.route('/course/<int:course_id>/learn')
+@login_required
+def course_learn_redirect(course_id):
+    """Redirect to the first incomplete lesson (or first lesson if none started)."""
+    conn = get_db()
+    
+    # Check enrollment
+    enrollment = conn.execute(
+        "SELECT * FROM enrollments WHERE user_id=? AND course_id=?",
+        (session['user_id'], course_id)
+    ).fetchone()
+    if not enrollment:
+        conn.close()
+        flash("You must be enrolled to access course content.", "warning")
+        return redirect(f'/course/{course_id}')
+
+    # Get all lessons ordered by module order then lesson order
+    lessons = conn.execute("""
+        SELECT l.id, lp.completed
+        FROM lessons l
+        JOIN course_modules m ON m.id = l.module_id
+        LEFT JOIN lesson_progress lp ON lp.lesson_id = l.id AND lp.user_id = ?
+        WHERE m.course_id = ?
+        ORDER BY m.order_index ASC, m.id ASC, l.order_index ASC, l.id ASC
+    """, (session['user_id'], course_id)).fetchall()
+
+    conn.close()
+
+    if not lessons:
+        flash("This course has no lessons yet.", "info")
+        return redirect(f'/course/{course_id}')
+
+    # Find first incomplete lesson
+    target_lesson_id = None
+    for l in lessons:
+        if not l['completed']:
+            target_lesson_id = l['id']
+            break
+    
+    if target_lesson_id is None:
+        # All completed, go to first
+        target_lesson_id = lessons[0]['id']
+
+    return redirect(f'/course/{course_id}/learn/{target_lesson_id}')
+
+
+@app.route('/course/<int:course_id>/learn/<int:lesson_id>')
+@login_required
+def course_learn(course_id, lesson_id):
+    """Render the learning viewer page for a specific lesson."""
+    conn = get_db()
+    
+    # Check enrollment
+    enrollment = conn.execute(
+        "SELECT * FROM enrollments WHERE user_id=? AND course_id=?",
+        (session['user_id'], course_id)
+    ).fetchone()
+    if not enrollment:
+        conn.close()
+        flash("You must be enrolled to access course content.", "warning")
+        return redirect(f'/course/{course_id}')
+
+    course = conn.execute("SELECT * FROM courses WHERE id=?", (course_id,)).fetchone()
+    if course['content_format'] != 'modular':
+        conn.close()
+        flash("This course does not support the modular learning view.", "warning")
+        return redirect(f'/course/{course_id}')
+
+    # Bug 3 fix: verify the lesson actually belongs to this course (prevent cross-course access)
+    current_lesson = conn.execute("""
+        SELECT l.* FROM lessons l
+        JOIN course_modules m ON l.module_id = m.id
+        WHERE l.id = ? AND m.course_id = ?
+    """, (lesson_id, course_id)).fetchone()
+    if not current_lesson:
+        conn.close()
+        flash("Lesson not found in this course.", "danger")
+        return redirect(f'/course/{course_id}')
+
+    # Get modules and lessons for sidebar
+    modules = conn.execute(
+        "SELECT * FROM course_modules WHERE course_id=? ORDER BY order_index ASC, id ASC",
+        (course_id,)
+    ).fetchall()
+
+    lessons_by_module = {}
+    completed_lessons = set(row['lesson_id'] for row in conn.execute(
+        "SELECT lesson_id FROM lesson_progress WHERE user_id=? AND completed=1",
+        (session['user_id'],)
+    ).fetchall())
+
+    all_lessons_ordered = []
+
+    for m in modules:
+        module_lessons = conn.execute(
+            "SELECT * FROM lessons WHERE module_id=? ORDER BY order_index ASC, id ASC",
+            (m['id'],)
+        ).fetchall()
+        
+        # Augment with completed flag
+        augmented_lessons = []
+        for ml in module_lessons:
+            # We can't modify sqlite3.Row directly, so we create a dict
+            ml_dict = dict(ml)
+            ml_dict['is_completed'] = ml['id'] in completed_lessons
+            augmented_lessons.append(ml_dict)
+            all_lessons_ordered.append(ml_dict)
+            
+        lessons_by_module[m['id']] = augmented_lessons
+
+    conn.close()
+
+    # Determine prev/next lesson
+    prev_lesson = None
+    next_lesson = None
+    for i, l in enumerate(all_lessons_ordered):
+        if l['id'] == lesson_id:
+            if i > 0:
+                prev_lesson = all_lessons_ordered[i-1]
+            if i < len(all_lessons_ordered) - 1:
+                next_lesson = all_lessons_ordered[i+1]
+            break
+
+    # Build current_lesson dict with is_completed flag
+    current_lesson_dict = dict(current_lesson)
+    current_lesson_dict['is_completed'] = current_lesson['id'] in completed_lessons
+
+    return render_template('course_learn.html',
+        course=course,
+        enrollment=dict(enrollment),
+        modules=modules,
+        lessons_by_module=lessons_by_module,
+        current_lesson=current_lesson_dict,
+        prev_lesson=prev_lesson,
+        next_lesson=next_lesson
+    )
+
+
+@app.route('/course/<int:course_id>/learn/<int:lesson_id>/complete', methods=['POST'])
+@login_required
+def course_lesson_complete(course_id, lesson_id):
+    """AJAX endpoint to mark a lesson as completed and recalculate progress."""
+    conn = get_db()
+    
+    # 1. Check enrollment
+    enrollment = conn.execute(
+        "SELECT * FROM enrollments WHERE user_id=? AND course_id=?",
+        (session['user_id'], course_id)
+    ).fetchone()
+    
+    if not enrollment:
+        conn.close()
+        return jsonify({"success": False, "error": "Not enrolled"}), 403
+
+    # 2. Mark complete
+    try:
+        conn.execute("""
+            INSERT INTO lesson_progress (user_id, lesson_id, completed, completed_at)
+            VALUES (?, ?, 1, ?)
+            ON CONFLICT(user_id, lesson_id) DO UPDATE SET completed=1, completed_at=excluded.completed_at
+        """, (session['user_id'], lesson_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+    except sqlite3.OperationalError:
+        # If ON CONFLICT not supported (older SQLite), fallback to insert/update manually
+        existing = conn.execute("SELECT id FROM lesson_progress WHERE user_id=? AND lesson_id=?", (session['user_id'], lesson_id)).fetchone()
+        if existing:
+            conn.execute("UPDATE lesson_progress SET completed=1, completed_at=? WHERE id=?", (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), existing['id']))
+        else:
+            conn.execute("INSERT INTO lesson_progress (user_id, lesson_id, completed, completed_at) VALUES (?, ?, 1, ?)", (session['user_id'], lesson_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+
+    conn.commit()
+    conn.close()
+
+    # Bug 5 fix: delegate recalculation to the canonical helper (avoids duplicated logic)
+    recalc_course_progress(session['user_id'], course_id)
+
+    # Read the updated progress back to return in the response
+    conn2 = get_db()
+    row = conn2.execute(
+        "SELECT progress FROM enrollments WHERE user_id=? AND course_id=?",
+        (session['user_id'], course_id)
+    ).fetchone()
+    conn2.close()
+    progress = row['progress'] if row else 0
+
+    return jsonify({"success": True, "progress": progress})
 
 
 # -------------------------------------------------------------------
@@ -691,14 +976,33 @@ def update_progress(enrollment_id):
     if not validate_csrf():
         return redirect('/my-learning')
 
+    conn = get_db()
+    
+    # Check if course is modular, if so, block manual progress update
+    course = conn.execute("""
+        SELECT c.content_format FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        WHERE e.id = ? AND e.user_id = ?
+    """, (enrollment_id, session['user_id'])).fetchone()
+    
+    if not course:
+        conn.close()
+        flash("Enrollment not found.", "danger")
+        return redirect('/my-learning')
+        
+    if course['content_format'] == 'modular':
+        conn.close()
+        flash("Progress for modular courses is updated automatically by completing lessons.", "warning")
+        return redirect('/my-learning')
+
     try:
         progress = int(request.form['progress'])
         progress = max(0, min(100, progress))
     except ValueError:
+        conn.close()
         flash("Invalid progress value.", "danger")
         return redirect('/my-learning')
 
-    conn = get_db()
     conn.execute(
         "UPDATE enrollments SET progress = ? WHERE id = ? AND user_id = ?",
         (progress, enrollment_id, session['user_id'])
@@ -892,6 +1196,9 @@ def admin_delete_user(user_id):
             flash("Cannot delete — at least one admin must remain.", "warning")
             return redirect('/users')
 
+    # Bug 2 fix: clean up ALL user-owned rows to prevent orphaned data
+    conn.execute("DELETE FROM lesson_progress WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM reviews WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM enrollments WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()
@@ -1071,6 +1378,9 @@ def admin_delete_course(course_id):
     ).fetchone()
 
     if course:
+        conn.execute("DELETE FROM lesson_progress WHERE lesson_id IN (SELECT l.id FROM lessons l JOIN course_modules m ON l.module_id=m.id WHERE m.course_id=?)", (course_id,))
+        conn.execute("DELETE FROM lessons WHERE module_id IN (SELECT id FROM course_modules WHERE course_id=?)", (course_id,))
+        conn.execute("DELETE FROM course_modules WHERE course_id = ?", (course_id,))
         conn.execute("DELETE FROM enrollments WHERE course_id = ?", (course_id,))
         conn.execute("DELETE FROM courses WHERE id = ?", (course_id,))
         conn.commit()
@@ -1088,11 +1398,9 @@ def admin_delete_course(course_id):
 # -------------------------------------------------------------------
 
 @app.route('/review/<int:course_id>', methods=['POST'])
+@login_required
 def submit_review(course_id):
     """Submit a rating and comment for a course."""
-    guard = _login_guard()
-    if guard: return guard
-    
     conn = get_db()
     
     if not conn.execute(
@@ -1131,11 +1439,9 @@ def submit_review(course_id):
 
 
 @app.route('/review/<int:course_id>/delete', methods=['POST'])
+@login_required
 def delete_review(course_id):
     """Remove a previously submitted review."""
-    guard = _login_guard()
-    if guard: return guard
-    
     conn = get_db()
     conn.execute(
         "DELETE FROM reviews WHERE user_id=? AND course_id=?", 
@@ -1153,11 +1459,9 @@ def delete_review(course_id):
 # -------------------------------------------------------------------
 
 @app.route('/certificate/<int:enrollment_id>')
+@login_required
 def certificate(enrollment_id):
     """View certificate if course is completed 100%."""
-    guard = _login_guard()
-    if guard: return guard
-    
     conn = get_db()
     row  = conn.execute("""
         SELECT e.*, c.title as course_title, c.instructor, c.category, c.duration, c.color, u.username
@@ -1475,6 +1779,261 @@ def admin_analytics():
                            total_enroll=total_enroll,
                            avg_progress=avg_progress,
                            user_growth=user_growth)
+
+
+# -------------------------------------------------------------------
+# ADMIN — COURSE BUILDER (Modular Lessons)
+# -------------------------------------------------------------------
+
+@app.route('/admin/courses/<int:course_id>/builder')
+@admin_required
+def admin_course_builder(course_id):
+    conn = get_db()
+    course = conn.execute("SELECT * FROM courses WHERE id=?", (course_id,)).fetchone()
+    if not course:
+        conn.close()
+        flash("Course not found.", "danger")
+        return redirect('/admin/courses')
+
+    modules = conn.execute(
+        "SELECT * FROM course_modules WHERE course_id=? ORDER BY order_index ASC",
+        (course_id,)
+    ).fetchall()
+
+    lessons_by_module = {}
+    for m in modules:
+        lessons_by_module[m['id']] = conn.execute(
+            "SELECT * FROM lessons WHERE module_id=? ORDER BY order_index ASC",
+            (m['id'],)
+        ).fetchall()
+
+    conn.close()
+    return render_template('admin_course_builder.html',
+        course=course,
+        modules=modules,
+        lessons_by_module=lessons_by_module
+    )
+
+
+@app.route('/admin/courses/<int:course_id>/format', methods=['POST'])
+@admin_required
+def admin_course_format(course_id):
+    conn = get_db()
+    course = conn.execute("SELECT * FROM courses WHERE id=?", (course_id,)).fetchone()
+    if not course:
+        conn.close()
+        flash("Course not found.", "danger")
+        return redirect('/admin/courses')
+
+    fmt = request.form.get('content_format', 'standard')
+    if fmt not in ('standard', 'modular'):
+        fmt = 'standard'
+
+    conn.execute("UPDATE courses SET content_format=? WHERE id=?", (fmt, course_id))
+    conn.commit()
+    conn.close()
+
+    log_action("Changed course format", f"{course['title']} → {fmt}")
+    flash(f"Content format set to '{fmt}'.", "success")
+    return redirect(f'/admin/courses/{course_id}/builder')
+
+
+@app.route('/admin/courses/<int:course_id>/modules/add', methods=['POST'])
+@admin_required
+def admin_add_module(course_id):
+    conn = get_db()
+    course = conn.execute("SELECT id FROM courses WHERE id=?", (course_id,)).fetchone()
+    if not course:
+        conn.close()
+        flash("Course not found.", "danger")
+        return redirect('/admin/courses')
+
+    module_title = request.form.get('module_title', '').strip()
+    try:
+        order_index = int(request.form.get('order_index', 0))
+    except ValueError:
+        order_index = 0
+
+    if not module_title:
+        conn.close()
+        flash("Module title cannot be empty.", "danger")
+        return redirect(f'/admin/courses/{course_id}/builder')
+    conn.execute(
+        "INSERT INTO course_modules (course_id, module_title, order_index) VALUES (?,?,?)",
+        (course_id, module_title, order_index)
+    )
+    conn.commit()
+    conn.close()
+
+    log_action("Created module", module_title)
+    flash(f'Module "{module_title}" added.', "success")
+    return redirect(f'/admin/courses/{course_id}/builder')
+
+
+@app.route('/admin/modules/<int:module_id>/edit', methods=['POST'])
+@admin_required
+def admin_edit_module(module_id):
+    conn = get_db()
+    module = conn.execute("SELECT * FROM course_modules WHERE id=?", (module_id,)).fetchone()
+    if not module:
+        conn.close()
+        flash("Module not found.", "danger")
+        return redirect('/admin/courses')
+
+    module_title = request.form.get('module_title', '').strip()
+    try:
+        order_index = int(request.form.get('order_index', 0))
+    except ValueError:
+        order_index = 0
+
+    if not module_title:
+        conn.close()  # Bug 4 fix: close connection before early return
+        flash("Module title cannot be empty.", "danger")
+        return redirect(f'/admin/courses/{module["course_id"]}/builder')
+
+    conn.execute(
+        "UPDATE course_modules SET module_title=?, order_index=? WHERE id=?",
+        (module_title, order_index, module_id)
+    )
+    conn.commit()
+    conn.close()
+
+    log_action("Updated module", module_title)
+    flash(f'Module "{module_title}" updated.', "success")
+    return redirect(f'/admin/courses/{module["course_id"]}/builder')
+
+
+@app.route('/admin/modules/<int:module_id>/delete', methods=['POST'])
+@admin_required
+def admin_delete_module(module_id):
+    conn = get_db()
+    module = conn.execute("SELECT * FROM course_modules WHERE id=?", (module_id,)).fetchone()
+    if not module:
+        conn.close()
+        flash("Module not found.", "danger")
+        return redirect('/admin/courses')
+
+    course_id = module['course_id']
+    title = module['module_title']
+
+    conn.execute("DELETE FROM lesson_progress WHERE lesson_id IN (SELECT id FROM lessons WHERE module_id=?)", (module_id,))
+    conn.execute("DELETE FROM lessons WHERE module_id=?", (module_id,))
+    conn.execute("DELETE FROM course_modules WHERE id=?", (module_id,))
+    conn.commit()
+    conn.close()
+
+    log_action("Deleted module", title)
+    flash(f'Module "{title}" and its lessons deleted.', "success")
+    return redirect(f'/admin/courses/{course_id}/builder')
+
+
+@app.route('/admin/modules/<int:module_id>/lessons/add', methods=['POST'])
+@admin_required
+def admin_add_lesson(module_id):
+    conn = get_db()
+    module = conn.execute("SELECT * FROM course_modules WHERE id=?", (module_id,)).fetchone()
+    if not module:
+        conn.close()
+        flash("Module not found.", "danger")
+        return redirect('/admin/courses')
+
+    course_id        = module['course_id']
+    title            = request.form.get('title', '').strip()
+    youtube_video_id = sanitize_youtube_id(request.form.get('youtube_video_id', ''))
+    notes            = request.form.get('notes', '').strip()
+    has_assignment   = 1 if request.form.get('has_assignment') else 0
+    google_doc_url   = request.form.get('google_doc_url', '').strip()
+    google_form_url  = request.form.get('google_form_url', '').strip()
+    try:
+        order_index = int(request.form.get('order_index', 0))
+    except ValueError:
+        order_index = 0
+
+    if not title:
+        flash("Lesson title cannot be empty.", "danger")
+        return redirect(f'/admin/courses/{course_id}/builder')
+
+    conn.execute(
+        """INSERT INTO lessons
+           (module_id, title, youtube_video_id, notes, has_assignment, google_doc_url, google_form_url, order_index)
+           VALUES (?,?,?,?,?,?,?,?)""",
+        (module_id, title, youtube_video_id, notes, has_assignment, google_doc_url, google_form_url, order_index)
+    )
+    conn.commit()
+    conn.close()
+
+    log_action("Created lesson", title)
+    flash(f'Lesson "{title}" added.', "success")
+    return redirect(f'/admin/courses/{course_id}/builder')
+
+
+@app.route('/admin/lessons/<int:lesson_id>/edit', methods=['POST'])
+@admin_required
+def admin_edit_lesson(lesson_id):
+    conn = get_db()
+    lesson = conn.execute("SELECT * FROM lessons WHERE id=?", (lesson_id,)).fetchone()
+    if not lesson:
+        conn.close()
+        flash("Lesson not found.", "danger")
+        return redirect('/admin/courses')
+
+    module = conn.execute("SELECT * FROM course_modules WHERE id=?", (lesson['module_id'],)).fetchone()
+    course_id = module['course_id']
+
+    title            = request.form.get('title', '').strip()
+    youtube_video_id = sanitize_youtube_id(request.form.get('youtube_video_id', ''))
+    notes            = request.form.get('notes', '').strip()
+    has_assignment   = 1 if request.form.get('has_assignment') else 0
+    google_doc_url   = request.form.get('google_doc_url', '').strip()
+    google_form_url  = request.form.get('google_form_url', '').strip()
+    try:
+        order_index = int(request.form.get('order_index', 0))
+    except ValueError:
+        order_index = 0
+
+    if not title:
+        conn.close()  # Bug 4 fix: close connection before early return
+        flash("Lesson title cannot be empty.", "danger")
+        return redirect(f'/admin/courses/{course_id}/builder')
+
+    conn.execute(
+        """UPDATE lessons SET
+           title=?, youtube_video_id=?, notes=?, has_assignment=?,
+           google_doc_url=?, google_form_url=?, order_index=?
+           WHERE id=?""",
+        (title, youtube_video_id, notes, has_assignment,
+         google_doc_url, google_form_url, order_index, lesson_id)
+    )
+    conn.commit()
+    conn.close()
+
+    log_action("Updated lesson", title)
+    flash(f'Lesson "{title}" updated.', "success")
+    return redirect(f'/admin/courses/{course_id}/builder')
+
+
+@app.route('/admin/lessons/<int:lesson_id>/delete', methods=['POST'])
+@admin_required
+def admin_delete_lesson(lesson_id):
+    conn = get_db()
+    lesson = conn.execute("SELECT * FROM lessons WHERE id=?", (lesson_id,)).fetchone()
+    if not lesson:
+        conn.close()
+        flash("Lesson not found.", "danger")
+        return redirect('/admin/courses')
+
+    module = conn.execute("SELECT * FROM course_modules WHERE id=?", (lesson['module_id'],)).fetchone()
+    course_id = module['course_id']
+    title = lesson['title']
+
+    conn.execute("DELETE FROM lesson_progress WHERE lesson_id=?", (lesson_id,))
+    conn.execute("DELETE FROM lessons WHERE id=?", (lesson_id,))
+    conn.commit()
+    conn.close()
+
+    log_action("Deleted lesson", title)
+    flash(f'Lesson "{title}" deleted.', "success")
+    return redirect(f'/admin/courses/{course_id}/builder')
 
 
 # -------------------------------------------------------------------

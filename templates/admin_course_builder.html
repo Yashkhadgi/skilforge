@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="sf-page">
+
+  <!-- ── HEADER ── -->
+  <div class="page-header reveal" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <a href="/admin/courses" style="font-size:0.8rem;color:var(--text-3);text-decoration:none;display:inline-flex;align-items:center;gap:5px;margin-bottom:12px;"
+         onmouseover="this.style.color='var(--text-2)'" onmouseout="this.style.color='var(--text-3)'">
+        <i class="bi bi-arrow-left"></i> Back to Courses
+      </a>
+      <div class="hero-badge" style="margin-bottom:10px;display:inline-flex;">
+        <i class="bi bi-diagram-3-fill"></i> Course Builder
+      </div>
+      <h1 style="font-family:'Inter Tight',sans-serif;font-size:1.9rem;font-weight:900;letter-spacing:-0.04em;line-height:1.1;margin-bottom:6px;">
+        {{ course['title'] }}
+      </h1>
+      <p style="color:var(--text-2);font-size:0.88rem;">
+        Design your curriculum — add modules and lessons below.
+      </p>
+    </div>
+    
+    <!-- Format Toggle Form -->
+    <form method="POST" action="/admin/courses/{{ course['id'] }}/format"
+          style="display:flex;align-items:center;gap:10px;background:var(--card);padding:12px 18px;border-radius:12px;border:1px solid var(--border);">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label style="font-size:0.82rem;color:var(--text-2);font-weight:600;white-space:nowrap;">Content Format:</label>
+      <select name="content_format" onchange="this.form.submit()"
+              style="padding:8px 14px;border-radius:8px;background:var(--bg-3);color:var(--text);
+                     border:1px solid var(--border-2);outline:none;font-family:'Inter',sans-serif;
+                     font-size:0.85rem;cursor:pointer;">
+        <option value="standard" {% if course['content_format'] == 'standard' %}selected{% endif %}>Standard (Static)</option>
+        <option value="modular" {% if course['content_format'] == 'modular' %}selected{% endif %}>Modular (Builder)</option>
+      </select>
+    </form>
+  </div>
+
+  {% if course['content_format'] != 'modular' %}
+  <!-- DISABLED STATE -->
+  <div class="sf-card reveal reveal-delay-1" style="text-align:center;padding:60px 20px;">
+    <div style="font-size:3rem;margin-bottom:16px;">🚧</div>
+    <h3 style="margin-bottom:8px;">Builder is Disabled</h3>
+    <p style="color:var(--text-2);font-size:0.9rem;max-width:400px;margin:0 auto 24px;">
+      This course is using the <strong>Standard</strong> format. Switch to <strong>Modular</strong>
+      using the dropdown above to start building interactive modules and lessons.
+    </p>
+  </div>
+  {% else %}
+
+  <!-- ── BUILDER CONTENT ── -->
+  <div class="reveal reveal-delay-1">
+    
+    <!-- ADD MODULE BUTTON & FORM -->
+    <div style="margin-bottom:20px;">
+      <button onclick="document.getElementById('add-module-form').style.display = document.getElementById('add-module-form').style.display === 'none' ? 'block' : 'none'"
+              class="btn-primary-sf" style="width:auto;padding:10px 20px;font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;">
+        <i class="bi bi-plus-lg"></i> Add Module
+      </button>
+      
+      <div id="add-module-form" class="sf-card" style="display:none;margin-top:12px;padding:24px;border:1px dashed rgba(255,255,255,0.2);">
+        <h4 style="margin-bottom:16px;font-size:1rem;font-weight:700;">New Module</h4>
+        <form method="POST" action="/admin/courses/{{ course['id'] }}/modules/add"
+              style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="admin-field" style="flex:1;min-width:200px;">
+            <label>Module Title</label>
+            <input type="text" name="module_title" placeholder="e.g. Module 1: Introduction" required>
+          </div>
+          <div class="admin-field" style="width:100px;">
+            <label>Order</label>
+            <input type="number" name="order_index" value="0">
+          </div>
+          <button type="submit" class="btn-primary-sf" style="width:auto;padding:10px 20px;">Save</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODULE LIST -->
+    {% if modules %}
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      {% for m in modules %}
+      <div class="sf-card" style="padding:0;overflow:hidden;">
+        
+        <!-- MODULE HEADER -->
+        <div style="background:var(--bg-3);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">
+          <div style="display:flex;align-items:center;gap:12px;cursor:pointer;"
+               onclick="var c=document.getElementById('module-content-{{ m['id'] }}'); c.style.display = c.style.display==='none' ? 'block' : 'none'; var icon=this.querySelector('.chevron-icon'); icon.style.transform = c.style.display==='none' ? 'rotate(0deg)' : 'rotate(180deg)';">
+            <div style="width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.06);
+                        color:var(--text-2);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:0.9rem;">
+              {{ m['order_index'] }}
+            </div>
+            <h3 style="font-size:1.05rem;margin:0;font-weight:700;">{{ m['module_title'] }}</h3>
+            <i class="bi bi-chevron-down chevron-icon" style="color:var(--text-3);font-size:0.8rem;transition:transform 0.2s;"></i>
+          </div>
+          
+          <div style="display:flex;gap:8px;">
+            <button onclick="var f=document.getElementById('edit-module-{{ m['id'] }}'); f.style.display = f.style.display==='none' ? 'block' : 'none';"
+                    class="action-btn action-edit"><i class="bi bi-pencil-fill"></i></button>
+            <form method="POST" action="/admin/modules/{{ m['id'] }}/delete" style="margin:0;"
+                  onsubmit="return confirm('Delete this module and all its lessons?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="action-btn action-delete"><i class="bi bi-trash-fill"></i></button>
+            </form>
+          </div>
+        </div>
+
+        <!-- MODULE EDIT FORM (hidden) -->
+        <div id="edit-module-{{ m['id'] }}" style="display:none;padding:16px 20px;background:var(--bg-2);border-bottom:1px solid var(--border);">
+          <form method="POST" action="/admin/modules/{{ m['id'] }}/edit"
+                style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="admin-field" style="flex:1;">
+              <label>Module Title</label>
+              <input type="text" name="module_title" value="{{ m['module_title'] }}" required>
+            </div>
+            <div class="admin-field" style="width:100px;">
+              <label>Order</label>
+              <input type="number" name="order_index" value="{{ m['order_index'] }}">
+            </div>
+            <button type="submit" class="btn-primary-sf" style="width:auto;padding:10px 18px;">Update</button>
+          </form>
+        </div>
+
+        <!-- LESSONS CONTAINER -->
+        <div id="module-content-{{ m['id'] }}" style="padding:20px;">
+          
+          {% set m_lessons = lessons_by_module[m['id']] %}
+          {% if m_lessons %}
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+            {% for l in m_lessons %}
+            <div class="sf-card" style="padding:12px 16px;background:var(--bg-2);border:1px solid var(--border);
+                        display:flex;justify-content:space-between;align-items:center;transition:transform 0.15s,box-shadow 0.15s;"
+                 onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.2)'"
+                 onmouseout="this.style.transform='none';this.style.boxShadow='none'">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span style="color:var(--text-3);font-family:monospace;font-size:0.85rem;">{{ l['order_index'] }}</span>
+                <i class="bi bi-play-circle-fill" style="color:var(--blue);font-size:1.1rem;"></i>
+                <div style="font-weight:600;font-size:0.92rem;">{{ l['title'] }}</div>
+                {% if l['has_assignment'] %}
+                <span class="badge" style="background:rgba(245,158,11,0.12);color:var(--warning);
+                             border:1px solid rgba(245,158,11,0.2);font-size:0.65rem;">
+                  <i class="bi bi-journal-text"></i> Assignment
+                </span>
+                {% endif %}
+              </div>
+              
+              <div style="display:flex;gap:8px;">
+                <button onclick="var f=document.getElementById('edit-lesson-{{ l['id'] }}'); f.style.display = f.style.display==='none' ? 'block' : 'none';"
+                        class="action-btn action-edit" style="padding:6px 10px;"><i class="bi bi-pencil-fill"></i></button>
+                <form method="POST" action="/admin/lessons/{{ l['id'] }}/delete" style="margin:0;"
+                      onsubmit="return confirm('Delete this lesson?')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="action-btn action-delete" style="padding:6px 10px;"><i class="bi bi-trash-fill"></i></button>
+                </form>
+              </div>
+            </div>
+
+            <!-- LESSON EDIT FORM (hidden) -->
+            <div id="edit-lesson-{{ l['id'] }}" class="sf-card"
+                 style="display:none;padding:24px;margin-top:-6px;margin-bottom:10px;
+                        border:1px dashed rgba(255,255,255,0.15);background:var(--bg-2);">
+              <h5 style="margin-bottom:16px;color:var(--blue);font-weight:700;">Edit Lesson</h5>
+              <form method="POST" action="/admin/lessons/{{ l['id'] }}/edit">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+                  <div class="admin-field" style="flex:2;min-width:200px;">
+                    <label>Lesson Title</label>
+                    <input type="text" name="title" value="{{ l['title'] }}" required>
+                  </div>
+                  <div class="admin-field" style="flex:1;min-width:150px;">
+                    <label>YouTube Video ID</label>
+                    <input type="text" name="youtube_video_id" value="{{ l['youtube_video_id'] }}">
+                    <span style="font-size:0.7rem;color:var(--text-3);margin-top:2px;">Paste only the part after v=</span>
+                  </div>
+                  <div class="admin-field" style="width:80px;">
+                    <label>Order</label>
+                    <input type="number" name="order_index" value="{{ l['order_index'] }}">
+                  </div>
+                </div>
+
+                <div class="admin-field" style="margin-bottom:16px;">
+                  <label>Notes (Markdown)</label>
+                  <div style="display:flex;gap:6px;margin-bottom:8px;">
+                    <button type="button" class="action-btn action-edit" onclick="insertMd('edit-notes-{{ l['id'] }}', '**bold**')" style="padding:4px 8px;font-weight:bold;">B</button>
+                    <button type="button" class="action-btn action-edit" onclick="insertMd('edit-notes-{{ l['id'] }}', '## Heading')" style="padding:4px 8px;">H</button>
+                    <button type="button" class="action-btn action-edit" onclick="insertMd('edit-notes-{{ l['id'] }}', '\n```python\ncode\n```\n')" style="padding:4px 8px;font-family:monospace;">&lt;/&gt;</button>
+                    <button type="button" class="action-btn action-edit" onclick="insertMd('edit-notes-{{ l['id'] }}', '\n- item')" style="padding:4px 8px;"><i class="bi bi-list-ul"></i></button>
+                  </div>
+                  <textarea id="edit-notes-{{ l['id'] }}" name="notes" style="height:150px;font-family:monospace;resize:vertical;"
+                            oninput="renderPreview('edit-notes-{{ l['id'] }}', 'edit-preview-{{ l['id'] }}')">{{ l['notes'] }}</textarea>
+                  <div style="margin-top:10px;padding:14px;background:var(--bg);border:1px solid var(--border);
+                              border-radius:8px;min-height:50px;font-size:0.9rem;line-height:1.6;color:var(--text-2);"
+                       id="edit-preview-{{ l['id'] }}">
+                    <span style="color:var(--text-3);">Preview will appear here...</span>
+                  </div>
+                </div>
+
+                <div style="margin-bottom:16px;">
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text);font-weight:600;font-size:0.85rem;">
+                    <input type="checkbox" name="has_assignment" value="1"
+                           {% if l['has_assignment'] %}checked{% endif %}
+                           onchange="var f=document.getElementById('edit-asgn-{{ l['id'] }}'); f.style.display=this.checked ? 'flex' : 'none';">
+                    Has Assignment?
+                  </label>
+                </div>
+
+                <div id="edit-asgn-{{ l['id'] }}" style="display:{% if l['has_assignment'] %}flex{% else %}none{% endif %};gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+                  <div class="admin-field" style="flex:1;min-width:200px;">
+                    <label>Google Doc URL (Brief)</label>
+                    <input type="url" name="google_doc_url" value="{{ l['google_doc_url'] }}">
+                  </div>
+                  <div class="admin-field" style="flex:1;min-width:200px;">
+                    <label>Google Form URL (Submission)</label>
+                    <input type="url" name="google_form_url" value="{{ l['google_form_url'] }}">
+                  </div>
+                </div>
+
+                <button type="submit" class="btn-primary-sf" style="width:auto;padding:10px 20px;">Save Changes</button>
+              </form>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p style="color:var(--text-3);font-size:0.85rem;margin-bottom:16px;">No lessons in this module yet.</p>
+          {% endif %}
+
+          <!-- ADD LESSON BUTTON & FORM -->
+          <button onclick="var f=document.getElementById('add-lesson-form-{{ m['id'] }}'); f.style.display = f.style.display==='none' ? 'block' : 'none';"
+                  class="action-btn" style="padding:6px 14px;font-size:0.82rem;color:var(--blue);
+                         background:rgba(0,153,255,0.08);border:1px solid rgba(0,153,255,0.15);">
+            <i class="bi bi-plus"></i> Add Lesson
+          </button>
+          
+          <div id="add-lesson-form-{{ m['id'] }}" class="sf-card"
+               style="display:none;margin-top:12px;padding:24px;border:1px dashed rgba(0,153,255,0.3);">
+            <h5 style="margin-bottom:16px;color:var(--blue);font-weight:700;">New Lesson</h5>
+            <form method="POST" action="/admin/modules/{{ m['id'] }}/lessons/add">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              
+              <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+                <div class="admin-field" style="flex:2;min-width:200px;">
+                  <label>Lesson Title</label>
+                  <input type="text" name="title" required placeholder="e.g. What is Python?">
+                </div>
+                <div class="admin-field" style="flex:1;min-width:150px;">
+                  <label>YouTube Video ID</label>
+                  <input type="text" name="youtube_video_id" placeholder="dQw4w9WgXcQ">
+                  <span style="font-size:0.7rem;color:var(--text-3);margin-top:2px;">Paste only the part after v=</span>
+                </div>
+                <div class="admin-field" style="width:80px;">
+                  <label>Order</label>
+                  <input type="number" name="order_index" value="0">
+                </div>
+              </div>
+
+              <div class="admin-field" style="margin-bottom:16px;">
+                <label>Notes (Markdown)</label>
+                <div style="display:flex;gap:6px;margin-bottom:8px;">
+                  <button type="button" class="action-btn action-edit" onclick="insertMd('add-notes-{{ m['id'] }}', '**bold**')" style="padding:4px 8px;font-weight:bold;">B</button>
+                  <button type="button" class="action-btn action-edit" onclick="insertMd('add-notes-{{ m['id'] }}', '## Heading')" style="padding:4px 8px;">H</button>
+                  <button type="button" class="action-btn action-edit" onclick="insertMd('add-notes-{{ m['id'] }}', '\n```python\ncode\n```\n')" style="padding:4px 8px;font-family:monospace;">&lt;/&gt;</button>
+                  <button type="button" class="action-btn action-edit" onclick="insertMd('add-notes-{{ m['id'] }}', '\n- item')" style="padding:4px 8px;"><i class="bi bi-list-ul"></i></button>
+                </div>
+                <textarea id="add-notes-{{ m['id'] }}" name="notes" style="height:100px;font-family:monospace;resize:vertical;"
+                          oninput="renderPreview('add-notes-{{ m['id'] }}', 'add-preview-{{ m['id'] }}')"></textarea>
+                <div style="margin-top:10px;padding:14px;background:var(--bg);border:1px solid var(--border);
+                            border-radius:8px;min-height:50px;font-size:0.9rem;line-height:1.6;color:var(--text-2);"
+                     id="add-preview-{{ m['id'] }}"></div>
+              </div>
+
+              <div style="margin-bottom:16px;">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text);font-weight:600;font-size:0.85rem;">
+                  <input type="checkbox" name="has_assignment" value="1"
+                         onchange="var f=document.getElementById('add-asgn-{{ m['id'] }}'); f.style.display=this.checked ? 'flex' : 'none';">
+                  Has Assignment?
+                </label>
+              </div>
+
+              <div id="add-asgn-{{ m['id'] }}" style="display:none;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+                <div class="admin-field" style="flex:1;min-width:200px;">
+                  <label>Google Doc URL (Brief)</label>
+                  <input type="url" name="google_doc_url">
+                </div>
+                <div class="admin-field" style="flex:1;min-width:200px;">
+                  <label>Google Form URL (Submission)</label>
+                  <input type="url" name="google_form_url">
+                </div>
+              </div>
+
+              <div style="display:flex;gap:10px;">
+                <button type="submit" class="btn-primary-sf" style="width:auto;padding:10px 20px;">Save Lesson</button>
+              </div>
+            </form>
+          </div>
+          
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <!-- No modules yet -->
+    <div class="sf-card" style="text-align:center;padding:48px 20px;">
+      <div style="font-size:2.5rem;margin-bottom:12px;">📦</div>
+      <div style="font-weight:600;margin-bottom:6px;">No modules yet</div>
+      <div style="font-size:0.82rem;color:var(--text-3);">Click "+ Add Module" above to start building your curriculum.</div>
+    </div>
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- marked.js for markdown preview -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+function insertMd(textareaId, text) {
+  const ta = document.getElementById(textareaId);
+  if (!ta) return;
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  ta.value = ta.value.substring(0, start) + text + ta.value.substring(end);
+  ta.focus();
+  ta.selectionStart = ta.selectionEnd = start + text.length;
+  ta.dispatchEvent(new Event('input'));
+}
+
+function renderPreview(textareaId, previewId) {
+  const md = document.getElementById(textareaId).value;
+  const el = document.getElementById(previewId);
+  if (md.trim() === '') {
+    el.innerHTML = '<span style="color:var(--text-3);">Preview will appear here...</span>';
+  } else {
+    el.innerHTML = marked.parse(md);
+  }
+}
+
+// Init previews for existing lesson notes on page load
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('textarea[id^="edit-notes-"]').forEach(function(ta) {
+    var previewId = ta.id.replace('edit-notes-', 'edit-preview-');
+    renderPreview(ta.id, previewId);
+  });
+});
+</script>
+
+{% endblock %}
