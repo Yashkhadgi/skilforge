@@ -1271,3 +1271,34 @@ body {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
 }
+/* ── COURSE BUILDER & VIEWER ─────────────────────────────────────── */
+.lesson-sidebar::-webkit-scrollbar { width: 4px; }
+.lesson-sidebar::-webkit-scrollbar-track { background: transparent; }
+.lesson-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.lesson-sidebar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+.lesson-item {
+  transition: transform 0.15s var(--ease), box-shadow 0.15s;
+}
+.lesson-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.code-box-parent .code-box {
+  background: #1a1a24;
+  color: #e2e8f0;
+  font-family: monospace;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.assignment-box {
+  transition: border-color 0.2s var(--ease);
+}
+.assignment-box:hover {
+  border-color: var(--warning);
+}
