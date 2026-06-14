@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- Learning viewer — full-width layout overrides .sf-page max-width -->
+<div style="display:flex; height:calc(100vh - 70px); margin:0; overflow:hidden;">
+
+  <!-- ── SIDEBAR ── -->
+  <aside style="width:320px; background:var(--card); border-right:1px solid var(--border);
+                overflow-y:auto; flex-shrink:0; display:flex; flex-direction:column;">
+    
+    <!-- Sidebar header -->
+    <div style="padding:20px; border-bottom:1px solid var(--border); position:sticky; top:0;
+                background:var(--card); z-index:10;">
+      <a href="/course/{{ course['id'] }}" style="color:var(--text-2); text-decoration:none;
+                font-size:0.82rem; display:inline-flex; align-items:center; gap:6px; margin-bottom:10px;
+                transition:color 0.2s;"
+         onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-2)'">
+        <i class="bi bi-arrow-left"></i> Back to Course
+      </a>
+      <h2 style="font-size:1.05rem; font-weight:800; margin:0 0 10px; line-height:1.3;
+                 font-family:'Inter Tight',sans-serif; letter-spacing:-0.02em;">
+        {{ course['title'] }}
+      </h2>
+      
+      <!-- Progress Bar -->
+      <div style="margin-top:10px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.78rem;
+                    color:var(--text-2); margin-bottom:6px;">
+          <span>Your Progress</span>
+          <span id="progress-text" style="font-weight:600;">{{ enrollment['progress'] }}%</span>
+        </div>
+        <div style="height:5px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden;">
+          <div id="progress-fill" style="height:100%; background:var(--success);
+               width:{{ enrollment['progress'] }}%; transition:width 0.5s ease; border-radius:3px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module / lesson nav -->
+    <div style="padding:10px 12px; flex:1;">
+      {% for m in modules %}
+      {% set module_is_active = (m['id'] == current_lesson['module_id']) %}
+      <div style="margin-bottom:8px;">
+        <!-- Module header -->
+        <div style="padding:10px 12px; border-radius:8px; cursor:pointer; display:flex;
+                    justify-content:space-between; align-items:center; background:var(--bg-2);
+                    border:1px solid var(--border); transition:background 0.15s;"
+             onmouseover="this.style.background='var(--bg-3)'"
+             onmouseout="this.style.background='var(--bg-2)'"
+             onclick="var list=document.getElementById('sidebar-mod-{{ m['id'] }}'); var icon=this.querySelector('.mod-chevron');
+                      if(list.style.display==='none'){list.style.display='flex';icon.style.transform='rotate(180deg)';}
+                      else{list.style.display='none';icon.style.transform='rotate(0deg)';}">
+          <div style="font-weight:700; font-size:0.85rem; color:var(--text);">{{ m['module_title'] }}</div>
+          <i class="bi bi-chevron-down mod-chevron" style="font-size:0.75rem; color:var(--text-3);
+             transition:transform 0.2s;{% if module_is_active %} transform:rotate(180deg);{% endif %}"></i>
+        </div>
+        
+        <!-- Lesson list inside module -->
+        {% set m_lessons = lessons_by_module[m['id']] %}
+        <div id="sidebar-mod-{{ m['id'] }}" style="display:{% if module_is_active %}flex{% else %}none{% endif %}; padding-top:4px; padding-left:8px;
+                    flex-direction:column; gap:2px;">
+          {% for l in m_lessons %}
+          {% set is_active = (l['id'] == current_lesson['id']) %}
+          <a href="/course/{{ course['id'] }}/learn/{{ l['id'] }}"
+             style="padding:8px 12px; border-radius:6px; display:flex; align-items:flex-start; gap:10px;
+                    text-decoration:none; color:var(--text); font-size:0.84rem; transition:background 0.15s;
+                    {% if is_active %}background:rgba(0,153,255,0.1); border-left:3px solid var(--blue);
+                    {% else %}background:transparent; border-left:3px solid transparent;{% endif %}"
+             onmouseover="{% if not is_active %}this.style.background='rgba(255,255,255,0.04)'{% endif %}"
+             onmouseout="{% if not is_active %}this.style.background='transparent'{% endif %}">
+            
+            <div style="margin-top:2px;" id="status-icon-{{ l['id'] }}">
+              {% if l['is_completed'] %}
+              <i class="bi bi-check-circle-fill" style="color:var(--success);font-size:0.85rem;"></i>
+              {% else %}
+              <i class="bi bi-circle" style="color:var(--text-3);font-size:0.85rem;"></i>
+              {% endif %}
+            </div>
+            
+            <div style="flex:1;">
+              <div style="{% if is_active %}font-weight:700; color:var(--blue);
+                          {% else %}font-weight:500;{% endif %}line-height:1.3;">{{ l['title'] }}</div>
+              {% if l['has_assignment'] %}
+              <div style="font-size:0.68rem; color:var(--warning); margin-top:3px;">
+                <i class="bi bi-journal-text"></i> Assignment
+              </div>
+              {% endif %}
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <!-- ── MAIN CONTENT ── -->
+  <main style="flex:1; overflow-y:auto; background:var(--bg); padding:32px;">
+    
+    <div style="max-width:860px; margin:0 auto;">
+      <h1 style="font-family:'Inter Tight',sans-serif; font-size:1.7rem; font-weight:800;
+                 letter-spacing:-0.03em; margin-bottom:24px;">
+        {{ current_lesson['title'] }}
+      </h1>
+
+      <!-- YouTube Embed -->
+      {% if current_lesson['youtube_video_id'] %}
+      <div style="position:relative; width:100%; padding-bottom:56.25%; border-radius:12px;
+                  overflow:hidden; margin-bottom:32px; box-shadow:0 8px 32px rgba(0,0,0,0.3);
+                  background:#000; border:1px solid var(--border);">
+        <iframe title="YouTube video player" src="https://www.youtube.com/embed/{{ current_lesson['youtube_video_id'] }}"
+                style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen></iframe>
+      </div>
+      {% endif %}
+
+      <!-- Notes (Markdown rendered client-side) -->
+      {% if current_lesson['notes'] %}
+      <div id="lesson-notes" style="color:var(--text-2); line-height:1.7; font-size:0.95rem; margin-bottom:40px;">
+        <!-- Markdown rendered here -->
+      </div>
+      <textarea id="raw-notes" style="display:none;">{{ current_lesson['notes'] }}</textarea>
+      {% endif %}
+
+      <!-- Assignment Box -->
+      {% if current_lesson['has_assignment'] %}
+      <div style="background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.25);
+                  border-radius:12px; padding:24px; margin-bottom:40px; transition:border-color 0.2s;"
+           onmouseover="this.style.borderColor='rgba(245,158,11,0.5)'"
+           onmouseout="this.style.borderColor='rgba(245,158,11,0.25)'">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+          <i class="bi bi-journal-check" style="font-size:1.4rem; color:var(--warning);"></i>
+          <h3 style="margin:0; color:var(--warning); font-weight:700; font-size:1.1rem;">Assignment</h3>
+        </div>
+        <p style="color:var(--text-2); margin-bottom:20px; font-size:0.9rem;">
+          Complete the assignment described in the brief and submit your solution via the form.
+        </p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          {% if current_lesson['google_doc_url'] %}
+          <a href="{{ current_lesson['google_doc_url'] }}" target="_blank"
+             style="display:inline-flex; align-items:center; gap:8px; padding:10px 18px;
+                    border-radius:8px; background:#4285F4; color:#fff; text-decoration:none;
+                    font-weight:600; font-size:0.88rem; transition:opacity 0.2s;"
+             onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+            <i class="bi bi-file-earmark-text-fill"></i> View Assignment Brief
+          </a>
+          {% endif %}
+          {% if current_lesson['google_form_url'] %}
+          <a href="{{ current_lesson['google_form_url'] }}" target="_blank"
+             style="display:inline-flex; align-items:center; gap:8px; padding:10px 18px;
+                    border-radius:8px; background:#7c3aed; color:#fff; text-decoration:none;
+                    font-weight:600; font-size:0.88rem; transition:opacity 0.2s;"
+             onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+            <i class="bi bi-cloud-arrow-up-fill"></i> Submit Solution
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Bottom Navigation & Mark Complete -->
+      <div style="display:flex; justify-content:space-between; align-items:center;
+                  border-top:1px solid var(--border); padding-top:24px; margin-top:40px; margin-bottom:60px;">
+        
+        <!-- Prev Button -->
+        <div>
+          {% if prev_lesson %}
+          <a href="/course/{{ course['id'] }}/learn/{{ prev_lesson['id'] }}"
+             style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px;
+                    border-radius:8px; border:1px solid var(--border); background:var(--card);
+                    color:var(--text-2); text-decoration:none; font-size:0.85rem; font-weight:500;
+                    transition:all 0.2s;"
+             onmouseover="this.style.borderColor='var(--border-2)';this.style.color='var(--text)'"
+             onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'">
+            <i class="bi bi-arrow-left"></i> Previous
+          </a>
+          {% endif %}
+        </div>
+        
+        <!-- Mark Complete -->
+        <div>
+          {% set is_completed = current_lesson.get('is_completed', False) %}
+          <button id="mark-complete-btn" onclick="markComplete()"
+                  style="display:inline-flex; align-items:center; gap:8px; padding:10px 24px;
+                         border-radius:8px; font-weight:700; font-size:0.88rem; border:none;
+                         cursor:pointer; transition:all 0.2s;
+                         {% if is_completed %}background:var(--success); color:#fff;
+                         {% else %}background:#fff; color:#000;{% endif %}">
+            <i class="bi bi-check-circle-fill" id="complete-icon"></i>
+            <span id="complete-text">{% if is_completed %}Completed{% else %}Mark Complete{% endif %}</span>
+          </button>
+        </div>
+        
+        <!-- Next Button -->
+        <div>
+          {% if next_lesson %}
+          <a href="/course/{{ course['id'] }}/learn/{{ next_lesson['id'] }}"
+             style="display:inline-flex; align-items:center; gap:6px; padding:10px 18px;
+                    border-radius:8px; border:1px solid var(--border); background:var(--card);
+                    color:var(--text-2); text-decoration:none; font-size:0.85rem; font-weight:500;
+                    transition:all 0.2s;"
+             onmouseover="this.style.borderColor='var(--border-2)';this.style.color='var(--text)'"
+             onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-2)'">
+            Next <i class="bi bi-arrow-right"></i>
+          </a>
+          {% endif %}
+        </div>
+        
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+// Render markdown notes
+document.addEventListener('DOMContentLoaded', function() {
+  var rawEl = document.getElementById('raw-notes');
+  var targetEl = document.getElementById('lesson-notes');
+  if (rawEl && targetEl && rawEl.value.trim()) {
+    targetEl.innerHTML = marked.parse(rawEl.value);
+    // Style code blocks
+    targetEl.querySelectorAll('pre').forEach(function(pre) {
+      pre.style.background = '#1a1a24';
+      pre.style.color = '#e2e8f0';
+      pre.style.fontFamily = 'monospace';
+      pre.style.padding = '16px';
+      pre.style.borderRadius = '8px';
+      pre.style.overflowX = 'auto';
+      pre.style.marginBottom = '16px';
+      pre.style.border = '1px solid rgba(255,255,255,0.05)';
+    });
+  }
+});
+
+function markComplete() {
+  var btn = document.getElementById('mark-complete-btn');
+  var text = document.getElementById('complete-text');
+  var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+  var csrfToken = csrfMeta ? csrfMeta.content : '';
+
+  btn.style.opacity = '0.6';
+  btn.style.pointerEvents = 'none';
+  text.innerText = 'Saving...';
+
+  fetch('/course/{{ course['id'] }}/learn/{{ current_lesson['id'] }}/complete', {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': csrfToken
+    },
+    body: (function() {
+      var fd = new FormData();
+      fd.append('csrf_token', csrfToken);
+      return fd;
+    })()
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    
+    if (data.success) {
+      btn.style.background = 'var(--success)';
+      btn.style.color = '#fff';
+      text.innerText = 'Completed';
+      
+      // Update sidebar icon
+      var sidebarIcon = document.getElementById('status-icon-{{ current_lesson['id'] }}');
+      if (sidebarIcon) {
+        sidebarIcon.innerHTML = '<i class="bi bi-check-circle-fill" style="color:var(--success);font-size:0.85rem;"></i>';
+      }
+
+      // Update progress bar
+      var progressFill = document.getElementById('progress-fill');
+      var progressText = document.getElementById('progress-text');
+      if (progressFill) progressFill.style.width = data.progress + '%';
+      if (progressText) progressText.innerText = data.progress + '%';
+    } else {
+      text.innerText = 'Error';
+      alert(data.error || 'Failed to mark complete.');
+    }
+  })
+  .catch(function(err) {
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    text.innerText = 'Error';
+    console.error(err);
+  });
+}
+</script>
+
+{% endblock %}

@@ -105,9 +105,15 @@
         <div class="free-tag"><i class="bi bi-infinity"></i> Full lifetime access</div>
 
         {% if enrollment %}
+          {% if course['content_format'] == 'modular' %}
+          <a href="/course/{{ course['id'] }}/learn" class="btn-enroll-big" style="display:flex;">
+            <i class="bi bi-play-circle-fill"></i> Continue Learning
+          </a>
+          {% else %}
           <a href="/my-learning" class="btn-enrolled-big">
             <i class="bi bi-check-circle-fill"></i> Already Enrolled
           </a>
+          {% endif %}
           <!-- Progress -->
           <div class="progress-wrap mt-3">
             <div class="progress-label">
@@ -167,9 +173,19 @@
 
   <!-- ── CURRICULUM ── -->
   <div class="curriculum-section reveal" style="margin-top:8px;">
-    <h3 style="display:flex;align-items:center;justify-content:space-between;">
+    <h3 style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <span><i class="bi bi-journal-text me-2" style="color:var(--accent);"></i>Course Curriculum</span>
-      <span style="font-size:0.76rem;color:var(--text-3);font-weight:400;">{{ curriculum|length }} modules</span>
+      <span style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:0.76rem;color:var(--text-3);font-weight:400;">{{ curriculum|length }} modules</span>
+        {% if session.get('is_admin') %}
+        <a href="/admin/courses/{{ course['id'] }}/builder"
+           style="font-size:0.76rem;color:var(--accent);text-decoration:none;
+                  background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);
+                  padding:5px 12px;border-radius:8px;">
+          <i class="bi bi-gear me-1"></i>Manage Lessons
+        </a>
+        {% endif %}
+      </span>
     </h3>
     {% for item in curriculum %}
     <div class="curriculum-item">
